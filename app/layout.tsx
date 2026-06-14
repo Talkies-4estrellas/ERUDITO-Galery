@@ -11,7 +11,7 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-//sasa
+//sasad
 export const metadata: Metadata = {
   title: "ERUDITO Galery",
   description: "Galería de arte — exposiciones y obras destacadas",
