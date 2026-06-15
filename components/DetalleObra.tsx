@@ -79,7 +79,7 @@ export default function DetalleObra({ ficha, similares }: Props) {
       </section>
 
       {/* Estadísticas del valor actual y compra */}
-      <EstadisticasValor />
+      <EstadisticasValor ficha={ficha} />
 
       {/* Recomendaciones de arte similar */}
       <FilaFichas titulo="Arte similar" lista={similares} />

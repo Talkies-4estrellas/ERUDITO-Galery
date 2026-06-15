@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { menus, type MenuNav } from "@/data/navegacion";
+import BuscadorModal from "@/components/BuscadorModal";
 
 function Flecha({ abierta }: { abierta: boolean }) {
   return (
@@ -160,81 +161,141 @@ function MenuMovil({ alCerrar }: { alCerrar: () => void }) {
 export default function Navbar() {
   const [menuAbierto, setMenuAbierto] = useState<string | null>(null);
   const [movilAbierto, setMovilAbierto] = useState(false);
+  const [buscadorAbierto, setBuscadorAbierto] = useState(false);
+  const [queryBusqueda, setQueryBusqueda] = useState("");
+
+  // Atajo de teclado global: Ctrl+K / Cmd+K
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setBuscadorAbierto(true);
+        setQueryBusqueda("");
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
+
+  function abrirBuscador() {
+    setQueryBusqueda("");
+    setBuscadorAbierto(true);
+  }
+
+  function cerrarBuscador() {
+    setBuscadorAbierto(false);
+    setQueryBusqueda("");
+  }
 
   return (
-    <header className="relative z-50 px-4 pt-4 sm:px-8">
-      <div className="mx-auto max-w-6xl">
-        <nav
-          className="relative"
-          onMouseLeave={() => setMenuAbierto(null)}
-        >
-          <div className="flex items-center justify-between rounded-2xl bg-zinc-900/90 px-6 py-4 ring-1 ring-white/10 backdrop-blur">
-            <a href="/" className="text-lg font-semibold tracking-widest text-white">
-              ERUDITO <span className="text-amber-400">GALERY</span>
-            </a>
+    <>
+      <header className="relative z-50 px-4 pt-4 sm:px-8">
+        <div className="mx-auto max-w-6xl">
+          <nav className="relative" onMouseLeave={() => setMenuAbierto(null)}>
+            <div className="flex items-center justify-between rounded-2xl bg-zinc-900/90 px-6 py-4 ring-1 ring-white/10 backdrop-blur">
+              <a href="/" className="text-lg font-semibold tracking-widest text-white">
+                ERUDITO <span className="text-amber-400">GALERY</span>
+              </a>
 
-            <ul className="hidden flex-wrap items-center justify-end gap-x-0.5 gap-y-1 lg:flex">
-              {menus.map((menu) => (
-                <li key={menu.etiqueta} className="relative">
-                  {menu.secciones ? (
-                    <button
-                      type="button"
-                      onMouseEnter={() => setMenuAbierto(menu.etiqueta)}
-                      onClick={() => setMenuAbierto(menu.etiqueta)}
-                      aria-expanded={menuAbierto === menu.etiqueta}
-                      className={`flex items-center gap-1 rounded-full px-2 py-1.5 text-[13px] transition-colors ${
-                        menuAbierto === menu.etiqueta
-                          ? "bg-white/10 text-amber-400"
-                          : "text-zinc-300 hover:text-amber-400"
-                      }`}
-                    >
-                      {menu.etiqueta}
-                      <Flecha abierta={menuAbierto === menu.etiqueta} />
-                    </button>
-                  ) : (
-                    <a
-                      href={menu.href}
-                      onMouseEnter={() => setMenuAbierto(null)}
-                      className="rounded-full px-2 py-1.5 text-[13px] text-zinc-300 transition-colors hover:text-amber-400"
-                    >
-                      {menu.etiqueta}
-                    </a>
-                  )}
-                  {/* Dropdown simple anclado a su botón */}
-                  {menu.secciones &&
-                    menu.secciones.length === 1 &&
-                    menuAbierto === menu.etiqueta && (
-                      <PanelDesplegable menu={menu} />
+              <ul className="hidden flex-wrap items-center justify-end gap-x-0.5 gap-y-1 lg:flex">
+                {menus.map((menu) => (
+                  <li key={menu.etiqueta} className="relative">
+                    {menu.secciones ? (
+                      <button
+                        type="button"
+                        onMouseEnter={() => setMenuAbierto(menu.etiqueta)}
+                        onClick={() => setMenuAbierto(menu.etiqueta)}
+                        aria-expanded={menuAbierto === menu.etiqueta}
+                        className={`flex items-center gap-1 rounded-full px-2 py-1.5 text-[13px] transition-colors ${
+                          menuAbierto === menu.etiqueta
+                            ? "bg-white/10 text-amber-400"
+                            : "text-zinc-300 hover:text-amber-400"
+                        }`}
+                      >
+                        {menu.etiqueta}
+                        <Flecha abierta={menuAbierto === menu.etiqueta} />
+                      </button>
+                    ) : (
+                      <a
+                        href={menu.href}
+                        onMouseEnter={() => setMenuAbierto(null)}
+                        className="rounded-full px-2 py-1.5 text-[13px] text-zinc-300 transition-colors hover:text-amber-400"
+                      >
+                        {menu.etiqueta}
+                      </a>
                     )}
-                </li>
-              ))}
-            </ul>
+                    {menu.secciones &&
+                      menu.secciones.length === 1 &&
+                      menuAbierto === menu.etiqueta && (
+                        <PanelDesplegable menu={menu} />
+                      )}
+                  </li>
+                ))}
+              </ul>
 
-            <button
-              type="button"
-              aria-label="Abrir menú"
-              onClick={() => setMovilAbierto(!movilAbierto)}
-              className="flex flex-col gap-1.5 lg:hidden"
-            >
-              <span className="h-0.5 w-6 bg-zinc-300" />
-              <span className="h-0.5 w-6 bg-zinc-300" />
-              <span className="h-0.5 w-6 bg-zinc-300" />
-            </button>
-          </div>
+              {/* Botón lupa + hamburguesa */}
+              <div className="flex items-center gap-3">
+                {/* Botón de búsqueda */}
+                <button
+                  type="button"
+                  aria-label="Abrir buscador"
+                  onClick={abrirBuscador}
+                  className="flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-amber-400"
+                >
+                  <svg
+                    className="size-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                    />
+                  </svg>
+                  <kbd className="hidden text-[10px] font-medium text-zinc-500 sm:block">
+                    ⌘K
+                  </kbd>
+                </button>
 
-          {/* Mega-menús anclados al ancho del navbar (escritorio) */}
-          {menus.map(
-            (menu) =>
-              menu.secciones &&
-              menu.secciones.length > 1 &&
-              menuAbierto === menu.etiqueta && (
-                <PanelDesplegable key={menu.etiqueta} menu={menu} />
-              )
-          )}
-        </nav>
+                {/* Hamburguesa */}
+                <button
+                  type="button"
+                  aria-label="Abrir menú"
+                  onClick={() => setMovilAbierto(!movilAbierto)}
+                  className="flex flex-col gap-1.5 lg:hidden"
+                >
+                  <span className="h-0.5 w-6 bg-zinc-300" />
+                  <span className="h-0.5 w-6 bg-zinc-300" />
+                  <span className="h-0.5 w-6 bg-zinc-300" />
+                </button>
+              </div>
+            </div>
 
-        {movilAbierto && <MenuMovil alCerrar={() => setMovilAbierto(false)} />}
-      </div>
-    </header>
+            {/* Mega-menús de escritorio */}
+            {menus.map(
+              (menu) =>
+                menu.secciones &&
+                menu.secciones.length > 1 &&
+                menuAbierto === menu.etiqueta && (
+                  <PanelDesplegable key={menu.etiqueta} menu={menu} />
+                )
+            )}
+          </nav>
+
+          {movilAbierto && <MenuMovil alCerrar={() => setMovilAbierto(false)} />}
+        </div>
+      </header>
+
+      {/* Modal de búsqueda */}
+      <BuscadorModal
+        open={buscadorAbierto}
+        onClose={cerrarBuscador}
+        query={queryBusqueda}
+        setQuery={setQueryBusqueda}
+      />
+    </>
   );
 }

@@ -1,50 +1,64 @@
 "use client";
 
 import { useState } from "react";
+import type { FichaArte } from "@/data/fichas";
 
-// Datos de muestra — más adelante vendrán del mercado real de cada obra
-const interesMensual = [45, 70, 38, 82, 60, 75, 65];
+interface Props {
+  ficha: FichaArte;
+}
 
-const valorPorMes: { mes: string; valor: number; destacado?: boolean }[] = [
-  { mes: "Ene", valor: 40 },
-  { mes: "Feb", valor: 55 },
-  { mes: "Mar", valor: 35 },
-  { mes: "Abr", valor: 48 },
-  { mes: "May", valor: 60 },
-  { mes: "Jun", valor: 90, destacado: true },
-  { mes: "Jul", valor: 52 },
-  { mes: "Ago", valor: 44 },
-  { mes: "Sep", valor: 58 },
-  { mes: "Oct", valor: 38 },
-  { mes: "Nov", valor: 50 },
-  { mes: "Dic", valor: 62 },
-];
+// Índice del mes actual (Junio = 5)
+const MES_ACTUAL = 5;
 
-const secciones = [
-  {
-    titulo: "CERTIFICACIONES",
-    contenido:
-      "Obra verificada por ERUDITO Galery. Incluye certificado digital de autenticidad firmado por la galería y registro permanente en nuestro catálogo.",
-  },
-  {
-    titulo: "Activo Financiero",
-    contenido:
-      "Esta obra puede adquirirse como activo de inversión. Su valor se actualiza periódicamente según el mercado, las subastas recientes y el interés de los coleccionistas.",
-  },
-  {
-    titulo: "Entregables",
-    contenido:
-      "Archivo JPG certificado en alta resolución, certificado de autenticidad y ficha técnica completa de la obra.",
-  },
-  {
-    titulo: "FAQs",
-    contenido:
-      "¿Dudas sobre el proceso de compra, los envíos o la certificación? Consulta las preguntas frecuentes o escríbenos desde la sección de Contacto.",
-  },
-];
-
-export default function EstadisticasValor() {
+export default function EstadisticasValor({ ficha }: Props) {
   const [abierta, setAbierta] = useState<string | null>(null);
+
+  /* ── Gráfica de interés ──────────────────────────────────────────── */
+  const maxInteres = Math.max(...ficha.graficaInteres);
+  const deltaInteres =
+    ficha.graficaInteres[ficha.graficaInteres.length - 1] -
+    ficha.graficaInteres[ficha.graficaInteres.length - 2];
+  const totalInteres = ficha.graficaInteres.reduce((a, b) => a + b, 0);
+
+  /* ── Gráfica de valor ────────────────────────────────────────────── */
+  const precios = ficha.graficaValor.map((p) => p.valor);
+  const minPrecio = Math.min(...precios);
+  const maxPrecio = Math.max(...precios);
+  const rango = maxPrecio - minPrecio || 1;
+  // Normaliza a 15-100% para que siempre haya barra visible
+  const alturaPct = (v: number) => 15 + ((v - minPrecio) / rango) * 85;
+
+  const precioActual = ficha.graficaValor[MES_ACTUAL].valor;
+  const precioAnterior = ficha.graficaValor[MES_ACTUAL - 1].valor;
+  const cambioPct = (((precioActual - precioAnterior) / precioAnterior) * 100).toFixed(1);
+  const subio = precioActual >= precioAnterior;
+
+  /* ── Secciones del acordeón ──────────────────────────────────────── */
+  const secciones = [
+    {
+      titulo: "CERTIFICACIONES",
+      contenido: ficha.certificaciones.join(" · "),
+    },
+    {
+      titulo: "Activo Financiero",
+      contenido:
+        "Esta obra puede adquirirse como activo de inversión. Su valor se actualiza periódicamente según el mercado, las subastas recientes y el interés de los coleccionistas.",
+    },
+    {
+      titulo: "Entregables",
+      contenido:
+        ficha.tipo === "Físico"
+          ? "Obra original con certificado de autenticidad, ficha técnica completa y embalaje especializado para transporte."
+          : ficha.tipo === "Impresión Oficial"
+          ? "Impresión de alta calidad con sello oficial, certificado de edición limitada y ficha técnica completa."
+          : "Archivo JPG certificado en alta resolución, certificado de autenticidad digital y ficha técnica completa de la obra.",
+    },
+    {
+      titulo: "FAQs",
+      contenido:
+        "¿Dudas sobre el proceso de compra, los envíos o la certificación? Consulta las preguntas frecuentes o escríbenos desde la sección de Contacto.",
+    },
+  ];
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-8">
@@ -55,20 +69,26 @@ export default function EstadisticasValor() {
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <div>
           <div className="grid gap-4 sm:grid-cols-2">
+
             {/* Interés mensual */}
             <div className="rounded-2xl bg-zinc-900 p-5 ring-1 ring-white/10">
               <p className="text-2xl font-bold text-white">
-                854{" "}
-                <span className="align-middle text-xs font-semibold text-emerald-400">
-                  ↑ +25
+                {totalInteres}{" "}
+                <span
+                  className={`align-middle text-xs font-semibold ${
+                    deltaInteres >= 0 ? "text-emerald-400" : "text-red-400"
+                  }`}
+                >
+                  {deltaInteres >= 0 ? "↑" : "↓"} {deltaInteres >= 0 ? "+" : ""}
+                  {deltaInteres}
                 </span>
               </p>
               <div className="mt-4 flex h-28 items-end justify-between gap-2 px-1">
-                {interesMensual.map((altura, i) => (
+                {ficha.graficaInteres.map((altura, i) => (
                   <div
                     key={i}
                     className="w-3 rounded-full bg-gradient-to-t from-fuchsia-800 via-purple-500 to-purple-300"
-                    style={{ height: `${altura}%` }}
+                    style={{ height: `${(altura / maxInteres) * 100}%` }}
                   />
                 ))}
               </div>
@@ -84,11 +104,19 @@ export default function EstadisticasValor() {
             {/* Valor estimado por mes */}
             <div className="rounded-2xl bg-zinc-900 p-5 ring-1 ring-white/10">
               <div className="flex items-start justify-between">
-                <p className="text-2xl font-bold text-white">$890.93</p>
-                <span className="text-zinc-500" aria-hidden>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" strokeLinecap="round" />
-                  </svg>
+                <p className="text-2xl font-bold text-white">
+                  ${precioActual.toLocaleString("en-US")}
+                  <span className="ml-1.5 align-middle text-xs font-normal text-zinc-500">
+                    USD
+                  </span>
+                </p>
+                <span
+                  className={`text-xs font-semibold ${
+                    subio ? "text-emerald-400" : "text-red-400"
+                  }`}
+                >
+                  {subio ? "↑" : "↓"} {subio ? "+" : ""}
+                  {cambioPct}%
                 </span>
               </div>
               <div className="relative mt-4 h-28 border-t border-dashed border-zinc-600 pt-1">
@@ -96,13 +124,16 @@ export default function EstadisticasValor() {
                   máx
                 </span>
                 <div className="flex h-full items-end justify-between gap-1">
-                  {valorPorMes.map(({ mes, valor, destacado }) => (
-                    <div key={mes} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
+                  {ficha.graficaValor.map(({ mes, valor }, i) => (
+                    <div
+                      key={mes}
+                      className="flex h-full flex-1 flex-col items-center justify-end gap-1"
+                    >
                       <div
                         className={`w-full rounded-sm ${
-                          destacado ? "bg-cyan-400" : "bg-zinc-600"
+                          i === MES_ACTUAL ? "bg-cyan-400" : "bg-zinc-600"
                         }`}
-                        style={{ height: `${valor}%` }}
+                        style={{ height: `${alturaPct(valor)}%` }}
                       />
                       <span className="text-[7px] uppercase text-zinc-500">
                         {mes}
@@ -117,7 +148,7 @@ export default function EstadisticasValor() {
             </div>
           </div>
 
-          {/* Acordeones de información */}
+          {/* Acordeones */}
           <div className="mt-6 space-y-3">
             {secciones.map((seccion) => (
               <div
@@ -146,7 +177,11 @@ export default function EstadisticasValor() {
                       abierta === seccion.titulo ? "rotate-180" : ""
                     }`}
                   >
-                    <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M6 9l6 6 6-6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </button>
                 {abierta === seccion.titulo && (
@@ -162,9 +197,15 @@ export default function EstadisticasValor() {
         {/* Columna de compra */}
         <aside className="h-fit rounded-2xl bg-zinc-900/60 p-5 ring-1 ring-white/10">
           <p className="text-center font-serif text-3xl font-bold text-white">
-            10.00 <span className="text-base">USD</span>{" "}
-            <span className="align-middle text-sm font-semibold text-emerald-400">
-              ↑ +20
+            {ficha.precio.toLocaleString("en-US")}{" "}
+            <span className="text-base font-normal text-zinc-400">USD</span>{" "}
+            <span
+              className={`align-middle text-sm font-semibold ${
+                subio ? "text-emerald-400" : "text-red-400"
+              }`}
+            >
+              {subio ? "↑" : "↓"} {subio ? "+" : ""}
+              {cambioPct}%
             </span>
           </p>
 
@@ -172,7 +213,7 @@ export default function EstadisticasValor() {
             <p className="border-b border-zinc-600/50 pb-1.5 text-center text-xs font-bold tracking-[0.25em]">
               TIPO
             </p>
-            <p className="pt-2 text-sm font-medium">JPG Certificado</p>
+            <p className="pt-2 text-sm font-medium">{ficha.tipo}</p>
           </div>
 
           <button

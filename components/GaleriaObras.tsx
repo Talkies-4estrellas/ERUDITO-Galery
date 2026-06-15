@@ -1,10 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { fichas, type FichaArte } from "@/data/fichas";
 import FichaObra from "@/components/FichaObra";
 
 type ClaveFiltro = "tamano" | "color" | "movimiento" | "tecnica";
+
+const claves: ClaveFiltro[] = ["tamano", "color", "movimiento", "tecnica"];
 
 const grupos: { clave: ClaveFiltro; titulo: string }[] = [
   { clave: "tamano", titulo: "Tamaños" },
@@ -14,30 +17,68 @@ const grupos: { clave: ClaveFiltro; titulo: string }[] = [
 ];
 
 const valoresDe = (clave: ClaveFiltro): string[] => [
-  ...new Set(fichas.map((ficha) => ficha[clave])),
+  ...new Set(fichas.map((f) => f[clave])),
 ];
 
 type Seleccion = Record<ClaveFiltro, string[]>;
 
-const seleccionVacia: Seleccion = {
-  tamano: [],
-  color: [],
-  movimiento: [],
-  tecnica: [],
-};
+// Quita tildes y pone en minúsculas para comparar URL ↔ chips
+const normalizar = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim();
 
-export default function GaleriaObras() {
-  const [seleccion, setSeleccion] = useState<Seleccion>(seleccionVacia);
+function seleccionDesdeParams(params: URLSearchParams): Seleccion {
+  const sel: Seleccion = { tamano: [], color: [], movimiento: [], tecnica: [] };
+  for (const clave of claves) {
+    const urlVals = params.getAll(clave);
+    if (!urlVals.length) continue;
+    const chips = valoresDe(clave);
+    // Activa el chip cuyo valor normalizado coincide con el param
+    sel[clave] = urlVals.flatMap((v) =>
+      chips.filter((c) => normalizar(c) === normalizar(v))
+    );
+  }
+  return sel;
+}
 
-  const alternar = (clave: ClaveFiltro, valor: string) =>
-    setSeleccion((previa) => ({
-      ...previa,
-      [clave]: previa[clave].includes(valor)
-        ? previa[clave].filter((v) => v !== valor)
-        : [...previa[clave], valor],
-    }));
+// ──────────────────────────────────────────────────────────────
+// Inner: necesita Suspense porque usa useSearchParams
+// ──────────────────────────────────────────────────────────────
+function GaleriaObrasInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const hayFiltros = grupos.some(({ clave }) => seleccion[clave].length > 0);
+  // URL como única fuente de verdad — se recalcula en cada cambio de URL
+  const seleccion = useMemo(
+    () => seleccionDesdeParams(new URLSearchParams(searchParams.toString())),
+    [searchParams]
+  );
+
+  const hayFiltros = claves.some((c) => seleccion[c].length > 0);
+
+  function alternar(clave: ClaveFiltro, valor: string) {
+    const nueva: Seleccion = {
+      ...seleccion,
+      [clave]: seleccion[clave].includes(valor)
+        ? seleccion[clave].filter((v) => v !== valor)
+        : [...seleccion[clave], valor],
+    };
+    const params = new URLSearchParams();
+    for (const c of claves) {
+      for (const v of nueva[c]) {
+        params.append(c, normalizar(v));
+      }
+    }
+    const qs = params.size > 0 ? `?${params}` : "";
+    router.replace(`/obras${qs}`, { scroll: false });
+  }
+
+  function limpiar() {
+    router.replace("/obras", { scroll: false });
+  }
 
   // OR dentro de cada grupo, AND entre grupos
   const resultado = useMemo(
@@ -94,7 +135,7 @@ export default function GaleriaObras() {
         {hayFiltros && (
           <button
             type="button"
-            onClick={() => setSeleccion(seleccionVacia)}
+            onClick={limpiar}
             className="text-xs text-zinc-400 underline-offset-2 transition hover:text-amber-400 hover:underline"
           >
             Limpiar filtros
@@ -102,7 +143,7 @@ export default function GaleriaObras() {
         )}
       </div>
 
-      {/* Cuadrícula de resultados */}
+      {/* Cuadrícula */}
       {resultado.length > 0 ? (
         <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 xl:grid-cols-4">
           {resultado.map((ficha) => (
@@ -115,5 +156,16 @@ export default function GaleriaObras() {
         </p>
       )}
     </section>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────
+// Export público — envuelve en Suspense para satisfacer Next.js
+// ──────────────────────────────────────────────────────────────
+export default function GaleriaObras() {
+  return (
+    <Suspense>
+      <GaleriaObrasInner />
+    </Suspense>
   );
 }
