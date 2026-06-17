@@ -49,8 +49,9 @@ export default function Footer() {
             <ul className="mt-4 space-y-2.5">
               {[
                 { label: "Obras", href: "/obras" },
-                { label: "Artistas", href: "#" },
-                { label: "Catálogo", href: "#" },
+                { label: "Artistas", href: "/artistas" },
+                { label: "Catálogo", href: "/catalogo" },
+                { label: "Favoritos", href: "/favoritos" },
                 { label: "Cocina y Alimento", href: "#" },
                 { label: "Eventos", href: "#" },
                 { label: "Blog", href: "#" },
@@ -74,19 +75,19 @@ export default function Footer() {
             </h3>
             <ul className="mt-4 space-y-2.5">
               {[
-                "Registro de Obras",
-                "Restauración de Arte",
-                "Manager de Ventas",
-                "Grupo de Coleccionistas",
-                "Exposición",
-                "Museos y Galerías",
-              ].map((s) => (
-                <li key={s}>
+                { label: "Registro de Obras", href: "/servicios#registro-de-obras" },
+                { label: "Restauración de Arte", href: "/servicios#restauracion-de-arte" },
+                { label: "Manager de Ventas", href: "/servicios#manager-de-ventas" },
+                { label: "Grupo de Coleccionistas", href: "/servicios#grupo-de-coleccionistas" },
+                { label: "Exposición", href: "/servicios#exposicion" },
+                { label: "Museos y Galerías", href: "/servicios#museos-asociaciones-y-galerias" },
+              ].map(({ label, href }) => (
+                <li key={label}>
                   <Link
-                    href="#"
+                    href={href}
                     className="text-sm text-zinc-400 transition hover:text-white"
                   >
-                    {s}
+                    {label}
                   </Link>
                 </li>
               ))}

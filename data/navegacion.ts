@@ -66,23 +66,23 @@ export const menus: MenuNav[] = [
         items: [
           {
             etiqueta: "Artesanos",
-            href: "#",
+            href: "/artistas",
             descripcion: "Creadores de arte tradicional y artesanal",
           },
           {
             etiqueta: "Artistas en línea",
-            href: "#",
+            href: "/artistas",
             descripcion: "Extranjeros y famosos del mundo digital",
           },
           {
             etiqueta: "Artistas presenciales",
-            href: "#",
+            href: "/artistas",
             descripcion: "Arte físico (off-line)",
           },
           {
-            etiqueta: "Filtros",
-            href: "#",
-            descripcion: "Busca artistas por estilo o región",
+            etiqueta: "Ver todos",
+            href: "/artistas",
+            descripcion: "Catálogo completo de artistas de la galería",
           },
         ],
       },
@@ -93,9 +93,9 @@ export const menus: MenuNav[] = [
     secciones: [
       {
         items: [
-          { etiqueta: "En Línea", href: "#" },
-          { etiqueta: "Historias", href: "#" },
-          { etiqueta: "Físicos", href: "#" },
+          { etiqueta: "En Línea", href: "/catalogo#en-linea" },
+          { etiqueta: "Historias", href: "/catalogo#historias" },
+          { etiqueta: "Físicos", href: "/catalogo#fisicos" },
         ],
       },
     ],
@@ -105,12 +105,12 @@ export const menus: MenuNav[] = [
     secciones: [
       {
         items: [
-          { etiqueta: "Registro de Obras", href: "#" },
-          { etiqueta: "Grupo de Coleccionistas", href: "#" },
-          { etiqueta: "Restauración de Arte", href: "#" },
-          { etiqueta: "Museos, Asociaciones y Galerías", href: "#" },
-          { etiqueta: "Manager de Ventas", href: "#" },
-          { etiqueta: "Exposición", href: "#" },
+          { etiqueta: "Registro de Obras", href: "/servicios#registro-de-obras" },
+          { etiqueta: "Grupo de Coleccionistas", href: "/servicios#grupo-de-coleccionistas" },
+          { etiqueta: "Restauración de Arte", href: "/servicios#restauracion-de-arte" },
+          { etiqueta: "Museos, Asociaciones y Galerías", href: "/servicios#museos-asociaciones-y-galerias" },
+          { etiqueta: "Manager de Ventas", href: "/servicios#manager-de-ventas" },
+          { etiqueta: "Exposición", href: "/servicios#exposicion" },
         ],
       },
     ],

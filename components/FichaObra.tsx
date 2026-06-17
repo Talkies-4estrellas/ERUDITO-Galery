@@ -2,14 +2,18 @@ import Image from "next/image";
 import Link from "next/link";
 import type { FichaArte } from "@/data/fichas";
 import CapsulaArtista from "@/components/CapsulaArtista";
+import BotonFavorito from "@/components/BotonFavorito";
+import BotonComparar from "@/components/BotonComparar";
 
 interface Props {
   ficha: FichaArte;
   /** Ancho fluido para usar en cuadrículas (por defecto, ancho fijo para filas con scroll) */
   fluida?: boolean;
+  /** Muestra el botón "Comparar" (solo en la galería /obras) */
+  comparable?: boolean;
 }
 
-export default function FichaObra({ ficha, fluida = false }: Props) {
+export default function FichaObra({ ficha, fluida = false, comparable = false }: Props) {
   return (
     <article
       className={`group ${
@@ -28,6 +32,18 @@ export default function FichaObra({ ficha, fluida = false }: Props) {
           sizes="256px"
           className="object-cover"
         />
+
+        {/* Botón de favorito */}
+        <div className="absolute right-2.5 top-2.5 z-10">
+          <BotonFavorito id={ficha.id} />
+        </div>
+
+        {/* Botón de comparar (solo en la galería) */}
+        {comparable && (
+          <div className="absolute left-2.5 top-2.5 z-10">
+            <BotonComparar id={ficha.id} />
+          </div>
+        )}
 
         {/* Panel inferior con la información */}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950/95 via-zinc-900/85 to-transparent p-3.5 pt-12">

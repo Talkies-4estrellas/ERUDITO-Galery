@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { menus, type MenuNav } from "@/data/navegacion";
 import BuscadorModal from "@/components/BuscadorModal";
+import BotonTema from "@/components/BotonTema";
+import { useFavoritos } from "@/hooks/useFavoritos";
 
 function Flecha({ abierta }: { abierta: boolean }) {
   return (
@@ -163,6 +166,7 @@ export default function Navbar() {
   const [movilAbierto, setMovilAbierto] = useState(false);
   const [buscadorAbierto, setBuscadorAbierto] = useState(false);
   const [queryBusqueda, setQueryBusqueda] = useState("");
+  const { favoritos, listo: favoritosListos } = useFavoritos();
 
   // Atajo de teclado global: Ctrl+K / Cmd+K
   useEffect(() => {
@@ -259,6 +263,35 @@ export default function Navbar() {
                     ⌘K
                   </kbd>
                 </button>
+
+                {/* Favoritos */}
+                <Link
+                  href="/favoritos"
+                  aria-label="Ver favoritos"
+                  className="relative flex items-center justify-center rounded-full bg-white/5 p-2 text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-amber-400"
+                >
+                  <svg
+                    className="size-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                    />
+                  </svg>
+                  {favoritosListos && favoritos.length > 0 && (
+                    <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-zinc-900">
+                      {favoritos.length}
+                    </span>
+                  )}
+                </Link>
+
+                {/* Toggle de tema */}
+                <BotonTema />
 
                 {/* Hamburguesa */}
                 <button

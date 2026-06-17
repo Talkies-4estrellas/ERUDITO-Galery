@@ -12,15 +12,59 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ─── Tema claro ──────────────────────────────────────────────────────── */
+
+[data-theme="light"] {
+  --background: #fafaf9;
+  --foreground: #1c1917;
+  color-scheme: light;
+}
+
+/* Fondos principales */
+[data-theme="light"] .bg-zinc-950 { background-color: #fafaf9; }
+[data-theme="light"] .bg-zinc-900 { background-color: #f0efed; }
+[data-theme="light"] .bg-zinc-800 { background-color: #e5e4e1; }
+[data-theme="light"] .bg-zinc-700 { background-color: #d4d2cf; }
+
+/* Fondos con opacidad (navbar, panels, dropdowns) */
+[data-theme="light"] .bg-zinc-900\/70  { background-color: rgb(240 239 237 / 0.90); }
+[data-theme="light"] .bg-zinc-900\/90  { background-color: rgb(240 239 237 / 0.96); }
+[data-theme="light"] .bg-zinc-900\/95  { background-color: rgb(240 239 237 / 0.98); }
+[data-theme="light"] .bg-zinc-800\/50  { background-color: rgb(229 228 225 / 0.60); }
+
+/* Semitransparentes (hover states, chips) */
+[data-theme="light"] .bg-white\/5  { background-color: rgb(0 0 0 / 0.04); }
+[data-theme="light"] .bg-white\/10 { background-color: rgb(0 0 0 / 0.07); }
+[data-theme="light"] .bg-white\/15 { background-color: rgb(0 0 0 / 0.10); }
+[data-theme="light"] .hover\:bg-white\/5:hover  { background-color: rgb(0 0 0 / 0.04); }
+[data-theme="light"] .hover\:bg-white\/10:hover { background-color: rgb(0 0 0 / 0.07); }
+[data-theme="light"] .hover\:bg-white\/15:hover { background-color: rgb(0 0 0 / 0.10); }
+
+/* Texto */
+[data-theme="light"] .text-white    { color: #1c1917; }
+[data-theme="light"] .text-zinc-100 { color: #292524; }
+[data-theme="light"] .text-zinc-200 { color: #3b3733; }
+[data-theme="light"] .text-zinc-300 { color: #57534e; }
+[data-theme="light"] .text-zinc-400 { color: #78716c; }
+[data-theme="light"] .text-zinc-500 { color: #a8a29e; }
+[data-theme="light"] .text-zinc-600 { color: #c7c4c1; }
+[data-theme="light"] .text-zinc-700 { color: #d9d7d4; }
+
+/* Anillos (card borders) */
+[data-theme="light"] .ring-white\/10 { --tw-ring-color: rgb(0 0 0 / 0.10); }
+[data-theme="light"] .ring-white\/15 { --tw-ring-color: rgb(0 0 0 / 0.13); }
+
+/* Bordes (dividers) */
+[data-theme="light"] .border-white\/5  { border-color: rgb(0 0 0 / 0.07); }
+[data-theme="light"] .border-white\/10 { border-color: rgb(0 0 0 / 0.10); }
+
+/* Sombras */
+[data-theme="light"] .shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.05);
 }

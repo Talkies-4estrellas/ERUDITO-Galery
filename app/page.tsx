@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Carousel from "@/components/Carousel";
+import SeccionEventos from "@/components/SeccionEventos";
 import FilaFichas from "@/components/FilaFichas";
 
 export default function Home() {
@@ -8,6 +9,7 @@ export default function Home() {
       <Navbar />
       <main className="flex flex-1 flex-col">
         <Carousel />
+        <SeccionEventos />
         <FilaFichas />
       </main>
     </div>

@@ -26,9 +26,17 @@ export default function RootLayout({
   return (
     <html
       lang="es"
+      data-theme="dark"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* Previene el flash al leer localStorage antes del primer paint */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('erudito-tema');document.documentElement.setAttribute('data-theme',t==='claro'?'light':'dark');}catch(e){}})();`,
+          }}
+        />
         {children}
         <Footer />
       </body>

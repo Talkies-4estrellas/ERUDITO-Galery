@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { fichas, type FichaArte } from "@/data/fichas";
 import FichaObra from "@/components/FichaObra";
+import { useComparacion, MAX_COMPARAR } from "@/hooks/useComparacion";
 
 type ClaveFiltro = "tamano" | "color" | "movimiento" | "tecnica";
 
@@ -50,6 +52,8 @@ function seleccionDesdeParams(params: URLSearchParams): Seleccion {
 function GaleriaObrasInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { seleccion: comparando, limpiar: limpiarComparacion, listo: comparacionLista } =
+    useComparacion();
 
   // URL como única fuente de verdad — se recalcula en cada cambio de URL
   const seleccion = useMemo(
@@ -147,13 +151,48 @@ function GaleriaObrasInner() {
       {resultado.length > 0 ? (
         <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 xl:grid-cols-4">
           {resultado.map((ficha) => (
-            <FichaObra key={ficha.id} ficha={ficha} fluida />
+            <FichaObra key={ficha.id} ficha={ficha} fluida comparable />
           ))}
         </div>
       ) : (
         <p className="mt-12 text-center text-sm text-zinc-400">
           Ninguna obra coincide con los filtros seleccionados.
         </p>
+      )}
+
+      {/* Barra flotante de comparación */}
+      {comparacionLista && comparando.length > 0 && (
+        <div className="fixed inset-x-4 bottom-4 z-40 mx-auto flex max-w-md items-center justify-between gap-3 rounded-2xl bg-zinc-900 px-5 py-3 shadow-2xl ring-1 ring-white/15 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2">
+          <p className="text-sm text-zinc-200">
+            <span className="font-semibold text-cyan-400">
+              {comparando.length}
+            </span>{" "}
+            / {MAX_COMPARAR} para comparar
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={limpiarComparacion}
+              className="text-xs text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
+            >
+              Limpiar
+            </button>
+            <Link
+              href="/comparar"
+              className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                comparando.length >= 2
+                  ? "bg-cyan-400 text-zinc-900 hover:bg-cyan-300"
+                  : "cursor-not-allowed bg-white/10 text-zinc-500"
+              }`}
+              aria-disabled={comparando.length < 2}
+              onClick={(e) => {
+                if (comparando.length < 2) e.preventDefault();
+              }}
+            >
+              Comparar
+            </Link>
+          </div>
+        </div>
       )}
     </section>
   );
