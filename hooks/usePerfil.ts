@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 const CLAVE = "erudito-perfil";
 
-export type Rol = "artista" | "comprador";
+export type Rol = "artista" | "comprador" | "empresa";
 
 export interface DatosPerfil {
   rol: Rol;

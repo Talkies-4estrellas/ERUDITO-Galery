@@ -8,7 +8,7 @@ interface Props {
 
 export default function SelectorRol({ onElegir }: Props) {
   return (
-    <section className="mx-auto w-full max-w-2xl px-4 py-20 sm:px-8">
+    <section className="mx-auto w-full max-w-3xl px-4 py-20 sm:px-8">
       <div className="text-center">
         <h1 className="text-3xl font-semibold tracking-wide text-white">
           Bienvenido a ERUDITO
@@ -18,26 +18,17 @@ export default function SelectorRol({ onElegir }: Props) {
         </p>
       </div>
 
-      <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2">
-        {/* Tarjeta Artista */}
+      <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-3">
+
+        {/* Artista */}
         <button
           type="button"
           onClick={() => onElegir("artista")}
           className="group flex flex-col items-center gap-5 rounded-3xl bg-zinc-900/70 p-8 ring-1 ring-white/10 transition hover:bg-amber-400/10 hover:ring-amber-400/40"
         >
           <span className="flex size-16 items-center justify-center rounded-2xl bg-amber-400/15 text-amber-400 ring-1 ring-amber-400/30 transition group-hover:bg-amber-400/25">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              className="size-8"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42"
-              />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42" />
             </svg>
           </span>
           <div className="text-center">
@@ -45,8 +36,7 @@ export default function SelectorRol({ onElegir }: Props) {
               Soy Artista
             </p>
             <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">
-              Exhibe tu obra, gestiona tu portfolio y conecta con coleccionistas
-              de todo el mundo.
+              Exhibe tu obra, gestiona tu portfolio y conecta con coleccionistas de todo el mundo.
             </p>
           </div>
           <span className="mt-auto rounded-full bg-amber-400 px-5 py-1.5 text-xs font-semibold text-zinc-900 opacity-0 transition group-hover:opacity-100">
@@ -54,25 +44,15 @@ export default function SelectorRol({ onElegir }: Props) {
           </span>
         </button>
 
-        {/* Tarjeta Coleccionista */}
+        {/* Coleccionista */}
         <button
           type="button"
           onClick={() => onElegir("comprador")}
           className="group flex flex-col items-center gap-5 rounded-3xl bg-zinc-900/70 p-8 ring-1 ring-white/10 transition hover:bg-cyan-400/10 hover:ring-cyan-400/40"
         >
           <span className="flex size-16 items-center justify-center rounded-2xl bg-cyan-400/10 text-cyan-400 ring-1 ring-cyan-400/20 transition group-hover:bg-cyan-400/20">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              className="size-8"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
-              />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
             </svg>
           </span>
           <div className="text-center">
@@ -80,14 +60,38 @@ export default function SelectorRol({ onElegir }: Props) {
               Soy Coleccionista
             </p>
             <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">
-              Descubre obras únicas, guarda tus favoritas y compáralas antes de
-              tomar tu decisión.
+              Descubre obras únicas, guarda tus favoritas y compáralas antes de tomar tu decisión.
             </p>
           </div>
           <span className="mt-auto rounded-full bg-cyan-400 px-5 py-1.5 text-xs font-semibold text-zinc-900 opacity-0 transition group-hover:opacity-100">
             Continuar →
           </span>
         </button>
+
+        {/* Empresa / Galería */}
+        <button
+          type="button"
+          onClick={() => onElegir("empresa")}
+          className="group flex flex-col items-center gap-5 rounded-3xl bg-zinc-900/70 p-8 ring-1 ring-white/10 transition hover:bg-violet-500/10 hover:ring-violet-500/40"
+        >
+          <span className="flex size-16 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-400 ring-1 ring-violet-400/20 transition group-hover:bg-violet-500/20">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+            </svg>
+          </span>
+          <div className="text-center">
+            <p className="text-lg font-semibold text-white transition group-hover:text-violet-400">
+              Soy Galería / Empresa
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">
+              Representa artistas, publica y vende su obra desde un perfil empresarial unificado.
+            </p>
+          </div>
+          <span className="mt-auto rounded-full bg-violet-500 px-5 py-1.5 text-xs font-semibold text-white opacity-0 transition group-hover:opacity-100">
+            Continuar →
+          </span>
+        </button>
+
       </div>
     </section>
   );
