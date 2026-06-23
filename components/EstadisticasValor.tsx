@@ -61,12 +61,12 @@ export default function EstadisticasValor({ ficha }: Props) {
   ];
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-8">
-      <h2 className="mb-5 text-lg font-semibold tracking-wide text-white">
-        Valor actual de la obra
-      </h2>
+    <section className="w-full">
+      <p className="mb-5 text-xs font-semibold uppercase tracking-widest text-zinc-500">
+        Valor y demanda
+      </p>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+      <div>
         <div>
           <div className="grid gap-4 sm:grid-cols-2">
 
@@ -193,47 +193,6 @@ export default function EstadisticasValor({ ficha }: Props) {
             ))}
           </div>
         </div>
-
-        {/* Columna de compra */}
-        <aside className="h-fit rounded-2xl bg-zinc-900/60 p-5 ring-1 ring-white/10">
-          <p className="text-center font-serif text-3xl font-bold text-white">
-            {ficha.precio.toLocaleString("en-US")}{" "}
-            <span className="text-base font-normal text-zinc-400">USD</span>{" "}
-            <span
-              className={`align-middle text-sm font-semibold ${
-                subio ? "text-emerald-400" : "text-red-400"
-              }`}
-            >
-              {subio ? "↑" : "↓"} {subio ? "+" : ""}
-              {cambioPct}%
-            </span>
-          </p>
-
-          <div className="mt-4 rounded-xl bg-gradient-to-b from-zinc-300 to-zinc-400 px-4 py-3 text-zinc-900">
-            <p className="border-b border-zinc-600/50 pb-1.5 text-center text-xs font-bold tracking-[0.25em]">
-              TIPO
-            </p>
-            <p className="pt-2 text-sm font-medium">{ficha.tipo}</p>
-          </div>
-
-          <button
-            type="button"
-            className="mt-4 w-full rounded-full bg-fuchsia-600 py-3 font-serif text-sm font-bold tracking-[0.2em] text-white transition hover:bg-fuchsia-500"
-          >
-            COMPRAR
-          </button>
-
-          <p className="mt-4 text-center text-sm text-zinc-300">Pago Seguro</p>
-          <div className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm font-bold text-zinc-500">
-            <span className="italic">PayPal</span>
-            <span className="lowercase">stripe</span>
-            <span className="italic tracking-tight">VISA</span>
-            <span className="flex" aria-label="Mastercard">
-              <span className="size-3.5 rounded-full bg-zinc-500" />
-              <span className="-ml-1.5 size-3.5 rounded-full bg-zinc-600" />
-            </span>
-          </div>
-        </aside>
       </div>
     </section>
   );

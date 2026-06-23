@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePerfil, type DatosPerfil } from "@/hooks/usePerfil";
+import { usePerfil, generarSlug, type DatosPerfil } from "@/hooks/usePerfil";
 import { useObrasEmpresa, type ObraEmpresa } from "@/hooks/useObrasEmpresa";
 import FormObraEmpresa from "@/components/FormObraEmpresa";
 
@@ -115,6 +115,7 @@ export default function MiPerfilEmpresa() {
       : undefined;
 
   const nombreMostrar = perfil.nombre || "Tu galería";
+  const slug = perfil.slug || generarSlug(perfil.nombre);
   const obrasConPrecio = obras.filter((o) => o.precio > 0);
   const totalValor = obrasConPrecio.reduce((s, o) => s + o.precio, 0);
   const artistasRepresentados = [...new Set(obras.map((o) => o.nombreArtista).filter(Boolean))];
@@ -175,7 +176,14 @@ export default function MiPerfilEmpresa() {
                         {perfil.pais && <> · <span className="text-zinc-500">{perfil.pais}</span></>}
                       </p>
                     </div>
-                    <div className="flex shrink-0 gap-2">
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <Link href={`/empresa/${slug}`}
+                        className="flex items-center gap-1.5 rounded-full bg-violet-500/10 px-4 py-1.5 text-xs text-violet-400 ring-1 ring-violet-400/30 transition hover:bg-violet-500/20">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-3.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                        </svg>
+                        Ver pública
+                      </Link>
                       <button type="button" onClick={iniciarEdicion}
                         className="flex items-center gap-1.5 rounded-full bg-white/5 px-4 py-1.5 text-xs text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-violet-400">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-3.5">
@@ -353,11 +361,17 @@ export default function MiPerfilEmpresa() {
                 </div>
               </div>
 
-              {/* Nota sobre artistas */}
-              <div className="rounded-2xl bg-violet-400/5 p-4 ring-1 ring-violet-400/20">
-                <p className="text-[11px] leading-relaxed text-zinc-400">
-                  <span className="font-semibold text-violet-400">¿Cómo funciona?</span>
-                  {" "}Los visitantes que busquen a los artistas que representas serán dirigidos al perfil de tu galería, no a una página individual.
+              {/* URL pública + nota */}
+              <div className="rounded-2xl bg-violet-400/5 p-4 ring-1 ring-violet-400/20 space-y-3">
+                <div>
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-violet-400">URL pública</p>
+                  <Link href={`/empresa/${slug}`}
+                    className="block truncate rounded-lg bg-violet-500/10 px-3 py-1.5 text-[11px] font-mono text-violet-300 hover:text-violet-200">
+                    /empresa/{slug}
+                  </Link>
+                </div>
+                <p className="text-[11px] leading-relaxed text-zinc-500">
+                  Los visitantes que busquen a tus artistas son dirigidos a esta página, no a perfiles individuales.
                 </p>
               </div>
 

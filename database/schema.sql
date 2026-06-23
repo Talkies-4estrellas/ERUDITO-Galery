@@ -161,3 +161,4 @@ create index on obras       (tipo);
 create index on pedidos     (id_cliente);
 create index on favoritos   (id_cliente);
 create index on contrataciones (id_artista);
+
