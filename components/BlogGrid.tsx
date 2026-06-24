@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   articulos,
   CATEGORIAS,
@@ -15,6 +16,7 @@ function TarjetaArticulo({ articulo, destacado }: { articulo: Articulo; destacad
 
   if (destacado) {
     return (
+      <Link href={`/blog/${articulo.id}`}>
       <article className="group relative overflow-hidden rounded-3xl bg-zinc-900 ring-1 ring-white/10 lg:grid lg:grid-cols-[1fr_420px]">
         <div className="relative aspect-[16/9] lg:aspect-auto lg:min-h-[340px]">
           <Image
@@ -56,10 +58,12 @@ function TarjetaArticulo({ articulo, destacado }: { articulo: Articulo; destacad
           </div>
         </div>
       </article>
+      </Link>
     );
   }
 
   return (
+    <Link href={`/blog/${articulo.id}`}>
     <article className="group flex flex-col overflow-hidden rounded-2xl bg-zinc-900 ring-1 ring-white/10 transition hover:ring-white/20">
       <div className="relative aspect-[16/9] overflow-hidden">
         <Image
@@ -95,6 +99,7 @@ function TarjetaArticulo({ articulo, destacado }: { articulo: Articulo; destacad
         </p>
       </div>
     </article>
+    </Link>
   );
 }
 
