@@ -1,6 +1,7 @@
 "use client";
 
 import { useFavoritos } from "@/hooks/useFavoritos";
+import { useToast } from "@/components/ToastProvider";
 
 interface Props {
   id: number;
@@ -10,6 +11,7 @@ interface Props {
 
 export default function BotonFavorito({ id, tamano = "sm" }: Props) {
   const { esFavorito, alternar, listo } = useFavoritos();
+  const { toast } = useToast();
   const activo = esFavorito(id);
 
   return (
@@ -20,7 +22,11 @@ export default function BotonFavorito({ id, tamano = "sm" }: Props) {
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
+        const nuevo = !activo;
         alternar(id);
+        toast(nuevo ? "Añadido a favoritos" : "Eliminado de favoritos", {
+          icono: nuevo ? "♥" : "♡",
+        });
       }}
       className={`flex items-center justify-center rounded-full backdrop-blur transition ${
         tamano === "sm" ? "size-8" : "size-11"

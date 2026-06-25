@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import InputImagen from "@/components/InputImagen";
 import type { ObraEmpresa, TamanoObra, ColorObra, TipoObra } from "@/hooks/useObrasEmpresa";
 
 type Datos = Omit<ObraEmpresa, "id">;
@@ -33,7 +33,6 @@ interface Props {
 
 export default function FormObraEmpresa({ inicial, onGuardar, onCerrar }: Props) {
   const [form, setForm] = useState<Datos>(inicial ? { ...inicial } : { ...VACIO });
-  const [imgError, setImgError] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,8 +50,6 @@ export default function FormObraEmpresa({ inicial, onGuardar, onCerrar }: Props)
     onGuardar(form);
     onCerrar();
   }
-
-  const mostrarPreview = form.imagen && !imgError;
 
   return (
     <div
@@ -93,30 +90,14 @@ export default function FormObraEmpresa({ inicial, onGuardar, onCerrar }: Props)
             </p>
           </div>
 
-          {/* Imagen URL */}
+          {/* Imagen */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-zinc-400">URL de la imagen</label>
-            <div className="flex gap-3">
-              <input
-                value={form.imagen}
-                onChange={e => { set("imagen", e.target.value); setImgError(false); }}
-                placeholder="https://..."
-                className={INPUT + " flex-1"}
-              />
-              {mostrarPreview && (
-                <div className="relative h-12 w-10 shrink-0 overflow-hidden rounded-xl bg-zinc-800">
-                  <Image
-                    src={form.imagen}
-                    alt="preview"
-                    fill
-                    sizes="40px"
-                    className="object-cover"
-                    onError={() => setImgError(true)}
-                  />
-                </div>
-              )}
-            </div>
-            {imgError && <p className="mt-1 text-[11px] text-red-400">URL de imagen no válida</p>}
+            <label className="mb-1.5 block text-xs font-medium text-zinc-400">Imagen de la obra</label>
+            <InputImagen
+              value={form.imagen}
+              onChange={(url) => set("imagen", url)}
+              accentColor="violet"
+            />
           </div>
 
           {/* Título + Año */}

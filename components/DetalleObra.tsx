@@ -7,6 +7,8 @@ import EstadisticasValor from "@/components/EstadisticasValor";
 import PanelCompra from "@/components/PanelCompra";
 import FilaFichas from "@/components/FilaFichas";
 import SeccionResenas from "@/components/SeccionResenas";
+import BotonCompartir from "@/components/BotonCompartir";
+import PageFade from "@/components/PageFade";
 
 const TIPO_ESTILO: Record<FichaArte["tipo"], string> = {
   "Físico":           "bg-amber-400/15 text-amber-400 ring-amber-400/30",
@@ -21,7 +23,7 @@ interface Props {
 
 export default function DetalleObra({ ficha, similares }: Props) {
   return (
-    <>
+    <PageFade>
       {/* ── HERO ─────────────────────────────────────────────────── */}
       <section className="relative h-[68vh] min-h-[460px] w-full overflow-hidden">
         <Image
@@ -44,16 +46,19 @@ export default function DetalleObra({ ficha, similares }: Props) {
         {/* Capa de oscurecimiento para legibilidad */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[65%] bg-gradient-to-t from-zinc-950/90 via-zinc-950/50 to-transparent" />
 
-        {/* Volver */}
-        <Link
-          href="/obras"
-          className="absolute left-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-black/40 px-3.5 py-1.5 text-xs text-white backdrop-blur-md transition hover:bg-black/60"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-3.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-          </svg>
-          Galería
-        </Link>
+        {/* Volver + Compartir */}
+        <div className="absolute left-4 top-4 z-10 flex items-center gap-2">
+          <Link
+            href="/obras"
+            className="flex items-center gap-1.5 rounded-full bg-black/40 px-3.5 py-1.5 text-xs text-white backdrop-blur-md transition hover:bg-black/60"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+            </svg>
+            Galería
+          </Link>
+          <BotonCompartir titulo={ficha.titulo} className="bg-black/40 backdrop-blur-md hover:bg-black/60 ring-0" />
+        </div>
 
         {/* Contenido superpuesto */}
         <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-8 sm:px-8">
@@ -161,6 +166,6 @@ export default function DetalleObra({ ficha, similares }: Props) {
 
       {/* ── Arte similar ─────────────────────────────────────────── */}
       <FilaFichas titulo="Arte similar" lista={similares} />
-    </>
+    </PageFade>
   );
 }

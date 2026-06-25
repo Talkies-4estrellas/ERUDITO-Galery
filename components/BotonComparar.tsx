@@ -1,6 +1,7 @@
 "use client";
 
 import { useComparacion } from "@/hooks/useComparacion";
+import { useToast } from "@/components/ToastProvider";
 
 interface Props {
   id: number;
@@ -8,6 +9,7 @@ interface Props {
 
 export default function BotonComparar({ id }: Props) {
   const { estaSeleccionada, alternar, lleno, listo } = useComparacion();
+  const { toast } = useToast();
   const activo = estaSeleccionada(id);
   const deshabilitado = !activo && lleno;
 
@@ -20,7 +22,10 @@ export default function BotonComparar({ id }: Props) {
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
+        const nuevo = !activo;
         alternar(id);
+        if (nuevo) toast("Obra añadida al comparador", { icono: "⚖️" });
+        else toast("Obra eliminada del comparador", { icono: "✕" });
       }}
       title={
         deshabilitado
