@@ -62,6 +62,36 @@ create table obras (
 );
 
 
+-- ── Perfiles (ligados a auth.users de Supabase) ─────────────
+-- Reemplaza la lógica de localStorage de usePerfil.ts
+-- Se crea vía upsert al elegir rol en el flujo de registro
+create table perfiles (
+  id            uuid references auth.users (id) on delete cascade primary key,
+  rol           text check (rol in ('artista','comprador','empresa')) not null,
+  nombre        text    default '',
+  bio           text    default '',
+  especialidad  text    default '',
+  pais          text    default '',
+  slug          text    unique,          -- solo rol 'empresa'; ej. "mi-galeria"
+  creado_at     timestamptz default now()
+);
+
+-- Políticas RLS (ejecutar tras crear la tabla)
+alter table perfiles enable row level security;
+
+create policy "Ver propio perfil"
+  on perfiles for select
+  using (auth.uid() = id);
+
+create policy "Crear propio perfil"
+  on perfiles for insert
+  with check (auth.uid() = id);
+
+create policy "Editar propio perfil"
+  on perfiles for update
+  using (auth.uid() = id);
+
+
 -- ── Clientes (compradores y artistas registrados) ────────────
 create table clientes (
   id_cliente      bigint primary key generated always as identity,
@@ -69,8 +99,8 @@ create table clientes (
   email           text unique not null,
   telefono        text,
   direccion       text,
-  -- Rol del perfil (usePerfil.ts: 'artista' | 'comprador')
-  rol             text check (rol in ('artista','comprador')) default 'comprador',
+  -- Rol del perfil (usePerfil.ts: 'artista' | 'comprador' | 'empresa')
+  rol             text check (rol in ('artista','comprador','empresa')) default 'comprador',
   -- Referencia opcional al artista si rol = 'artista'
   id_artista      bigint references artistas (id_artista) on delete set null,
   fecha_registro  timestamp default current_timestamp

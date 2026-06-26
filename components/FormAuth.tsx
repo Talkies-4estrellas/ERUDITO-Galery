@@ -112,8 +112,8 @@ export default function FormAuth({ modo }: Props) {
     }
   }
 
-  function seleccionarRol(rol: Rol) {
-    elegirRol(rol, email);
+  async function seleccionarRol(rol: Rol) {
+    await elegirRol(rol, email);
     setPaso("confirmar");
   }
 
