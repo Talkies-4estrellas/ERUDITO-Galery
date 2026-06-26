@@ -5,6 +5,7 @@ import Link from "next/link";
 import { menus, type MenuNav } from "@/data/navegacion";
 import BuscadorModal from "@/components/BuscadorModal";
 import BotonTema from "@/components/BotonTema";
+import BotonAuth from "@/components/BotonAuth";
 import { useFavoritos } from "@/hooks/useFavoritos";
 
 function Flecha({ abierta }: { abierta: boolean }) {
@@ -310,6 +311,9 @@ export default function Navbar() {
                     />
                   </svg>
                 </Link>
+
+                {/* Auth */}
+                <BotonAuth />
 
                 {/* Toggle de tema */}
                 <BotonTema />

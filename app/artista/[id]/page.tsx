@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import PerfilArtista from "@/components/PerfilArtista";
@@ -6,6 +7,25 @@ import { obrasDeArtista } from "@/data/fichas";
 
 export function generateStaticParams() {
   return artistas.map((artista) => ({ id: String(artista.id) }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const artista = artistas.find((a) => String(a.id) === id);
+  if (!artista) return { title: "Artista no encontrado" };
+  return {
+    title: `${artista.nombre} — ERUDITO Galery`,
+    description: artista.bio.slice(0, 160),
+    openGraph: {
+      title: artista.nombre,
+      description: artista.bio.slice(0, 160),
+      images: [{ url: artista.foto, alt: artista.nombre }],
+    },
+  };
 }
 
 export default async function PaginaArtista({
