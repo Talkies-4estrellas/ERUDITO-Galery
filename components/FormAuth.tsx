@@ -83,6 +83,12 @@ export default function FormAuth({ modo }: Props) {
     try {
       if (modo === "login") {
         await entrar(email, password);
+        // Sincronizar email en perfil local si ya tiene rol elegido
+        const raw = localStorage.getItem("erudito-perfil");
+        if (raw) {
+          const p = JSON.parse(raw);
+          if (!p.email) localStorage.setItem("erudito-perfil", JSON.stringify({ ...p, email }));
+        }
         toast("Sesión iniciada correctamente", { icono: "✓" });
         router.push("/perfil");
       } else {
@@ -107,7 +113,7 @@ export default function FormAuth({ modo }: Props) {
   }
 
   function seleccionarRol(rol: Rol) {
-    elegirRol(rol);
+    elegirRol(rol, email);
     setPaso("confirmar");
   }
 

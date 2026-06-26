@@ -12,6 +12,7 @@ export interface DatosPerfil {
   bio: string;
   especialidad: string;
   pais: string;
+  email?: string;
   /** Slug único para la URL pública de la empresa (solo rol "empresa") */
   slug?: string;
 }
@@ -54,10 +55,11 @@ export function usePerfil() {
     setListo(true);
   }, []);
 
-  const elegirRol = useCallback((rol: Rol) => {
+  const elegirRol = useCallback((rol: Rol, email?: string) => {
     const nuevo: DatosPerfil = {
       ...VACIO,
       rol,
+      email: email ?? undefined,
       slug: rol === "empresa" ? "mi-galeria" : undefined,
     };
     localStorage.setItem(CLAVE, JSON.stringify(nuevo));
