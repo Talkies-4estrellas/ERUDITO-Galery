@@ -9,16 +9,20 @@ export function useAuth() {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
+    try {
+      supabase.auth.getSession().then(({ data }) => {
+        setUser(data.session?.user ?? null);
+        setCargando(false);
+      }).catch(() => setCargando(false));
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_ev, session) => {
+        setUser(session?.user ?? null);
+      });
+
+      return () => subscription.unsubscribe();
+    } catch {
       setCargando(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_ev, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
+    }
   }, []);
 
   const entrar = useCallback(async (email: string, password: string) => {
