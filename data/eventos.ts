@@ -11,7 +11,12 @@ export interface Evento {
   lugar: string;
   imagen: string;
   descripcion: string;
+  href: string;
+  fichasIds: number[]; // obras que se exhiben/subastan en este evento
 }
+
+export const getEvento = (id: number): Evento | undefined =>
+  eventos.find((e) => e.id === id);
 
 export const eventos: Evento[] = [
   {
@@ -25,6 +30,8 @@ export const eventos: Evento[] = [
     imagen: "/obras/merck-rathke/principal.jpg",
     descripcion:
       "Lotes de alto valor: Underground Fantasy (Merck Rathke, $54,500 MXN) y Colibrí en Flor (Ideas Creativas, $37,500 MXN). Piezas con certificación y tasación incluida.",
+    href: "/eventos/1",
+    fichasIds: [9, 10],
   },
   {
     id: 2,
@@ -37,6 +44,8 @@ export const eventos: Evento[] = [
     imagen: "/obras/bellas-artes-noche/principal.jpg",
     descripcion:
       "Muestra completa del colectivo Revolution Canvas: Noche Estrellada sobre Bellas Artes, El Ángel y La Creación — Pop Art. Un recorrido por los íconos de la Ciudad de México reinterpretados en arte digital.",
+    href: "/eventos/2",
+    fichasIds: [11, 12, 13],
   },
   {
     id: 3,
@@ -49,6 +58,8 @@ export const eventos: Evento[] = [
     imagen: "/obras/banda-rock-haucoze/principal.jpg",
     descripcion:
       "Tres colecciones en un solo evento: La Banda de Rock (HAUCOZE), El Lector (UTTCMK) y El Trío del Silencio (GMMH). Escultura figurativa y expresionista en resina de alta densidad.",
+    href: "/eventos/3",
+    fichasIds: [16, 17, 18],
   },
   {
     id: 4,
@@ -61,5 +72,7 @@ export const eventos: Evento[] = [
     imagen: "/obras/sombrero-paja-wpap/principal.jpg",
     descripcion:
       "Diálogo entre lo contemporáneo y lo histórico: El Sombrero de Paja WPAP (Pop Maze Art) frente a la Mappa Mundi de John Senex (Carta Mundi). Arte que cruza siglos y géneros.",
+    href: "/eventos/4",
+    fichasIds: [19, 20],
   },
 ];
