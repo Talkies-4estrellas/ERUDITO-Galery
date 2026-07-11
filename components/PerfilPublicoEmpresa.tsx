@@ -241,7 +241,7 @@ function TarjetaPublica({ obra, onFiltrar }: { obra: ObraEmpresa; onFiltrar: (a:
         </p>
         {obra.precio > 0 && (
           <p className="mt-1 text-xs font-semibold text-violet-400">
-            ${obra.precio.toLocaleString("en-US")} USD
+            ${obra.precio.toLocaleString("es-MX")} MXN
           </p>
         )}
       </div>

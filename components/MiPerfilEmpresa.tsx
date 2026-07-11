@@ -73,7 +73,7 @@ function TarjetaObraEmpresa({
         </p>
         {obra.precio > 0 && (
           <p className="mt-1 text-xs font-semibold text-violet-400">
-            ${obra.precio.toLocaleString("en-US")} USD
+            ${obra.precio.toLocaleString("es-MX")} MXN
           </p>
         )}
         <span className="mt-1.5 inline-block rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-zinc-500 ring-1 ring-white/10">
@@ -208,7 +208,7 @@ export default function MiPerfilEmpresa() {
                 { valor: artistasRepresentados.length, etiqueta: "Artistas representados" },
                 { valor: totalValor > 0
                     ? `$${(totalValor / 1000).toFixed(0)}k`
-                    : "—",                         etiqueta: "Valor en catálogo USD" },
+                    : "—",                         etiqueta: "Valor en catálogo MXN" },
               ].map(({ valor, etiqueta }) => (
                 <div key={etiqueta} className="text-center">
                   <p className="text-lg font-bold text-white">{valor}</p>

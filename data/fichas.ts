@@ -8,7 +8,7 @@ export type TipoObra = "Físico" | "JPG Certificado" | "Impresión Oficial";
 
 export interface PuntoGrafica {
   mes: string;
-  valor: number; // precio real en USD ese mes
+  valor: number; // precio real en MXN ese mes
 }
 
 export interface FichaArte {
@@ -38,223 +38,413 @@ export interface FichaArte {
 const MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 const v = (vals: number[]): PuntoGrafica[] => vals.map((valor, i) => ({ mes: MESES[i], valor }));
 
-const base: Omit<FichaArte, "perspectivas">[] = [
-  /* ── 1 · Dos Mujeres · Obregón · Academicismo estable ─────────────── */
+export const fichas: FichaArte[] = [
+  /* ── 21 · Árbol de la Vida — Hojas de Cristal · BestAlice [10] ─────────── */
   {
-    id: 1,
-    titulo: "Dos Mujeres",
-    anio: "1865",
+    id: 21,
+    titulo: "Árbol de la Vida — Hojas de Cristal",
+    anio: "2023",
     descripcion:
-      "Composición visual que explora la relación entre la nostalgia y la identidad a través de la superposición de rostros fragmentados y paisajes etéreos. La obra presenta una figura central cuya silueta se disuelve en una serie de capas translúcidas, como si el tiempo erosionara lentamente la percepción de su propia existencia.",
+      "Escultura de mesa que reinterpreta el arquetipo universal del árbol de la vida: ramas de alambre de cobre pintado sostienen más de cien hojas individuales de acrílico translúcido en un espectro completo de color — del amarillo solar al naranja otoñal, el rojo intenso, el magenta, el azul zafiro y el verde esmeralda. La luz que atraviesa las hojas proyecta sombras cromáticas sobre la superficie, convirtiendo el entorno en parte de la obra.",
     estrellas: 5,
-    imagen: "https://picsum.photos/seed/obra-1/600/800",
-    artista: artistas[0],
-    tamano: "Mediano",
-    color: "Neutro",
-    movimiento: "Academicismo",
-    tecnica: "Retrato",
-    precio: 2400,
-    tipo: "JPG Certificado",
-    graficaValor: v([1820, 1850, 1790, 1880, 1960, 2050, 2020, 2120, 2200, 2280, 2350, 2400]),
-    graficaInteres: [35, 50, 28, 62, 48, 57, 52],
-    certificaciones: [
-      "Verificada por ERUDITO Galery",
-      "Certificado de Autenticidad Digital",
-      "Registro en catálogo histórico del siglo XIX",
+    imagen: "/obras/arbol-vida-cristal/principal.jpg",
+    artista: artistas[10],
+    perspectivas: [
+      "/obras/arbol-vida-cristal/principal.jpg",
+      "/obras/arbol-vida-cristal/mesa-madera.jpg",
+      "/obras/arbol-vida-cristal/consola.jpg",
+      "/obras/arbol-vida-cristal/fondo-blanco.jpg",
     ],
-  },
-
-  /* ── 2 · El Pulque · Herrán · Modernismo moderado ──────────────────── */
-  {
-    id: 2,
-    titulo: "El Pulque",
-    anio: "1909",
-    descripcion:
-      "Escena costumbrista que celebra los oficios y rituales cotidianos del México de principios de siglo, con una paleta cálida y un dibujo de gran precisión académica.",
-    estrellas: 4,
-    imagen: "https://picsum.photos/seed/obra-2/600/800",
-    artista: artistas[1],
-    tamano: "Grande",
-    color: "Cálido",
-    movimiento: "Modernismo",
-    tecnica: "Costumbrista",
-    precio: 1850,
-    tipo: "JPG Certificado",
-    graficaValor: v([1580, 1610, 1590, 1640, 1690, 1740, 1720, 1760, 1790, 1810, 1835, 1850]),
-    graficaInteres: [40, 55, 32, 68, 52, 60, 55],
-    certificaciones: [
-      "Verificada por ERUDITO Galery",
-      "Certificado de Autenticidad Digital",
-    ],
-  },
-
-  /* ── 3 · La Ofrenda · Herrán · Modernismo simbólico ────────────────── */
-  {
-    id: 3,
-    titulo: "La Ofrenda",
-    anio: "1913",
-    descripcion:
-      "Una barca cargada de cempasúchil avanza por el canal mientras las figuras inclinan el cuerpo en señal de duelo; luz dorada y simbolismo del ciclo de la vida.",
-    estrellas: 5,
-    imagen: "https://picsum.photos/seed/obra-3/600/800",
-    artista: artistas[1],
-    tamano: "Grande",
-    color: "Cálido",
-    movimiento: "Modernismo",
-    tecnica: "Costumbrista",
-    precio: 3200,
-    tipo: "Físico",
-    graficaValor: v([2380, 2440, 2390, 2520, 2680, 2840, 2790, 2920, 3010, 3070, 3140, 3200]),
-    graficaInteres: [55, 70, 45, 80, 65, 75, 72],
-    certificaciones: [
-      "Verificada por ERUDITO Galery",
-      "Certificado de Autenticidad",
-      "Tasación profesional 2025",
-      "Activo Financiero Clase B",
-    ],
-  },
-
-  /* ── 4 · Mural campesino · Diego Rivera · alcista ───────────────────── */
-  {
-    id: 4,
-    titulo: "Obra Artística",
-    anio: "1926",
-    descripcion:
-      "Estudio mural de la vida campesina: volúmenes macizos, sombreros de ala ancha y un ritmo compositivo que dignifica el trabajo colectivo de la tierra.",
-    estrellas: 5,
-    imagen: "https://picsum.photos/seed/obra-4/600/800",
-    artista: artistas[2],
-    tamano: "Grande",
-    color: "Cálido",
-    movimiento: "Muralismo",
-    tecnica: "Mural",
-    precio: 8500,
-    tipo: "Físico",
-    graficaValor: v([5800, 6100, 5900, 6400, 6950, 7500, 7300, 7750, 8050, 8150, 8350, 8500]),
-    graficaInteres: [65, 80, 55, 92, 75, 88, 82],
-    certificaciones: [
-      "Verificada por ERUDITO Galery",
-      "Autenticada por especialistas INBA",
-      "Registro Patrimonio Nacional",
-      "Activo Financiero Clase A",
-      "Tasación internacional 2025",
-    ],
-  },
-
-  /* ── 5 · Obra temprana · Diego Rivera · alcista fuerte ─────────────── */
-  {
-    id: 5,
-    titulo: "Obra Artística",
-    anio: "1894",
-    descripcion:
-      "Girasoles y rostros se funden en una sola masa luminosa; el color actúa como memoria emocional más que como descripción literal del mundo.",
-    estrellas: 4,
-    imagen: "https://picsum.photos/seed/obra-5/600/800",
-    artista: artistas[2],
     tamano: "Pequeño",
     color: "Cálido",
-    movimiento: "Modernismo",
-    tecnica: "Abstracto",
-    precio: 6800,
-    tipo: "JPG Certificado",
-    graficaValor: v([4200, 4520, 4350, 4850, 5300, 5820, 5640, 6050, 6250, 6430, 6620, 6800]),
-    graficaInteres: [60, 75, 50, 88, 70, 82, 78],
-    certificaciones: [
-      "Verificada por ERUDITO Galery",
-      "Registro catálogo Rivera (obra juvenil)",
-      "Activo Financiero Clase A",
-    ],
-  },
-
-  /* ── 6 · Vendedora de Alcatraces · Rivera · icónica / AAA ──────────── */
-  {
-    id: 6,
-    titulo: "Vendedora de Alcatraces",
-    anio: "1942",
-    descripcion:
-      "La figura arrodillada sostiene un ramo monumental de alcatraces; la geometría del rebozo y las flores construye una arquitectura de ternura y trabajo.",
-    estrellas: 5,
-    imagen: "https://picsum.photos/seed/obra-6/600/800",
-    artista: artistas[2],
-    tamano: "Mediano",
-    color: "Frío",
-    movimiento: "Muralismo",
-    tecnica: "Retrato",
-    precio: 12500,
+    movimiento: "Arte Decorativo",
+    tecnica: "Mixta",
+    precio: 4800,
     tipo: "Físico",
-    graficaValor: v([7800, 8400, 8100, 9250, 10150, 11050, 10700, 11550, 11850, 12050, 12250, 12500]),
-    graficaInteres: [78, 90, 65, 99, 85, 95, 92],
+    graficaValor: v([3000, 3200, 3100, 3400, 3700, 4000, 3900, 4200, 4400, 4500, 4700, 4800]),
+    graficaInteres: [72, 86, 64, 96, 80, 92, 88],
     certificaciones: [
       "Verificada por ERUDITO Galery",
-      "Autenticada internacionalmente",
-      "Subastada en Christie's 2024",
-      "Activo Financiero Clase AAA",
-      "Registro UNESCO — Arte Moderno Mexicano",
-      "Certificado Heritage Premium",
+      "Colección oficial BestAlice",
+      "Hojas en acrílico translúcido de color",
+      "Estructura de alambre pintado a mano",
     ],
   },
 
-  /* ── 7 · La Constitución 1917 · González Camarena · estable ──────── */
+  /* ── 20 · Mappa Mundi — Carta de los Dos Hemisferios · Carta Mundi [9] ─── */
   {
-    id: 7,
-    titulo: "La Constitución 1917",
-    anio: "1967",
+    id: 20,
+    titulo: "Mappa Mundi — Carta de los Dos Hemisferios",
+    anio: "c. 1721 (reproducción)",
     descripcion:
-      "Alegoría monumental del pacto constitucional: figuras pétreas emergen del muro entre estandartes, fuego y acero, narrando la fundación del estado moderno.",
-    estrellas: 4,
-    imagen: "https://picsum.photos/seed/obra-7/600/800",
-    artista: artistas[3],
+      "Reproducción en alta fidelidad del mapa mundial de John Senex, cartógrafo real inglés, corregido a partir de las observaciones comunicadas a las Sociedades Reales de Londres y París. Los dos hemisferios en proyección esférica, la caligrafía tipográfica del siglo XVIII y las manchas de envejecimiento del pergamino recrean el asombro geográfico de una época en que el mundo aún guardaba bordes inciertos.",
+    estrellas: 5,
+    imagen: "/obras/mappa-mundi/principal.jpg",
+    artista: artistas[9],
+    perspectivas: [
+      "/obras/mappa-mundi/principal.jpg",
+      "/obras/mappa-mundi/comedor.jpg",
+      "/obras/mappa-mundi/sala.jpg",
+    ],
+    tamano: "Grande",
+    color: "Cálido",
+    movimiento: "Cartografía Histórica",
+    tecnica: "Digital",
+    precio: 2500,
+    tipo: "Impresión Oficial",
+    graficaValor: v([1600, 1700, 1650, 1800, 2000, 2100, 2050, 2200, 2300, 2350, 2450, 2500]),
+    graficaInteres: [70, 84, 62, 94, 78, 90, 86],
+    certificaciones: [
+      "Verificada por ERUDITO Galery",
+      "Reproducción de alta fidelidad sobre canvas",
+      "Basada en cartografía original John Senex (c. 1721)",
+      "Impresión con tinta resistente a los rayos UV",
+    ],
+  },
+
+  /* ── 19 · El Sombrero de Paja — WPAP · Pop Maze Art [8] · Pop Art ──────── */
+  {
+    id: 19,
+    titulo: "El Sombrero de Paja — WPAP",
+    anio: "2022",
+    descripcion:
+      "Retrato en técnica WPAP (Wedha's Pop Art Portrait) de uno de los personajes más icónicos del anime contemporáneo: el joven capitán de sombrero de paja. La composición fragmenta el rostro en planos geométricos de colores saturados — amarillos, naranjas, verdes, magenta — sobre un fondo azul marino profundo. Una declaración de cultura pop que transforma la animación en arte de coleccionista.",
+    estrellas: 5,
+    imagen: "/obras/sombrero-paja-wpap/principal.jpg",
+    artista: artistas[8],
+    perspectivas: [
+      "/obras/sombrero-paja-wpap/principal.jpg",
+      "/obras/sombrero-paja-wpap/estudio-rustico.jpg",
+      "/obras/sombrero-paja-wpap/sala-libros.jpg",
+    ],
     tamano: "Grande",
     color: "Frío",
-    movimiento: "Muralismo",
-    tecnica: "Mural",
-    precio: 5500,
+    movimiento: "Pop Art",
+    tecnica: "Digital",
+    precio: 2800,
     tipo: "Impresión Oficial",
-    graficaValor: v([4200, 4300, 4250, 4420, 4600, 4780, 4720, 4880, 5020, 5130, 5320, 5500]),
-    graficaInteres: [58, 68, 45, 80, 62, 72, 68],
+    graficaValor: v([1800, 1900, 1850, 2000, 2200, 2400, 2350, 2500, 2600, 2650, 2750, 2800]),
+    graficaInteres: [75, 90, 68, 98, 85, 96, 92],
     certificaciones: [
       "Verificada por ERUDITO Galery",
-      "Autorizada por el Estado Mexicano",
+      "Impresión en canvas de alta resolución",
+      "Edición limitada numerada",
+    ],
+  },
+
+  /* ── 18 · El Trío del Silencio · GMMH [7] · Escultura Expresionista ───── */
+  {
+    id: 18,
+    titulo: "El Trío del Silencio",
+    anio: "2023",
+    descripcion:
+      "Tres rostros abstractos en resina plata antigüa interpretan la trilogía milenaria: Ver, Oír, Callar. La textura cincelada a mano y el acabado plateado envejecido convierten cada figura en una meditación sobre los sentidos. Bases en madera negra que anclan la composición con sobriedad. Un ensemble filosófico para biblioteca, escritorio o consola de diseño.",
+    estrellas: 5,
+    imagen: "/obras/silencio-trio/principal.jpg",
+    artista: artistas[7],
+    perspectivas: [
+      "/obras/silencio-trio/principal.jpg",
+      "/obras/silencio-trio/fondo-blanco.jpg",
+      "/obras/silencio-trio/mesa-rustica.jpg",
+      "/obras/silencio-trio/repisa.jpg",
+    ],
+    tamano: "Pequeño",
+    color: "Neutro",
+    movimiento: "Expresionismo",
+    tecnica: "Escultura",
+    precio: 8900,
+    tipo: "Físico",
+    graficaValor: v([5500, 5800, 5700, 6200, 6800, 7400, 7200, 7700, 8000, 8300, 8600, 8900]),
+    graficaInteres: [60, 76, 52, 90, 74, 86, 82],
+    certificaciones: [
+      "Verificada por ERUDITO Galery",
+      "Colección oficial GMMH",
+      "Resina con acabado plata antigüa patinada",
+      "Edición limitada de coleccionista",
+    ],
+  },
+
+  /* ── 9 · Underground Fantasy · Merck Rathke [3] · Expresionismo ───────── */
+  {
+    id: 9,
+    titulo: "Underground Fantasy",
+    anio: "c. 1925",
+    descripcion:
+      "Una escena de misterio urbano: figuras estilizadas deambulan entre columnas y palmeras esquemáticas bajo una atmósfera cargada de tensión social. El hombre de negro que despliega un objeto ante las miradas inexpresivas de las mujeres crea una coreografía silenciosa entre lo mundano y lo fantástico.",
+    estrellas: 5,
+    imagen: "/obras/merck-rathke/principal.jpg",
+    artista: artistas[3],
+    perspectivas: [
+      "/obras/merck-rathke/principal.jpg",
+      "/obras/merck-rathke/sala-oscura.jpg",
+      "/obras/merck-rathke/sala-clara.jpg",
+      "/obras/merck-rathke/dormitorio.jpg",
+    ],
+    tamano: "Grande",
+    color: "Cálido",
+    movimiento: "Expresionismo",
+    tecnica: "Óleo",
+    precio: 54500,
+    tipo: "Impresión Oficial",
+    graficaValor: v([36000, 37500, 37000, 40000, 43000, 47000, 46000, 49000, 51000, 52500, 54000, 54500]),
+    graficaInteres: [42, 58, 35, 75, 60, 70, 65],
+    certificaciones: [
+      "Verificada por ERUDITO Galery",
       "Impresión Oficial con sello de autenticidad",
       "Activo Financiero Clase B",
     ],
   },
 
-  /* ── 8 · Jinete · González Camarena · apreciación moderada ─────────── */
+  /* ── 10 · Colibrí en Flor · Ideas Creativas [1] · Arte Digital ─────────── */
   {
-    id: 8,
-    titulo: "Obra Artística",
-    anio: "1959",
+    id: 10,
+    titulo: "Colibrí en Flor",
+    anio: "2024",
     descripcion:
-      "Un jinete de bronce cabalga sobre un fondo incendiado; la pincelada enérgica convierte el movimiento en el verdadero protagonista de la escena.",
-    estrellas: 4,
-    imagen: "https://picsum.photos/seed/obra-8/600/800",
-    artista: artistas[3],
-    tamano: "Mediano",
-    color: "Cálido",
-    movimiento: "Muralismo",
-    tecnica: "Abstracto",
-    precio: 4200,
-    tipo: "JPG Certificado",
-    graficaValor: v([3000, 3100, 3050, 3200, 3360, 3520, 3460, 3620, 3760, 3870, 4020, 4200]),
-    graficaInteres: [45, 60, 38, 72, 55, 65, 60],
+      "Un colibrí de plumaje turquesa suspendido en pleno vuelo ante una explosión de flores tropicales rojas y naranjas. La técnica digital hiperrealista captura cada detalle del ave — la iridiscencia de sus plumas, el movimiento congelado de sus alas — sobre un fondo oscuro que intensifica la luminosidad del conjunto.",
+    estrellas: 5,
+    imagen: "/obras/colibri-digital/principal.jpg",
+    artista: artistas[1],
+    perspectivas: [
+      "/obras/colibri-digital/principal.jpg",
+      "/obras/colibri-digital/sala-moderna.jpg",
+      "/obras/colibri-digital/comedor.jpg",
+      "/obras/colibri-digital/oficina.jpg",
+    ],
+    tamano: "Grande",
+    color: "Frío",
+    movimiento: "Arte Digital",
+    tecnica: "Digital",
+    precio: 37500,
+    tipo: "Impresión Oficial",
+    graficaValor: v([24000, 25000, 26500, 27500, 30000, 32500, 32000, 34000, 35000, 36000, 37000, 37500]),
+    graficaInteres: [55, 72, 48, 88, 70, 82, 78],
     certificaciones: [
       "Verificada por ERUDITO Galery",
-      "Certificado de Autenticidad Digital",
-      "Activo Financiero Clase B",
+      "Impresión Oficial con sello de autenticidad",
+      "Certificado de edición limitada",
+    ],
+  },
+
+  /* ── 11 · La Creación — Pop Art · Revolution Canvas [0] ────────────────── */
+  {
+    id: 11,
+    titulo: "La Creación — Pop Art",
+    anio: "2022",
+    descripcion:
+      "Reinterpretación contemporánea de 'La Creación de Adán' de Miguel Ángel. Las manos icónicas que casi se tocan emergen en blanco y negro de un estallido de pigmentos: amarillos, azules, violetas y rojos que transforman la escena sagrada en una declaración de arte urbano y vanguardia cromática.",
+    estrellas: 5,
+    imagen: "/obras/revolution-canvas/principal.jpg",
+    artista: artistas[0],
+    perspectivas: [
+      "/obras/revolution-canvas/principal.jpg",
+      "/obras/revolution-canvas/sala-gris.jpg",
+      "/obras/revolution-canvas/loft.jpg",
+    ],
+    tamano: "Grande",
+    color: "Frío",
+    movimiento: "Arte Digital",
+    tecnica: "Digital",
+    precio: 28000,
+    tipo: "Impresión Oficial",
+    graficaValor: v([18000, 19000, 18500, 20000, 22000, 24000, 23500, 25000, 26000, 26500, 27000, 28000]),
+    graficaInteres: [62, 78, 55, 90, 74, 85, 80],
+    certificaciones: [
+      "Verificada por ERUDITO Galery",
+      "Impresión Oficial con sello de autenticidad",
+      "Edición limitada numerada",
+    ],
+  },
+
+  /* ── 12 · Noche Estrellada sobre Bellas Artes · Revolution Canvas [0] ──── */
+  {
+    id: 12,
+    titulo: "Noche Estrellada sobre Bellas Artes",
+    anio: "2024",
+    descripcion:
+      "Fusión magistral entre la pincelada giratoria de Van Gogh y la majestuosidad neoclásica del Palacio de Bellas Artes de la Ciudad de México. El cielo azul turquesa con sus remolinos y astros dorados envuelve la cúpula iluminada del palacio, creando un diálogo poético entre el expresionismo europeo y el patrimonio cultural mexicano.",
+    estrellas: 5,
+    imagen: "/obras/bellas-artes-noche/principal.jpg",
+    artista: artistas[0],
+    perspectivas: [
+      "/obras/bellas-artes-noche/principal.jpg",
+      "/obras/bellas-artes-noche/sala-moderna.jpg",
+      "/obras/bellas-artes-noche/comedor.jpg",
+    ],
+    tamano: "Grande",
+    color: "Frío",
+    movimiento: "Arte Digital",
+    tecnica: "Digital",
+    precio: 31500,
+    tipo: "Impresión Oficial",
+    graficaValor: v([20000, 21000, 20500, 22500, 24500, 26500, 26000, 27500, 28500, 29500, 30500, 31500]),
+    graficaInteres: [68, 82, 58, 95, 78, 90, 86],
+    certificaciones: [
+      "Verificada por ERUDITO Galery",
+      "Impresión Oficial con sello de autenticidad",
+      "Edición limitada numerada",
+      "Homenaje al Patrimonio Cultural Mexicano",
+    ],
+  },
+
+  /* ── 13 · El Ángel — Paseo de la Reforma · Revolution Canvas [0] ────────── */
+  {
+    id: 13,
+    titulo: "El Ángel — Paseo de la Reforma",
+    anio: "2024",
+    descripcion:
+      "La Columna de la Independencia emerge como eje central de una composición explosiva: rascacielos de teal y magenta flanquean el Paseo de la Reforma mientras la calzada se convierte en un espejo de naranjas, rojos y ocres bajo la lluvia. La pincelada de cuchillo imprime volumen y urgencia a uno de los iconos más reconocibles de la Ciudad de México.",
+    estrellas: 5,
+    imagen: "/obras/angel-reforma/principal.jpg",
+    artista: artistas[0],
+    perspectivas: [
+      "/obras/angel-reforma/principal.jpg",
+      "/obras/angel-reforma/sala-calida.jpg",
+      "/obras/angel-reforma/sala-moderna.jpg",
+    ],
+    tamano: "Grande",
+    color: "Cálido",
+    movimiento: "Arte Digital",
+    tecnica: "Digital",
+    precio: 29500,
+    tipo: "Impresión Oficial",
+    graficaValor: v([18500, 19500, 19000, 21000, 23000, 25000, 24500, 26000, 27000, 27500, 28500, 29500]),
+    graficaInteres: [70, 85, 60, 97, 80, 92, 88],
+    certificaciones: [
+      "Verificada por ERUDITO Galery",
+      "Impresión Oficial con sello de autenticidad",
+      "Edición limitada numerada",
+      "Homenaje al Patrimonio Cultural Mexicano",
+    ],
+  },
+
+  /* ── 14 · Dúo Venado Dorado · Atelier Geométrico [2] · Escultura ────────── */
+  {
+    id: 14,
+    titulo: "Dúo Venado Dorado",
+    anio: "2021",
+    descripcion:
+      "Par de ciervos en geometría low-poly: uno recostado en actitud contemplativa, el otro erguido con la cornamenta alzada. El acabado en resina dorada mate convierte cada faceta en un plano de luz distinto según el ángulo de visión. Dos piezas que dialogan entre el reposo y la vigilancia, pensadas para repisas, consolas y mesas de diseño de autor.",
+    estrellas: 4,
+    imagen: "/obras/venado-dorado/principal.jpg",
+    artista: artistas[2],
+    perspectivas: [
+      "/obras/venado-dorado/principal.jpg",
+      "/obras/venado-dorado/fondo-blanco.jpg",
+      "/obras/venado-dorado/mesa-sala.jpg",
+      "/obras/venado-dorado/detalle.jpg",
+    ],
+    tamano: "Pequeño",
+    color: "Cálido",
+    movimiento: "Minimalismo",
+    tecnica: "Escultura",
+    precio: 12500,
+    tipo: "Físico",
+    graficaValor: v([8500, 8800, 8700, 9200, 10000, 10800, 10500, 11200, 11500, 11800, 12200, 12500]),
+    graficaInteres: [48, 65, 40, 82, 65, 76, 72],
+    certificaciones: [
+      "Verificada por ERUDITO Galery",
+      "Edición limitada de coleccionista",
+      "Resina de alta densidad con acabado dorado",
+    ],
+  },
+
+  /* ── 15 · Árbol de Huellas — Amor y Unión · Arte & Memorias [4] ─────────── */
+  {
+    id: 15,
+    titulo: "Árbol de Huellas — Amor y Unión",
+    anio: "2023",
+    descripcion:
+      "Lienzo participativo en forma de árbol con corazón entrelazado y dos pájaros. Las ramas llegan vacías al evento — son los invitados quienes, con su huella dactilar entintada, crean cada hoja de color. Al final de la celebración la obra es única e irrepetible: un retrato literal de todos los que estuvieron presentes.",
+    estrellas: 5,
+    imagen: "/obras/arbol-huellas/principal.jpg",
+    artista: artistas[4],
+    perspectivas: [
+      "/obras/arbol-huellas/principal.jpg",
+      "/obras/arbol-huellas/sala-nordica.jpg",
+      "/obras/arbol-huellas/sala-cojines.jpg",
+      "/obras/arbol-huellas/plantilla.jpg",
+    ],
+    tamano: "Mediano",
+    color: "Neutro",
+    movimiento: "Arte Relacional",
+    tecnica: "Mixta",
+    precio: 7500,
+    tipo: "Físico",
+    graficaValor: v([5000, 5200, 5100, 5500, 6000, 6500, 6300, 6700, 7000, 7100, 7300, 7500]),
+    graficaInteres: [72, 88, 65, 98, 82, 94, 90],
+    certificaciones: [
+      "Verificada por ERUDITO Galery",
+      "Pieza única — completada por los invitados",
+      "Incluye almohadillas de tinta de colores",
+      "Certificado de evento con fecha y lugar",
+    ],
+  },
+
+  /* ── 16 · La Banda de Rock · HAUCOZE [5] · Escultura figurativa ─────────── */
+  {
+    id: 16,
+    titulo: "La Banda de Rock",
+    anio: "2021",
+    descripcion:
+      "Colección de cuatro figuras en resina: guitarrista inclinado en riff extremo, baterista con el brazo en alto, vocalista con el micrófono al límite y tecladista en plena entrega. El acabado grafito mate con detalles en plata captura la energía en vivo de una banda en su momento culmen. Piezas de colección para amantes de la música y el diseño de interiores.",
+    estrellas: 5,
+    imagen: "/obras/banda-rock-haucoze/principal.jpg",
+    artista: artistas[5],
+    perspectivas: [
+      "/obras/banda-rock-haucoze/principal.jpg",
+      "/obras/banda-rock-haucoze/marmol.jpg",
+      "/obras/banda-rock-haucoze/detalle.jpg",
+      "/obras/banda-rock-haucoze/multivista.jpg",
+    ],
+    tamano: "Pequeño",
+    color: "Neutro",
+    movimiento: "Figurativismo",
+    tecnica: "Escultura",
+    precio: 18500,
+    tipo: "Físico",
+    graficaValor: v([12000, 12500, 12200, 13500, 14800, 16000, 15500, 16800, 17200, 17500, 18000, 18500]),
+    graficaInteres: [65, 80, 55, 92, 75, 88, 84],
+    certificaciones: [
+      "Verificada por ERUDITO Galery",
+      "Colección oficial HAUCOZE",
+      "Resina de alta densidad con acabado metálico",
+      "Edición limitada de coleccionista",
+    ],
+  },
+
+  /* ── 17 · El Lector · UTTCMK [6] · Escultura abstracta ─────────────────── */
+  {
+    id: 17,
+    titulo: "El Lector",
+    anio: "2022",
+    descripcion:
+      "Figura humana sin rostro sentada en posición de loto con un libro abierto entre las manos y la palma apoyada en la sien. La superficie en arenisca beige mate de resina elimina todo detalle anatómico para concentrar la atención en la postura: la curvatura de la espalda, la tensión de los dedos y la inclinación de la cabeza narran la inmersión total en la lectura.",
+    estrellas: 5,
+    imagen: "/obras/el-lector-uttcmk/principal.jpg",
+    artista: artistas[6],
+    perspectivas: [
+      "/obras/el-lector-uttcmk/principal.jpg",
+      "/obras/el-lector-uttcmk/biblioteca.jpg",
+      "/obras/el-lector-uttcmk/escritorio.jpg",
+      "/obras/el-lector-uttcmk/producto.jpg",
+    ],
+    tamano: "Pequeño",
+    color: "Neutro",
+    movimiento: "Abstracto",
+    tecnica: "Escultura",
+    precio: 9500,
+    tipo: "Físico",
+    graficaValor: v([6000, 6300, 6200, 6800, 7400, 8000, 7800, 8300, 8600, 8800, 9200, 9500]),
+    graficaInteres: [58, 74, 50, 88, 72, 84, 80],
+    certificaciones: [
+      "Verificada por ERUDITO Galery",
+      "Colección oficial UTTCMK",
+      "Resina con acabado arenisca natural",
+      "Edición limitada de coleccionista",
     ],
   },
 ];
-
-export const fichas: FichaArte[] = base.map((ficha) => ({
-  ...ficha,
-  perspectivas: [
-    ficha.imagen,
-    `https://picsum.photos/seed/obra-${ficha.id}-vista-2/900/700`,
-    `https://picsum.photos/seed/obra-${ficha.id}-vista-3/900/700`,
-    `https://picsum.photos/seed/obra-${ficha.id}-vista-4/900/700`,
-  ],
-}));
 
 export const obrasDeArtista = (artistaId: number): FichaArte[] =>
   fichas.filter((f) => f.artista.id === artistaId);

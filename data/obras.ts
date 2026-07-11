@@ -8,47 +8,46 @@ export interface Obra {
   imagen: string;
 }
 
-// Imágenes de muestra (picsum.photos). Para usar obras reales,
-// coloca los archivos en /public/obras y cambia "imagen" a "/obras/archivo.jpg".
+// Selección aleatoria de fichas para el carrusel del inicio
 export const obras: Obra[] = [
   {
-    id: 1,
-    titulo: "Ecos de la Memoria",
-    autor: "Autor desconocido",
-    anio: "1948",
+    id: 21,
+    titulo: "Árbol de la Vida — Hojas de Cristal",
+    autor: "BestAlice",
+    anio: "2023",
     descripcion:
-      "Ecos de la Memoria es una composición visual que explora la relación entre la nostalgia y la vida cotidiana de un pueblo.",
+      "Escultura de mesa con más de cien hojas de acrílico translúcido en un espectro completo de color. La luz que atraviesa las hojas proyecta sombras cromáticas sobre la superficie, convirtiendo el entorno en parte de la obra.",
     estrellas: 5,
-    imagen: "https://picsum.photos/id/1040/1600/900",
+    imagen: "/obras/arbol-vida-cristal/principal.jpg",
   },
   {
-    id: 2,
-    titulo: "Luz del Valle",
-    autor: "Autor desconocido",
-    anio: "1952",
+    id: 18,
+    titulo: "El Trío del Silencio",
+    autor: "GMMH",
+    anio: "2023",
     descripcion:
-      "Una mirada serena al paisaje rural, donde la luz del atardecer define los volúmenes de la arquitectura tradicional.",
-    estrellas: 4,
-    imagen: "https://picsum.photos/id/1043/1600/900",
-  },
-  {
-    id: 3,
-    titulo: "Mercado al Alba",
-    autor: "Autor desconocido",
-    anio: "1936",
-    descripcion:
-      "El bullicio del mercado matutino capturado en trazos cálidos que celebran el comercio y la comunidad.",
+      "Tres rostros abstractos en resina plata antigüa interpretan la trilogía milenaria: Ver, Oír, Callar. La textura cincelada a mano convierte cada figura en una meditación sobre los sentidos.",
     estrellas: 5,
-    imagen: "https://picsum.photos/id/1047/1600/900",
+    imagen: "/obras/silencio-trio/principal.jpg",
   },
   {
-    id: 4,
-    titulo: "Campanario en Silencio",
-    autor: "Autor desconocido",
-    anio: "1960",
+    id: 13,
+    titulo: "El Ángel — Paseo de la Reforma",
+    autor: "Revolution Canvas",
+    anio: "2024",
     descripcion:
-      "El campanario domina la escena como testigo del paso del tiempo sobre las calles empedradas del pueblo.",
-    estrellas: 4,
-    imagen: "https://picsum.photos/id/1080/1600/900",
+      "La Columna de la Independencia emerge como eje central de una composición explosiva. Rascacielos de teal y magenta flanquean el Paseo de la Reforma bajo una lluvia de naranjas, rojos y ocres.",
+    estrellas: 5,
+    imagen: "/obras/angel-reforma/principal.jpg",
+  },
+  {
+    id: 9,
+    titulo: "Underground Fantasy",
+    autor: "Merck Rathke",
+    anio: "c. 1925",
+    descripcion:
+      "Una escena de misterio urbano: figuras estilizadas deambulan entre columnas y palmeras esquemáticas bajo una atmósfera cargada de tensión social y elegancia expresionista.",
+    estrellas: 5,
+    imagen: "/obras/merck-rathke/principal.jpg",
   },
 ];

@@ -90,8 +90,8 @@ export default function DetalleObra({ ficha, similares }: Props) {
               </div>
 
               <p className="font-serif text-3xl font-bold text-white sm:text-4xl">
-                ${ficha.precio.toLocaleString("en-US")}
-                <span className="ml-1.5 text-base font-normal text-white/50">USD</span>
+                ${ficha.precio.toLocaleString("es-MX")}
+                <span className="ml-1.5 text-base font-normal text-white/50">MXN</span>
               </p>
             </div>
           </div>

@@ -72,8 +72,8 @@ export default function PanelCompra({ ficha }: { ficha: FichaArte }) {
 
       {/* Precio */}
       <p className="text-center font-serif text-4xl font-bold text-white">
-        ${ficha.precio.toLocaleString("en-US")}
-        <span className="ml-1 text-base font-normal text-zinc-500">USD</span>
+        ${ficha.precio.toLocaleString("es-MX")}
+        <span className="ml-1 text-base font-normal text-zinc-500">MXN</span>
       </p>
 
       {/* Tipo */}
@@ -132,7 +132,7 @@ export default function PanelCompra({ ficha }: { ficha: FichaArte }) {
                   {TIPO_ICON[ficha.tipo]} {ficha.tipo}
                 </span>
                 <span className="font-serif text-base font-bold text-amber-400">
-                  ${ficha.precio.toLocaleString("en-US")} USD
+                  ${ficha.precio.toLocaleString("es-MX")} MXN
                 </span>
               </div>
             </div>

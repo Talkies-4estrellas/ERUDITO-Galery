@@ -50,7 +50,7 @@ function TarjetaProducto({ producto }: { producto: ProductoCocina }) {
 
         {/* Precio superpuesto */}
         <div className="absolute bottom-3 right-3 rounded-full bg-black/50 px-3 py-1 text-xs font-bold text-white backdrop-blur-sm">
-          ${producto.precio.toLocaleString("en-US")} USD
+          ${producto.precio.toLocaleString("es-MX")} MXN
         </div>
         <span className={`absolute bottom-3 left-3 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest ring-1 ${color}`}>
           {producto.categoria}
@@ -121,8 +121,8 @@ function ProductoDestacado({ producto }: { producto: ProductoCocina }) {
         <p className="text-sm leading-relaxed text-zinc-400">{producto.descripcion}</p>
         <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-4">
           <p className="font-serif text-2xl font-bold text-white">
-            ${producto.precio.toLocaleString("en-US")}
-            <span className="ml-1 text-sm font-normal text-zinc-500">USD</span>
+            ${producto.precio.toLocaleString("es-MX")}
+            <span className="ml-1 text-sm font-normal text-zinc-500">MXN</span>
           </p>
           <button
             type="button"

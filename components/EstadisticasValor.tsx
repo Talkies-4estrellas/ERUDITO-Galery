@@ -105,9 +105,9 @@ export default function EstadisticasValor({ ficha }: Props) {
             <div className="rounded-2xl bg-zinc-900 p-5 ring-1 ring-white/10">
               <div className="flex items-start justify-between">
                 <p className="text-2xl font-bold text-white">
-                  ${precioActual.toLocaleString("en-US")}
+                  ${precioActual.toLocaleString("es-MX")}
                   <span className="ml-1.5 align-middle text-xs font-normal text-zinc-500">
-                    USD
+                    MXN
                   </span>
                 </p>
                 <span

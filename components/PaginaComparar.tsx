@@ -113,7 +113,7 @@ export default function PaginaComparar() {
         {filaComparacion("Año", obras, (f) => f.anio)}
         {filaComparacion("Precio", obras, (f) => (
           <span className="font-semibold text-white">
-            ${f.precio.toLocaleString("en-US")} USD
+            ${f.precio.toLocaleString("es-MX")} MXN
           </span>
         ))}
         {filaComparacion("Tendencia", obras, (f) => {
