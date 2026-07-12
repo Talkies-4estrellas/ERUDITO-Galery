@@ -25,11 +25,18 @@ alter table eventos add column if not exists fecha_corta jsonb;
 alter table eventos add column if not exists href        text;
 alter table eventos add column if not exists fichas_ids  jsonb;
 
+-- perfiles: columna avatar_url añadida en el esquema nuevo
+alter table public.perfiles add column if not exists avatar_url text default '';
+
 -- eventos.modalidad: asegurar que 'En línea' esté permitido
--- (la tabla vieja puede tener un check constraint sin ese valor)
 alter table eventos drop constraint if exists eventos_modalidad_check;
 alter table eventos add constraint eventos_modalidad_check
   check (modalidad in ('Presencial','Virtual','Híbrido','En línea'));
+
+-- perfiles.rol: ampliar constraint para incluir el rol 'admin'
+alter table public.perfiles drop constraint if exists perfiles_rol_check;
+alter table public.perfiles add constraint perfiles_rol_check
+  check (rol in ('artista', 'comprador', 'empresa', 'admin'));
 
 
 -- ── Artistas (13) ────────────────────────────────────────────

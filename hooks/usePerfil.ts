@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const CLAVE_LOCAL = "erudito-perfil";
 
-export type Rol = "artista" | "comprador" | "empresa";
+export type Rol = "artista" | "comprador" | "empresa" | "admin";
 
 export interface DatosPerfil {
   rol: Rol;
