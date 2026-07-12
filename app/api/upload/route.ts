@@ -15,7 +15,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "El archivo debe ser una imagen" }, { status: 422 });
   }
 
-  const nombre = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.webp`;
+  const carpeta = req.nextUrl.searchParams.get("carpeta") ?? "";
+  const nombre = carpeta
+    ? `${carpeta}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.webp`
+    : `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.webp`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
   const { error: uploadError } = await supabase.storage

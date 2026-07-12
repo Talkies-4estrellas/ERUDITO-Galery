@@ -18,6 +18,8 @@ export interface Artista {
 // artistas[8] = Pop Maze Art       (id 13)
 // artistas[9] = Carta Mundi        (id 14)
 // artistas[10] = BestAlice         (id 15)
+// artistas[11] = Yihui Arts        (id 16)
+// artistas[12] = Suruim            (id 17)
 export const artistas: Artista[] = [
   {
     id: 7,
@@ -106,5 +108,21 @@ export const artistas: Artista[] = [
     origen: "Arte Decorativo",
     foto: "https://picsum.photos/seed/artista-15/400/400",
     bio: "Estudio de escultura decorativa especializado en árboles de la vida con hojas de acrílico translúcido. Cada pieza entrelaza ramas de alambre pintado a mano con hojas individuales en vidrio acrílico de color — un espectro que va del amarillo y naranja al rojo, violeta, azul y verde esmeralda. Sus esculturas capturan la abundancia cromática de la naturaleza en objetos de mesa pensados para escritorios, consolas y espacios de meditación.",
+  },
+  {
+    id: 16,
+    nombre: "Yihui Arts",
+    vida: "2010 – presente",
+    origen: "Pintura Decorativa",
+    foto: "https://picsum.photos/seed/artista-16/400/400",
+    bio: "Estudio especializado en pintura sobre canvas pintada a mano con textura en relieve. Sus obras combinan fondos abstractos de capas superpuestas —azules, grises y verdes al óleo— con motivos centrales de gran impacto visual: árboles desnudos, paisajes serenos y composiciones contemplativos que aportan calma y profundidad a cualquier espacio. Cada pieza incorpora acentos de pigmento dorado o ámbar que añaden calidez al conjunto.",
+  },
+  {
+    id: 17,
+    nombre: "Suruim",
+    vida: "2018 – presente",
+    origen: "Escultura Decorativa",
+    foto: "https://picsum.photos/seed/artista-17/400/400",
+    bio: "Estudio de escultura decorativa especializado en figuras de animales con personalidad urbana. Sus piezas transforman arquetipos de la fauna — bulldogs, osos, conejos — en personajes dandis vestidos con trajes, pajaritas doradas y accesorios removibles. La resina de alta densidad con acabados mate y detalles en metal dorado convierte cada figura en un objeto de colección funcional: charola de escritorio, hucha o elemento escultórico de diseño.",
   },
 ];

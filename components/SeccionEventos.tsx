@@ -3,9 +3,9 @@
 import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { eventos } from "@/data/eventos";
+import type { Evento } from "@/data/eventos";
 
-export default function SeccionEventos() {
+export default function SeccionEventos({ eventos }: { eventos: Evento[] }) {
   const pista = useRef<HTMLDivElement>(null);
 
   const desplazar = (dir: 1 | -1) => {

@@ -3,7 +3,7 @@
 import { useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { fichas, type FichaArte } from "@/data/fichas";
+import type { FichaArte } from "@/data/fichas";
 import FichaObra from "@/components/FichaObra";
 import { useComparacion, MAX_COMPARAR } from "@/hooks/useComparacion";
 
@@ -16,10 +16,6 @@ const grupos: { clave: ClaveFiltro; titulo: string }[] = [
   { clave: "color", titulo: "Color" },
   { clave: "movimiento", titulo: "Movimiento" },
   { clave: "tecnica", titulo: "Técnica" },
-];
-
-const valoresDe = (clave: ClaveFiltro): string[] => [
-  ...new Set(fichas.map((f) => f[clave])),
 ];
 
 type Seleccion = Record<ClaveFiltro, string[]>;
@@ -49,7 +45,10 @@ function seleccionDesdeParams(params: URLSearchParams): Seleccion {
 // ──────────────────────────────────────────────────────────────
 // Inner: necesita Suspense porque usa useSearchParams
 // ──────────────────────────────────────────────────────────────
-function GaleriaObrasInner() {
+function GaleriaObrasInner({ fichas }: { fichas: FichaArte[] }) {
+  const valoresDe = (clave: ClaveFiltro): string[] => [
+    ...new Set(fichas.map((f) => f[clave])),
+  ];
   const searchParams = useSearchParams();
   const router = useRouter();
   const { seleccion: comparando, limpiar: limpiarComparacion, listo: comparacionLista } =
@@ -201,10 +200,10 @@ function GaleriaObrasInner() {
 // ──────────────────────────────────────────────────────────────
 // Export público — envuelve en Suspense para satisfacer Next.js
 // ──────────────────────────────────────────────────────────────
-export default function GaleriaObras() {
+export default function GaleriaObras({ fichas }: { fichas: FichaArte[] }) {
   return (
     <Suspense>
-      <GaleriaObrasInner />
+      <GaleriaObrasInner fichas={fichas} />
     </Suspense>
   );
 }

@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { artistas } from "@/data/artistas";
-import { obrasDeArtista } from "@/data/fichas";
+import { getArtistas, getFichas } from "@/lib/db";
 
-export default function PaginaArtistas() {
+export default async function PaginaArtistas() {
+  const [artistas, todasFichas] = await Promise.all([getArtistas(), getFichas()]);
+
   return (
     <section className="mx-auto w-full max-w-6xl px-4 pb-16 pt-8 sm:px-8">
       <h1 className="text-2xl font-semibold tracking-wide text-white">
@@ -15,7 +16,7 @@ export default function PaginaArtistas() {
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {artistas.map((artista) => {
-          const obras = obrasDeArtista(artista.id);
+          const obras = todasFichas.filter((f) => f.artista.id === artista.id);
           const promedio =
             obras.length > 0
               ? (

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import PaginaPerfil from "@/components/PaginaPerfil";
+import AuthGuard from "@/components/AuthGuard";
 
 export const metadata: Metadata = {
   title: "Mi perfil — ERUDITO Galery",
@@ -12,7 +13,9 @@ export default function Perfil() {
     <div className="flex min-h-screen flex-col bg-zinc-950">
       <Navbar />
       <main className="flex flex-1 flex-col">
-        <PaginaPerfil />
+        <AuthGuard>
+          <PaginaPerfil />
+        </AuthGuard>
       </main>
     </div>
   );

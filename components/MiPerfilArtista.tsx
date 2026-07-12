@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePerfil, type DatosPerfil } from "@/hooks/usePerfil";
 import { useObrasArtista, type ObraPropia } from "@/hooks/useObrasArtista";
 import FormObraArtista from "@/components/FormObraArtista";
+import { uploadWebp } from "@/lib/uploadWebp";
 
 function iniciales(nombre: string): string {
   const partes = nombre.trim().split(/\s+/);
@@ -82,6 +83,20 @@ export default function MiPerfilArtista() {
   const [editandoPerfil, setEditandoPerfil] = useState(false);
   const [formPerfil, setFormPerfil] = useState<DatosPerfil | null>(null);
   const [modalObra, setModalObra] = useState<null | "nueva" | string>(null);
+  const [subiendoAvatar, setSubiendoAvatar] = useState(false);
+  const avatarRef = useRef<HTMLInputElement>(null);
+
+  async function onAvatarFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !perfil) return;
+    e.target.value = "";
+    setSubiendoAvatar(true);
+    try {
+      const url = await uploadWebp(file, "/api/upload?carpeta=avatars");
+      await guardar({ ...perfil, avatar_url: url });
+    } catch { /* silencioso — el usuario verá que no cambió */ }
+    finally { setSubiendoAvatar(false); }
+  }
 
   if (!perfil) return null;
 
@@ -121,9 +136,36 @@ export default function MiPerfilArtista() {
           <div className="mx-auto max-w-6xl px-4 sm:px-8">
             <div className="relative flex flex-col gap-4 pb-4 sm:flex-row sm:items-end sm:gap-6">
 
-              {/* Avatar */}
-              <div className="absolute -top-14 left-0 flex size-28 shrink-0 items-center justify-center rounded-full bg-amber-400 text-4xl font-bold text-zinc-900 ring-4 ring-zinc-950 sm:-top-16 sm:size-36 sm:text-5xl">
-                {iniciales(nombreMostrar)}
+              {/* Avatar con upload */}
+              <div className="absolute -top-14 left-0 sm:-top-16">
+                <button
+                  type="button"
+                  onClick={() => avatarRef.current?.click()}
+                  disabled={subiendoAvatar}
+                  className="group relative flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-full bg-amber-400 text-4xl font-bold text-zinc-900 ring-4 ring-zinc-950 sm:size-36 sm:text-5xl"
+                >
+                  {perfil?.avatar_url ? (
+                    <Image src={perfil.avatar_url} alt={nombreMostrar} fill sizes="144px" className="object-cover" />
+                  ) : (
+                    iniciales(nombreMostrar)
+                  )}
+                  <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/50 opacity-0 transition group-hover:opacity-100">
+                    {subiendoAvatar ? (
+                      <svg className="size-6 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3"/>
+                        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+                      </svg>
+                    ) : (
+                      <>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-6 text-white">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
+                        </svg>
+                        <span className="text-[10px] font-semibold text-white">Foto</span>
+                      </>
+                    )}
+                  </span>
+                </button>
+                <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={onAvatarFile} />
               </div>
 
               {/* Nombre / formulario */}

@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import DetalleObra from "@/components/DetalleObra";
-import { fichas } from "@/data/fichas";
+import { getFichas, getFicha } from "@/lib/db";
 
-export function generateStaticParams() {
-  return fichas.map((ficha) => ({ id: String(ficha.id) }));
+export async function generateStaticParams() {
+  const fichas = await getFichas();
+  return fichas.map((f) => ({ id: String(f.id) }));
 }
 
 export async function generateMetadata({
@@ -14,7 +15,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const ficha = fichas.find((f) => String(f.id) === id);
+  const ficha = await getFicha(Number(id));
   if (!ficha) return { title: "Obra no encontrada" };
   return {
     title: `${ficha.titulo} (${ficha.anio}) — ERUDITO Galery`,
@@ -34,10 +35,13 @@ export default async function PaginaObra({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const ficha = fichas.find((f) => String(f.id) === id);
+  const [ficha, todasFichas] = await Promise.all([
+    getFicha(Number(id)),
+    getFichas(),
+  ]);
   if (!ficha) notFound();
 
-  const similares = fichas.filter((f) => f.id !== ficha.id);
+  const similares = todasFichas.filter((f) => f.id !== ficha.id);
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-950">

@@ -39,6 +39,70 @@ const MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "O
 const v = (vals: number[]): PuntoGrafica[] => vals.map((valor, i) => ({ mes: MESES[i], valor }));
 
 export const fichas: FichaArte[] = [
+  /* ── 23 · El Bulldog Dandy · Suruim [12] · Escultura Decorativa ─────────── */
+  {
+    id: 23,
+    titulo: "El Bulldog Dandy",
+    anio: "2022",
+    descripcion:
+      "Bulldog francés de resina mate vestido con traje de etiqueta, pajarita dorada y gafas de sol con lentes iridiscentes teal. La figura sostiene una charola circular en metal dorado diseñada para llaves, joyas, tarjetas o dulces — convirtiendo al personaje en un mayordomo de escritorio con actitud. Incluye ranura interior para monedas y gafas removibles. Disponible en gris topo y negro profundo, ambos con los mismos accesorios dorados que unifican el conjunto.",
+    estrellas: 4,
+    imagen: "/obras/bulldog-dandy/principal.jpg",
+    artista: artistas[12],
+    perspectivas: [
+      "/obras/bulldog-dandy/principal.jpg",
+      "/obras/bulldog-dandy/ambientes.jpg",
+      "/obras/bulldog-dandy/detalle.jpg",
+    ],
+    tamano: "Pequeño",
+    color: "Neutro",
+    movimiento: "Figurativismo",
+    tecnica: "Escultura",
+    precio: 3800,
+    tipo: "Físico",
+    graficaValor: v([2400, 2500, 2450, 2700, 2900, 3100, 3050, 3200, 3400, 3500, 3650, 3800]),
+    graficaInteres: [74, 88, 65, 96, 80, 92, 89],
+    certificaciones: [
+      "Verificada por ERUDITO Galery",
+      "Colección oficial Suruim",
+      "Resina de alta densidad con acabado mate",
+      "Accesorios en metal dorado — gafas removibles",
+    ],
+  },
+
+  /* ── 22 · El Árbol Blanco — Calma Invernal · Yihui Arts [11] ───────────── */
+  {
+    id: 22,
+    titulo: "El Árbol Blanco — Calma Invernal",
+    anio: "2023",
+    descripcion:
+      "Pintura sobre canvas pintada a mano que representa un árbol desnudo de blanco puro sobre un fondo abstracto de capas al óleo en azul profundo, teal y gris perla. La ausencia de hojas no evoca pérdida sino quietud: el árbol en reposo antes del florecimiento. Detalles en pigmento dorado y ámbar en las raíces anclan la composición con un acento cálido que contrasta con la serenidad fría del cielo. Una obra de gran formato concebida para crear presencia en salones, habitaciones y espacios de diseño contemporáneo.",
+    estrellas: 5,
+    imagen: "/obras/arbol-blanco-yihui/principal.jpg",
+    artista: artistas[11],
+    perspectivas: [
+      "/obras/arbol-blanco-yihui/principal.jpg",
+      "/obras/arbol-blanco-yihui/detalle.jpg",
+      "/obras/arbol-blanco-yihui/sala-azul.jpg",
+      "/obras/arbol-blanco-yihui/sala-turquesa.jpg",
+      "/obras/arbol-blanco-yihui/sala-gris.jpg",
+    ],
+    tamano: "Grande",
+    color: "Frío",
+    movimiento: "Arte Decorativo",
+    tecnica: "Óleo",
+    precio: 3500,
+    tipo: "Físico",
+    graficaValor: v([2200, 2300, 2250, 2500, 2700, 2900, 2850, 3000, 3150, 3250, 3400, 3500]),
+    graficaInteres: [68, 82, 60, 94, 78, 90, 86],
+    certificaciones: [
+      "Verificada por ERUDITO Galery",
+      "Pintura original al óleo sobre canvas",
+      "Colección oficial Yihui Arts",
+      "Acentos en pigmento dorado aplicados a mano",
+    ],
+  },
+
   /* ── 21 · Árbol de la Vida — Hojas de Cristal · BestAlice [10] ─────────── */
   {
     id: 21,

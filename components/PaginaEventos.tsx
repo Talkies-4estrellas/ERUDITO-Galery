@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { eventos, type Evento } from "@/data/eventos";
+import type { Evento } from "@/data/eventos";
 
 type FiltroTipo = "Todos" | "Subasta" | "Exposición";
 type FiltroModal = "Todos" | "En línea" | "Presencial";
@@ -184,7 +184,7 @@ function TarjetaEvento({ evento, onRegistrar }: { evento: Evento; onRegistrar: (
 }
 
 /* ── Página principal ────────────────────────────────────────── */
-export default function PaginaEventos() {
+export default function PaginaEventos({ eventos }: { eventos: Evento[] }) {
   const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>("Todos");
   const [filtroModal, setFiltroModal] = useState<FiltroModal>("Todos");
   const [eventoActivo, setEventoActivo] = useState<Evento | null>(null);

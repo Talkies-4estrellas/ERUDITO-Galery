@@ -16,6 +16,7 @@ export interface DatosPerfil {
   pais: string;
   email?: string;
   slug?: string;
+  avatar_url?: string;
 }
 
 export function generarSlug(nombre: string): string {
@@ -71,6 +72,7 @@ export function usePerfil() {
             pais: data.pais ?? "",
             email: user.email ?? undefined,
             slug: data.slug ?? undefined,
+            avatar_url: data.avatar_url ?? "",
           });
         } else {
           setPerfil(null);
@@ -126,6 +128,7 @@ export function usePerfil() {
           especialidad: final.especialidad,
           pais: final.pais,
           slug: final.slug ?? null,
+          avatar_url: final.avatar_url ?? "",
         });
       } else {
         localStorage.setItem(CLAVE_LOCAL, JSON.stringify(final));
@@ -136,9 +139,10 @@ export function usePerfil() {
     [user]
   );
 
-  const cerrarSesion = useCallback(() => {
+  const cerrarSesion = useCallback(async () => {
     localStorage.removeItem(CLAVE_LOCAL);
     setPerfil(null);
+    await supabase.auth.signOut();
   }, []);
 
   return { perfil, listo, elegirRol, guardar, cerrarSesion };

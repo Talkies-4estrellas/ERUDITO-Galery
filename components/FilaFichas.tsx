@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { fichas, type FichaArte } from "@/data/fichas";
+import type { FichaArte } from "@/data/fichas";
 import FichaObra from "@/components/FichaObra";
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
 
 export default function FilaFichas({
   titulo = "Obras destacadas",
-  lista = fichas,
+  lista = [],
 }: Props) {
   const pista = useRef<HTMLDivElement>(null);
 

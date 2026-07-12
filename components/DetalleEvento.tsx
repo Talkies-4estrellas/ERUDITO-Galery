@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Evento } from "@/data/eventos";
-import { fichas } from "@/data/fichas";
+import type { FichaArte } from "@/data/fichas";
 import FichaObra from "@/components/FichaObra";
 
 interface Cuenta {
@@ -80,8 +80,8 @@ const TIPO_CTA: Record<Evento["tipo"], string> = {
   Exposición: "Reservar entrada",
 };
 
-export default function DetalleEvento({ evento }: { evento: Evento }) {
-  const obrasDelEvento = fichas.filter((f) => evento.fichasIds.includes(f.id));
+export default function DetalleEvento({ evento, obras }: { evento: Evento; obras: FichaArte[] }) {
+  const obrasDelEvento = obras;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
