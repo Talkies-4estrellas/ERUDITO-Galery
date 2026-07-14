@@ -96,16 +96,25 @@ export default function FormAuth({ modo }: Props) {
         // Avanzar a selección de rol
         setPaso("rol");
       }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Error inesperado";
-      if (msg.includes("Invalid login credentials")) {
+    } catch (err: unknown) {
+      const e = err as { message?: unknown; code?: string; status?: number };
+      const raw = typeof e?.message === "string" ? e.message : "";
+      const msg = raw || (err instanceof Error ? err.message : "Error inesperado");
+      if (
+        msg.toLowerCase().includes("invalid login credentials") ||
+        e?.code === "invalid_credentials" ||
+        e?.status === 400
+      ) {
         setErrorClave("credenciales");
-      } else if (msg.includes("User already registered")) {
+      } else if (msg.includes("User already registered") || msg.includes("already registered")) {
         setErrorClave("general");
         setErrorMsg("Ya existe una cuenta con ese email. ¿Quieres iniciar sesión?");
+      } else if (msg.includes("Email not confirmed")) {
+        setErrorClave("general");
+        setErrorMsg("Debes confirmar tu email antes de iniciar sesión.");
       } else {
         setErrorClave("general");
-        setErrorMsg(msg);
+        setErrorMsg(msg || `Error ${e?.status ?? "desconocido"} (${e?.code ?? "sin código"})`);
       }
     } finally {
       setEnviando(false);

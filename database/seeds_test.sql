@@ -93,6 +93,25 @@ begin
     '', '', ''
   ) on conflict (id) do nothing;
 
+  -- ── Identidades (requerido para login email/password) ────
+  insert into auth.identities (
+    id, user_id, provider_id, identity_data, provider,
+    created_at, updated_at, last_sign_in_at
+  ) values
+    (gen_random_uuid(), uid_artista,   'artista@test.com',
+     jsonb_build_object('sub', uid_artista::text,   'email', 'artista@test.com'),
+     'email', now(), now(), now()),
+    (gen_random_uuid(), uid_comprador, 'comprador@test.com',
+     jsonb_build_object('sub', uid_comprador::text, 'email', 'comprador@test.com'),
+     'email', now(), now(), now()),
+    (gen_random_uuid(), uid_empresa,   'empresa@test.com',
+     jsonb_build_object('sub', uid_empresa::text,   'email', 'empresa@test.com'),
+     'email', now(), now(), now()),
+    (gen_random_uuid(), uid_admin,     'admin@test.com',
+     jsonb_build_object('sub', uid_admin::text,     'email', 'admin@test.com'),
+     'email', now(), now(), now())
+  on conflict (provider, provider_id) do nothing;
+
   -- ── Perfiles ─────────────────────────────────────────────
   insert into public.perfiles (id, rol, nombre, bio, especialidad, pais, slug, avatar_url)
   values
