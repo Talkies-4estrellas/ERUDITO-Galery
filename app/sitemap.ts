@@ -1,12 +1,13 @@
 import type { MetadataRoute } from "next";
-import { fichas } from "@/data/fichas";
-import { artistas } from "@/data/artistas";
+import { getArtistas, getFichas } from "@/lib/db";
 import { articulos } from "@/data/articulos";
 import { servicios } from "@/data/servicios";
 
 const BASE = "https://erudito-galery.vercel.app";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [artistas, fichas] = await Promise.all([getArtistas(), getFichas()]);
+
   const estaticas: MetadataRoute.Sitemap = [
     { url: BASE, priority: 1 },
     { url: `${BASE}/obras`, priority: 0.9 },

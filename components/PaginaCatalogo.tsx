@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { fichas, type TipoObra } from "@/data/fichas";
+import type { FichaArte, TipoObra } from "@/data/fichas";
 import FichaObra from "@/components/FichaObra";
 
 type Orden = "precio-asc" | "precio-desc" | "anio-asc" | "anio-desc" | "relevancia";
@@ -14,15 +14,17 @@ const TIPOS: { id: TipoObra | "todas"; label: string }[] = [
   { id: "Físico",          label: "Físico" },
 ];
 
-const MOVIMIENTOS = Array.from(new Set(fichas.map((f) => f.movimiento))).sort();
-const TECNICAS    = Array.from(new Set(fichas.map((f) => f.tecnica))).sort();
-const PRECIO_MAX  = Math.max(...fichas.map((f) => f.precio));
+export default function PaginaCatalogo({ fichas }: { fichas: FichaArte[] }) {
+  const MOVIMIENTOS = useMemo(() => Array.from(new Set(fichas.map((f) => f.movimiento))).sort(), [fichas]);
+  const TECNICAS    = useMemo(() => Array.from(new Set(fichas.map((f) => f.tecnica))).sort(), [fichas]);
+  const PRECIO_MAX  = useMemo(() => fichas.length ? Math.max(...fichas.map((f) => f.precio)) : 100000, [fichas]);
 
-export default function PaginaCatalogo() {
   const [tipo,       setTipo]       = useState<TipoObra | "todas">("todas");
   const [movimiento, setMovimiento] = useState("");
   const [tecnica,    setTecnica]    = useState("");
-  const [precioMax,  setPrecioMax]  = useState(PRECIO_MAX);
+  const [precioMax,  setPrecioMax]  = useState(() =>
+    fichas.length ? Math.max(...fichas.map((f) => f.precio)) : 100000
+  );
   const [orden,      setOrden]      = useState<Orden>("relevancia");
   const [busqueda,   setBusqueda]   = useState("");
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
@@ -53,7 +55,7 @@ export default function PaginaCatalogo() {
     }
 
     return lista;
-  }, [tipo, movimiento, tecnica, precioMax, orden, busqueda]);
+  }, [fichas, tipo, movimiento, tecnica, precioMax, orden, busqueda]);
 
   const hayFiltros = tipo !== "todas" || movimiento || tecnica || precioMax < PRECIO_MAX || busqueda;
 

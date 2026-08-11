@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePerfil } from "@/hooks/usePerfil";
+import { useToast } from "@/components/ToastProvider";
 import { supabase } from "@/lib/supabase";
 import PageFade from "@/components/PageFade";
 
@@ -24,6 +25,20 @@ interface EventoRow {
   lugar: string | null;
   modalidad: string | null;
   fecha_corta: { mes: string; dia: string } | null;
+}
+
+interface SolicitudRow {
+  id: number;
+  email: string;
+  clave: string;
+  rol: "artista" | "empresa";
+  nombre: string;
+  bio: string;
+  especialidad: string;
+  pais: string;
+  motivacion: string;
+  estado: "pendiente" | "aprobado" | "rechazado";
+  created_at: string;
 }
 
 // ── sub-componentes ───────────────────────────────────────────────────
@@ -61,11 +76,14 @@ function StatCard({
 // ── componente principal ──────────────────────────────────────────────
 export default function PanelAdmin() {
   const { perfil, listo, cerrarSesion } = usePerfil();
+  const { toast } = useToast();
 
-  const [stats, setStats] = useState<Stats>({ obras: 0, artistas: 0, eventos: 0, perfiles: 0 });
-  const [obras, setObras] = useState<ObraRow[]>([]);
-  const [eventos, setEventos] = useState<EventoRow[]>([]);
+  const [stats, setStats]               = useState<Stats>({ obras: 0, artistas: 0, eventos: 0, perfiles: 0 });
+  const [obras, setObras]               = useState<ObraRow[]>([]);
+  const [eventos, setEventos]           = useState<EventoRow[]>([]);
+  const [solicitudes, setSolicitudes]   = useState<SolicitudRow[]>([]);
   const [cargandoData, setCargandoData] = useState(true);
+  const [accionando, setAccionando]     = useState<number | null>(null);
 
   useEffect(() => {
     if (!listo) return;
@@ -75,21 +93,17 @@ export default function PanelAdmin() {
     }
 
     Promise.all([
-      supabase.from("obras").select("*", { count: "exact", head: true }),
+      supabase.from("obras").select("*",   { count: "exact", head: true }),
       supabase.from("artistas").select("*", { count: "exact", head: true }),
-      supabase.from("eventos").select("*", { count: "exact", head: true }),
+      supabase.from("eventos").select("*",  { count: "exact", head: true }),
       supabase.from("perfiles").select("*", { count: "exact", head: true }),
-      supabase
-        .from("obras")
-        .select("id_obra, titulo, anio, precio, tipo, artistas(nombre)")
-        .order("id_obra", { ascending: false })
-        .limit(10),
-      supabase
-        .from("eventos")
-        .select("id_evento, titulo, lugar, modalidad, fecha_corta")
-        .order("id_evento", { ascending: false })
-        .limit(5),
-    ]).then(([obrasC, artistasC, eventosC, perfilesC, obrasData, eventosData]) => {
+      supabase.from("obras").select("id_obra, titulo, anio, precio, tipo, artistas(nombre)")
+        .order("id_obra", { ascending: false }).limit(10),
+      supabase.from("eventos").select("id_evento, titulo, lugar, modalidad, fecha_corta")
+        .order("id_evento", { ascending: false }).limit(5),
+      supabase.from("solicitudes").select("*").eq("estado", "pendiente")
+        .order("created_at", { ascending: false }),
+    ]).then(([obrasC, artistasC, eventosC, perfilesC, obrasData, eventosData, solicitudesData]) => {
       setStats({
         obras:    obrasC.count    ?? 0,
         artistas: artistasC.count ?? 0,
@@ -98,9 +112,58 @@ export default function PanelAdmin() {
       });
       setObras((obrasData.data as ObraRow[]) ?? []);
       setEventos((eventosData.data as EventoRow[]) ?? []);
+      setSolicitudes((solicitudesData.data as SolicitudRow[]) ?? []);
       setCargandoData(false);
     });
   }, [listo, perfil]);
+
+  async function aprobar(s: SolicitudRow) {
+    setAccionando(s.id);
+    try {
+      const slug =
+        s.rol === "empresa"
+          ? s.nombre.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+              .replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").slice(0, 50)
+          : null;
+
+      const { error: errInsert } = await supabase.from("usuarios").insert({
+        email: s.email, clave: s.clave, rol: s.rol,
+        nombre: s.nombre, bio: s.bio, especialidad: s.especialidad,
+        pais: s.pais, avatar_url: "", slug,
+      });
+
+      if (errInsert && errInsert.code !== "23505") throw errInsert;
+
+      await supabase.from("solicitudes")
+        .update({ estado: "aprobado", revisado_at: new Date().toISOString() })
+        .eq("id", s.id);
+
+      setSolicitudes((prev) => prev.filter((x) => x.id !== s.id));
+      toast(`${s.nombre} aprobado`, { icono: "✓" });
+    } catch (err) {
+      console.error("Error al aprobar:", err);
+      toast("Error al aprobar la solicitud", { icono: "✗" });
+    } finally {
+      setAccionando(null);
+    }
+  }
+
+  async function rechazar(s: SolicitudRow) {
+    setAccionando(s.id);
+    try {
+      await supabase.from("solicitudes")
+        .update({ estado: "rechazado", revisado_at: new Date().toISOString() })
+        .eq("id", s.id);
+
+      setSolicitudes((prev) => prev.filter((x) => x.id !== s.id));
+      toast(`Solicitud de ${s.nombre} rechazada`, { icono: "✗" });
+    } catch (err) {
+      console.error("Error al rechazar:", err);
+      toast("Error al rechazar la solicitud", { icono: "✗" });
+    } finally {
+      setAccionando(null);
+    }
+  }
 
   // ── estados de carga / acceso ──────────────────────────────────────
   if (!listo || cargandoData) return <Spinner />;
@@ -133,11 +196,11 @@ export default function PanelAdmin() {
   ];
 
   const acciones = [
-    { label: "Catálogo de obras",  href: "/obras",    icono: "🖼️" },
-    { label: "Directorio artistas",href: "/artistas", icono: "👤" },
-    { label: "Agenda de eventos",  href: "/eventos",  icono: "📅" },
-    { label: "Página principal",   href: "/",         icono: "🏠" },
-    { label: "Mi perfil",          href: "/perfil",   icono: "⚙️" },
+    { label: "Catálogo de obras",   href: "/obras",    icono: "🖼️" },
+    { label: "Directorio artistas", href: "/artistas", icono: "👤" },
+    { label: "Agenda de eventos",   href: "/eventos",  icono: "📅" },
+    { label: "Página principal",    href: "/",         icono: "🏠" },
+    { label: "Mi perfil",           href: "/perfil",   icono: "⚙️" },
   ];
 
   const modalidadColor: Record<string, string> = {
@@ -145,6 +208,11 @@ export default function PanelAdmin() {
     Virtual:    "text-sky-400 bg-sky-400/10",
     Híbrido:    "text-violet-400 bg-violet-400/10",
     "En línea": "text-sky-400 bg-sky-400/10",
+  };
+
+  const rolColor: Record<string, string> = {
+    artista: "bg-amber-400/10 text-amber-400",
+    empresa: "bg-violet-400/10 text-violet-400",
   };
 
   return (
@@ -173,6 +241,77 @@ export default function PanelAdmin() {
           {statCards.map((s) => (
             <StatCard key={s.label} {...s} />
           ))}
+        </div>
+
+        {/* ── Solicitudes pendientes ── */}
+        <div className="mt-10">
+          <div className="mb-4 flex items-center gap-3">
+            <h2 className="text-sm font-semibold text-white">Solicitudes pendientes</h2>
+            {solicitudes.length > 0 && (
+              <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-zinc-900">
+                {solicitudes.length}
+              </span>
+            )}
+          </div>
+
+          {solicitudes.length === 0 ? (
+            <div className="rounded-2xl bg-zinc-900 px-4 py-8 text-center ring-1 ring-white/10">
+              <p className="text-sm text-zinc-600">Sin solicitudes pendientes</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {solicitudes.map((s) => (
+                <div key={s.id} className="rounded-2xl bg-zinc-900 p-5 ring-1 ring-white/10">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate font-semibold text-zinc-200">
+                          {s.nombre || "Sin nombre"}
+                        </p>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${rolColor[s.rol]}`}>
+                          {s.rol}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 truncate text-xs text-zinc-500">{s.email}</p>
+                      {s.especialidad && (
+                        <p className="mt-1 text-xs text-zinc-400">{s.especialidad}</p>
+                      )}
+                      {s.pais && (
+                        <p className="text-xs text-zinc-500">{s.pais}</p>
+                      )}
+                      {s.motivacion && (
+                        <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-zinc-500">
+                          &ldquo;{s.motivacion}&rdquo;
+                        </p>
+                      )}
+                      <p className="mt-2 text-[10px] text-zinc-600">
+                        {new Date(s.created_at).toLocaleDateString("es-MX", {
+                          day: "numeric", month: "long", year: "numeric",
+                        })}
+                      </p>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col gap-2">
+                      <button
+                        onClick={() => aprobar(s)}
+                        disabled={accionando === s.id}
+                        className="rounded-xl bg-emerald-400/10 px-3 py-2 text-xs font-semibold text-emerald-400 ring-1 ring-emerald-400/20 transition hover:bg-emerald-400/20 disabled:opacity-50"
+                      >
+                        {accionando === s.id ? "…" : "Aprobar"}
+                      </button>
+                      <button
+                        onClick={() => rechazar(s)}
+                        disabled={accionando === s.id}
+                        className="rounded-xl bg-red-400/10 px-3 py-2 text-xs font-semibold text-red-400 ring-1 ring-red-400/20 transition hover:bg-red-400/20 disabled:opacity-50"
+                      >
+                        {accionando === s.id ? "…" : "Rechazar"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── Tabla obras ── */}
@@ -207,15 +346,15 @@ export default function PanelAdmin() {
                       <td className="px-4 py-3 text-xs text-zinc-600">{o.id_obra}</td>
                       <td className="px-4 py-3">
                         <span className="font-medium text-zinc-200">{o.titulo}</span>
-                        {o.anio && (
-                          <span className="ml-2 text-xs text-zinc-500">{o.anio}</span>
-                        )}
+                        {o.anio && <span className="ml-2 text-xs text-zinc-500">{o.anio}</span>}
                       </td>
                       <td className="px-4 py-3 text-zinc-400">
                         {o.artistas?.nombre ?? <span className="text-zinc-600">—</span>}
                       </td>
                       <td className="px-4 py-3 font-semibold text-amber-400">
-                        {o.precio != null ? `$${o.precio.toLocaleString("es-MX")}` : <span className="text-zinc-600">—</span>}
+                        {o.precio != null
+                          ? `$${o.precio.toLocaleString("es-MX")}`
+                          : <span className="text-zinc-600">—</span>}
                       </td>
                       <td className="px-4 py-3">
                         {o.tipo ? (
@@ -247,10 +386,7 @@ export default function PanelAdmin() {
               </p>
             ) : (
               eventos.map((e) => (
-                <div
-                  key={e.id_evento}
-                  className="flex gap-4 rounded-2xl bg-zinc-900 p-4 ring-1 ring-white/10"
-                >
+                <div key={e.id_evento} className="flex gap-4 rounded-2xl bg-zinc-900 p-4 ring-1 ring-white/10">
                   {e.fecha_corta && (
                     <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-emerald-400/10 text-center">
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">

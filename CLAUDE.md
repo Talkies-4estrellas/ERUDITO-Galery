@@ -25,10 +25,12 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `app/artista/[id]/page.tsx` — perfil de artista (SSG): compone `PerfilArtista`. Misma regla.
 - `app/layout.tsx` — raíz: importa `Footer` para que aparezca en todas las páginas.
 - `app/artistas/page.tsx` — compone `PaginaArtistas` (server, sin filtros aún).
-- `app/catalogo/page.tsx` — compone `PaginaCatalogo` (client, filtros: búsqueda/tipo/movimiento/técnica/precio/orden).
+- `app/catalogo/page.tsx` — async server; fetcha `getFichas()` y pasa como prop a `PaginaCatalogo` (client, filtros: búsqueda/tipo/movimiento/técnica/precio/orden).
+- `app/favoritos/page.tsx` — async server; fetcha `getFichas()` y pasa como prop a `PaginaFavoritos` (client, lee de `useFavoritos`).
+- `app/comparar/page.tsx` — async server; fetcha `getFichas()` y pasa como prop a `PaginaComparar`.
+- `app/privado/page.tsx` — async server; fetcha `getFichas()` y pasa como prop a `PaginaPrivado` (requiere sesión).
 - `app/servicios/page.tsx` — compone `PaginaServicios` (anclas por servicio, enlaza a `/servicios/[slug]`).
 - `app/servicios/[slug]/page.tsx` — detalle de servicio (SSG): compone `DetalleServicio`.
-- `app/favoritos/page.tsx` — compone `PaginaFavoritos` (client, lee de `useFavoritos`).
 - `app/login/page.tsx` — compone `FormAuth` en modo `"login"`.
 - `app/registro/page.tsx` — compone `FormAuth` en modo `"registro"` (flujo 3 pasos).
 - `app/privado/page.tsx` — compone `PaginaPrivado` (requiere sesión).
@@ -42,16 +44,20 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `lib/supabase.ts` — cliente Supabase con inicialización lazy (Proxy). `getSupabase()` solo se llama en runtime, nunca en build, para evitar crash en Vercel.
 - `hooks/useAuth.ts` — sesión Supabase (`user`, `cargando`, `entrar`, `registrar`, `salir`). El `useEffect` está envuelto en try/catch para no romper páginas si faltan las vars de entorno.
 - `hooks/usePerfil.ts` — perfil del usuario (`rol`, `nombre`, `bio`, `especialidad`, `pais`, `email`, `slug`). Lee/escribe en tabla `perfiles` de Supabase si hay sesión activa; cae a `localStorage` si no. Expone `elegirRol(rol, email?)`, `guardar(datos)`, `cerrarSesion()`.
-- `components/FormAuth.tsx` — formulario auth de 3 pasos: (1) email+contraseña, (2) selección de rol (artista/coleccionista/empresa), (3) instrucciones de confirmación de email con reenvío. Modo `"login"` va directo tras autenticar.
+- `components/FormAuth.tsx` — registro multi-rol sin confirmación de email:
+  - **comprador** → guarda directo en tabla `usuarios` → redirige a `/perfil`
+  - **artista / empresa** → formulario de evaluación (nombre, especialidad, país, bio, motivación) → guarda en `solicitudes` → pantalla "Solicitud enviada"
+  - **login**: verifica en orden `accesos_prueba` (localStorage) → `usuarios` → `solicitudes` → Supabase Auth
+  - Incluye botón ojito (toggle mostrar/ocultar contraseña)
 - `components/BotonAuth.tsx` — en Navbar: muestra "Entrar" si no hay sesión, o avatar amber con dropdown (Mi perfil / Área privada / Administración / Cerrar sesión) si hay sesión.
-- `components/AuthGuard.tsx` — redirige a `/login` si `!user && !cargando`; muestra spinner mientras carga.
+- `components/AuthGuard.tsx` — acepta dos tipos de sesión: Supabase Auth (`user` del hook) O sesión de prueba en `localStorage` (clave `erudito-perfil`). Redirige a `/login` solo si ninguna de las dos existe.
 - `components/PaginaPrivado.tsx` — vista bloqueada si no autenticado; contenido premium si autenticado.
-- `components/PanelAdmin.tsx` — panel de administración. `ADMIN_EMAILS = ["firestarshyni@gmail.com"]`.
+- `components/PanelAdmin.tsx` — panel de administración. `ADMIN_EMAILS = ["firestarshyni@gmail.com"]`. Incluye sección "Solicitudes pendientes" con badge numérico, tarjetas por solicitante y botones Aprobar (inserta en `usuarios` + marca estado) / Rechazar (marca estado) con toast de confirmación.
 
 ## Componentes
 
-- `components/Navbar.tsx` — barra (client). Layout 3 columnas (`grid-cols-[1fr_auto_1fr]`): menús izquierda / logo centrado / menús derecha + acciones. Dropdowns en escritorio (`lg`); hamburguesa en móvil. Incluye buscador (`Ctrl+K`), favoritos con badge, `BotonAuth` y `BotonTema`.
-- `components/BuscadorModal.tsx` — modal de búsqueda (client). Recibe `open`, `onClose`, `query`, `setQuery` del Navbar. Busca en `fichas` y `artistas` al instante; Enter navega al primer resultado.
+- `components/Navbar.tsx` — barra (client). Layout 3 columnas (`grid-cols-[1fr_auto_1fr]`): menús izquierda / logo centrado / menús derecha + acciones. Dropdowns en escritorio (`lg`); hamburguesa en móvil. Incluye buscador (`Ctrl+K`), favoritos con badge, `BotonAuth` y `BotonTema`. Fetcha `getArtistas()` y `getFichas()` en `useEffect` y los pasa como props a `BuscadorModal`.
+- `components/BuscadorModal.tsx` — modal de búsqueda (client). Props: `open`, `onClose`, `query`, `setQuery`, `artistas: Artista[]`, `fichas: FichaArte[]` (recibidos desde Navbar via Supabase). Busca al instante; Enter navega al primer resultado.
 - `components/Footer.tsx` — footer (client): 4 columnas (Marca, Explorar, Servicios, Newsletter). El formulario de newsletter muestra confirmación amber al suscribirse. Enlaces de Explorar/Servicios apuntan a las páginas reales (`/artistas`, `/catalogo`, `/favoritos`, `/servicios#...`).
 - `components/BotonFavorito.tsx` — botón corazón (client, prop `id`, `tamano: "sm" | "lg"`). Usa `useFavoritos`; `e.preventDefault()`/`stopPropagation()` para no disparar el `Link` padre.
 - `components/PaginaArtistas.tsx` / `PaginaCatalogo.tsx` / `PaginaServicios.tsx` / `PaginaFavoritos.tsx` — contenido de esas páginas (ver arriba).
@@ -76,35 +82,21 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 - Esquema completo en `database/schema.sql`.
 - Tabla `perfiles` — vinculada a `auth.users` (FK uuid). Campos: `rol`, `nombre`, `bio`, `especialidad`, `pais`, `slug`. RLS activo: cada usuario solo ve/edita su fila.
+- Tabla `artistas` — 13 artistas migrados (ids 5–17). Columnas: `id_artista`, `nombre`, `vida`, `origen`, `foto_perfil`, `biografia`. RLS: select público.
+- Tabla `obras` — 15 obras migradas (ids 9–23). Columnas: `id_obra`, `titulo`, `anio`, `descripcion`, `estrellas`, `imagen_principal`, `id_artista`, `tamano`, `color`, `movimiento`, `tecnica`, `precio`, `tipo`, `perspectivas` (jsonb), `grafica_valor` (jsonb), `grafica_interes` (jsonb), `certificaciones` (jsonb). RLS: select público.
+- Tabla `usuarios` — usuarios registrados sin Supabase Auth. PK: `email`. Campos: `clave`, `rol` (artista/comprador/empresa), `nombre`, `bio`, `especialidad`, `pais`, `slug`, `avatar_url`, `created_at`. RLS: select+insert público (anon).
+- Tabla `solicitudes` — solicitudes de acceso de artistas y empresas en evaluación. Campos: `id` serial, `email` unique, `clave`, `rol`, `nombre`, `bio`, `especialidad`, `pais`, `motivacion`, `estado` (pendiente/aprobado/rechazado), `created_at`, `revisado_at`.
 - Bucket Storage `obras` — público, acepta INSERT/SELECT anon+authenticated. Usado para subir imágenes WebP de obras.
 - Confirmación de email **desactivada** en Supabase (Authentication → Providers → Email).
-- El resto de tablas (artistas, obras, clientes, pedidos, etc.) están definidas en `schema.sql` pero aún no conectadas; los datos viven en `data/fichas.ts` y archivos afines.
+- `lib/db.ts` — funciones `getArtistas()` y `getFichas()` con mappers `mapArtista` / `mapFicha`. Puente entre nombres de columna BD (`id_artista`, `foto_perfil`, etc.) y los tipos TypeScript (`id`, `foto`, etc.).
 
 ## Datos
 
 - `data/navegacion.ts` — fuente única del menú. Los items de Obras ya usan query params reales (`?tecnica=oleo`, `?movimiento=muralismo`, `?tamano=grande`, etc.). Artistas/Catálogo/Servicios ya enlazan a `/artistas`, `/catalogo#...`, `/servicios#...` en vez de `#`.
 - `data/eventos.ts` — 4 eventos de muestra (Subasta/Exposición × En línea/Presencial) con fechas relativas a 2026. Cada uno: `fechaCorta` (día+mes para el badge), `lugar`, `imagen`, `descripcion`.
-- `data/obras.ts` — obras del carrusel (4 entradas, independientes de fichas).
-- `data/artistas.ts` — 7 artistas (orden del array crítico para índices en fichas.ts):
-  - `artistas[0]` = Revolution Canvas (id 7)
-  - `artistas[1]` = Ideas Creativas (id 6)
-  - `artistas[2]` = Atelier Geométrico (id 8)
-  - `artistas[3]` = Merck Rathke (id 5)
-  - `artistas[4]` = Arte & Memorias (id 9)
-  - `artistas[5]` = HAUCOZE (id 10)
-  - `artistas[6]` = UTTCMK (id 11)
-  - **Todos usan fotos `picsum.photos` de placeholder** — pendiente reemplazar con fotos reales.
-  - **Regla crítica**: siempre agregar nuevos artistas al FINAL del array para no desplazar índices existentes.
-- `data/fichas.ts` — 9 fichas (ids 9-17), todas con imágenes reales en `public/obras/`:
-  - Ficha 9 — "Underground Fantasy" (Merck Rathke) → `artistas[3]` → `/obras/merck-rathke/`
-  - Ficha 10 — "Colibrí en Flor" (Ideas Creativas) → `artistas[1]` → `/obras/colibri-digital/`
-  - Ficha 11 — "La Creación — Pop Art" (Revolution Canvas) → `artistas[0]` → `/obras/revolution-canvas/`
-  - Ficha 12 — "Noche Estrellada sobre Bellas Artes" (Revolution Canvas) → `artistas[0]` → `/obras/bellas-artes-noche/`
-  - Ficha 13 — "El Ángel — Paseo de la Reforma" (Revolution Canvas) → `artistas[0]` → `/obras/angel-reforma/`
-  - Ficha 14 — "Dúo Venado Dorado" (Atelier Geométrico) → `artistas[2]` → `/obras/venado-dorado/`
-  - Ficha 15 — "Árbol de Huellas — Amor y Unión" (Arte & Memorias) → `artistas[4]` → `/obras/arbol-huellas/`
-  - Ficha 16 — "La Banda de Rock" (HAUCOZE) → `artistas[5]` → `/obras/banda-rock-haucoze/`
-  - Ficha 17 — "El Lector" (UTTCMK) → `artistas[6]` → `/obras/el-lector-uttcmk/`
+- `data/obras.ts` — 4 obras estáticas del carrusel de inicio. **Pendiente migrar** a Supabase con columna `vistas` para mostrar las más vistas dinámicamente.
+- `data/artistas.ts` — **SOLO fuente de tipos** (`interface Artista`). Los 13 artistas ya están en Supabase tabla `artistas`. No usar para datos en runtime.
+- `data/fichas.ts` — **SOLO fuente de tipos** (`interface FichaArte`, `PuntoGrafica`, etc.). Las 15 obras ya están en Supabase tabla `obras`. No usar para datos en runtime.
 - **Moneda**: todos los precios y gráficas en MXN (pesos mexicanos). Formato `toLocaleString("es-MX")`.
 - `data/servicios.ts` — 6 servicios con slug, titulo, descripcion, detalle, beneficios, proceso (4 pasos), desde, icono, imagen, acento. Helper `getServicio(slug)`. Cada una tiene: `id`, `titulo`, `anio`, `descripcion`, `estrellas`, `imagen`, `artista`, `perspectivas` (4 vistas derivadas), `tamano`, `color`, `movimiento`, `tecnica`, `precio` (USD real), `tipo` ("Físico" | "JPG Certificado" | "Impresión Oficial"), `graficaValor` (12 puntos mensuales en USD reales), `graficaInteres` (7 puntos 0-100), `certificaciones` (lista única por obra). Helper `obrasDeArtista(id)`.
 
@@ -143,14 +135,14 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 ## Pendientes
 
-- El carrusel de inicio (`data/obras.ts`) no enlaza al detalle; unificar con `data/fichas.ts` o enlazar su botón "Ver más" a `/obra/[id]`.
-- Flujo de compra real (botón COMPRAR es decorativo). Integrar Stripe.
-- Reemplazar fotos de perfil de artista (picsum.photos) — **7 fotos pendientes** para Revolution Canvas, Ideas Creativas, Atelier Geométrico, Merck Rathke, Arte & Memorias, HAUCOZE, UTTCMK. Flujo: usuario deja imagen en `Pruebas/` → asistente la copia a `public/artistas/[slug]/` → actualiza `foto` en `artistas.ts`.
+- **Carousel** (`data/obras.ts`) — migrar a Supabase con columna `vistas`. Plan: incrementar `vistas` al entrar a `/obra/[id]`, home muestra top 4 por vistas. Botón "Ver más" sigue sin href.
+- **Notificaciones por email** — avisar al artista/empresa cuando su solicitud es aprobada o rechazada (Resend o SendGrid pendiente).
+- **Motivo de rechazo** — el admin no puede añadir nota al rechazar una solicitud (campo `motivo` pendiente).
+- Flujo de compra real (botón COMPRAR es decorativo). Integrar Mercado Pago (Route Handlers + service role, igual que Order Express).
+- Reemplazar fotos de perfil de artista (picsum.photos) — pendiente fotos reales. Flujo: usuario deja imagen en `Pruebas/` → asistente la copia a `public/artistas/[slug]/` → actualiza `foto_perfil` en Supabase tabla `artistas`.
 - El botón "Más información" de `SeccionEventos` es decorativo (no hay páginas `/eventos/[id]` todavía).
 - Quedan en `#`: Eventos, Cocina y Alimento, Blog, Newsletter, Contacto — sin página propia todavía.
-- Filtros de `/artistas` (Artesanos / En línea / Presenciales) son decorativos: `data/artistas.ts` no tiene campo de categoría aún.
-- Migrar obras y artistas de `data/fichas.ts` / `data/artistas.ts` a tablas Supabase.
-- Notificaciones por email (Resend o SendGrid).
+- Filtros de `/artistas` (Artesanos / En línea / Presenciales) son decorativos: tabla `artistas` no tiene campo de categoría aún.
 - Página `/perfil` — formulario de edición de nombre, bio, especialidad, país (ya existe `guardar()` en `usePerfil`).
 
 ## Notas del entorno (Windows)

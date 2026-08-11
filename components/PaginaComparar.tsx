@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { fichas, type FichaArte } from "@/data/fichas";
+import type { FichaArte } from "@/data/fichas";
 import { useComparacion } from "@/hooks/useComparacion";
 
 const MES_ACTUAL = 5;
@@ -31,7 +31,7 @@ function filaComparacion(
   );
 }
 
-export default function PaginaComparar() {
+export default function PaginaComparar({ fichas }: { fichas: FichaArte[] }) {
   const { seleccion, alternar, limpiar, listo } = useComparacion();
   const obras = fichas.filter((f) => seleccion.includes(f.id));
 

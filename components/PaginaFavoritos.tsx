@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { fichas } from "@/data/fichas";
+import type { FichaArte } from "@/data/fichas";
 import { useFavoritos } from "@/hooks/useFavoritos";
 import FichaObra from "@/components/FichaObra";
 
-export default function PaginaFavoritos() {
+export default function PaginaFavoritos({ fichas }: { fichas: FichaArte[] }) {
   const { favoritos, listo } = useFavoritos();
   const obras = fichas.filter((f) => favoritos.includes(f.id));
 

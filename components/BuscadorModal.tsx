@@ -4,17 +4,19 @@ import { useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { fichas } from "@/data/fichas";
-import { artistas } from "@/data/artistas";
+import type { FichaArte } from "@/data/fichas";
+import type { Artista } from "@/data/artistas";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   query: string;
   setQuery: (q: string) => void;
+  artistas: Artista[];
+  fichas: FichaArte[];
 }
 
-export default function BuscadorModal({ open, onClose, query, setQuery }: Props) {
+export default function BuscadorModal({ open, onClose, query, setQuery, artistas, fichas }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 

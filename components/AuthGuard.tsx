@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -12,14 +12,25 @@ interface Props {
 export default function AuthGuard({ children, redirigirA = "/login" }: Props) {
   const { user, cargando } = useAuth();
   const router = useRouter();
+  const [localSesion, setLocalSesion] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!cargando && !user) {
+    try {
+      setLocalSesion(!!localStorage.getItem("erudito-perfil"));
+    } catch {
+      setLocalSesion(false);
+    }
+  }, []);
+
+  const autenticado = !!user || !!localSesion;
+
+  useEffect(() => {
+    if (!cargando && localSesion !== null && !autenticado) {
       router.replace(redirigirA);
     }
-  }, [user, cargando, router, redirigirA]);
+  }, [autenticado, cargando, localSesion, router, redirigirA]);
 
-  if (cargando) {
+  if (cargando || localSesion === null) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <svg className="size-8 animate-spin text-amber-400" viewBox="0 0 24 24" fill="none">
@@ -30,7 +41,7 @@ export default function AuthGuard({ children, redirigirA = "/login" }: Props) {
     );
   }
 
-  if (!user) return null;
+  if (!autenticado) return null;
 
   return <>{children}</>;
 }

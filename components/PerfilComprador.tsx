@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePerfil, type DatosPerfil } from "@/hooks/usePerfil";
 import { useFavoritos } from "@/hooks/useFavoritos";
 import { useComparacion } from "@/hooks/useComparacion";
-import { fichas } from "@/data/fichas";
+import { getFichas } from "@/lib/db";
+import type { FichaArte } from "@/data/fichas";
 import FichaObra from "@/components/FichaObra";
 
 function iniciales(nombre: string): string {
@@ -22,6 +23,11 @@ export default function PerfilComprador() {
   const { perfil, guardar, cerrarSesion } = usePerfil();
   const { favoritos } = useFavoritos();
   const { seleccion: comparando } = useComparacion();
+  const [fichas, setFichas] = useState<FichaArte[]>([]);
+
+  useEffect(() => {
+    getFichas().then(setFichas).catch(() => {});
+  }, []);
 
   const [editando, setEditando] = useState(false);
   const [form, setForm] = useState<DatosPerfil | null>(null);

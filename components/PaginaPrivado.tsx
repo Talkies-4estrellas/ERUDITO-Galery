@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { fichas } from "@/data/fichas";
+import type { FichaArte } from "@/data/fichas";
 import { useAuth } from "@/hooks/useAuth";
 import FichaObra from "@/components/FichaObra";
 import PageFade from "@/components/PageFade";
-
-const OBRAS_PRIVADAS = fichas.filter((f) => f.precio > 2000);
 
 const BENEFICIOS = [
   { icono: "🖼️", titulo: "Obras exclusivas",    desc: "Piezas de alto valor no disponibles en el catálogo público." },
@@ -15,8 +13,9 @@ const BENEFICIOS = [
   { icono: "🤝", titulo: "Asesor personal",     desc: "Un curador dedicado a tu colección." },
 ];
 
-export default function PaginaPrivado() {
+export default function PaginaPrivado({ fichas }: { fichas: FichaArte[] }) {
   const { user, salir } = useAuth();
+  const OBRAS_PRIVADAS = fichas.filter((f) => f.precio > 2000);
 
   if (!user) {
     return (
