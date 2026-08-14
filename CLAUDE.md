@@ -7,13 +7,20 @@ Galería / marketplace de arte. Sitio en español, tema oscuro (zinc-950) con ac
 ## Stack
 
 - Next.js 16 (App Router, Turbopack), TypeScript, Tailwind CSS v4, npm.
-- Supabase (Auth + PostgreSQL + Storage). Variables de entorno: `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` en Vercel y `.env.local`.
-- Contenido estático en `data/`; perfiles de usuario en tabla `perfiles` de Supabase.
+- Supabase (Auth + PostgreSQL + Storage + Realtime).
+- Mercado Pago SDK v3 (`mercadopago`) — checkout Preference + webhook.
+- Resend — email transaccional vía `fetch` (no SDK) desde Route Handlers.
+- Variables de entorno necesarias (`.env.local` y Vercel):
+  - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — cliente público
+  - `SUPABASE_SERVICE_ROLE_KEY` — solo Route Handlers (nunca cliente)
+  - `RESEND_API_KEY` — notificaciones email
+  - `MP_ACCESS_TOKEN` — Mercado Pago
+  - `NEXT_PUBLIC_URL` — URL base de producción (para webhook MP y emails)
 
 ## Comandos
 
 ```
-npm run dev     # servidor de desarrollo (puerto 3000)
+npm run dev     # servidor de desarrollo (puerto 3002)
 npm run build   # build de producción (úsalo para verificar tipos y compilación)
 ```
 
@@ -52,17 +59,19 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `components/BotonAuth.tsx` — en Navbar: muestra "Entrar" si no hay sesión, o avatar amber con dropdown (Mi perfil / Área privada / Administración / Cerrar sesión) si hay sesión.
 - `components/AuthGuard.tsx` — acepta dos tipos de sesión: Supabase Auth (`user` del hook) O sesión de prueba en `localStorage` (clave `erudito-perfil`). Redirige a `/login` solo si ninguna de las dos existe.
 - `components/PaginaPrivado.tsx` — vista bloqueada si no autenticado; contenido premium si autenticado.
-- `components/PanelAdmin.tsx` — panel de administración. `ADMIN_EMAILS = ["firestarshyni@gmail.com"]`. Incluye sección "Solicitudes pendientes" con badge numérico, tarjetas por solicitante y botones Aprobar (inserta en `usuarios` + marca estado) / Rechazar (marca estado) con toast de confirmación.
+- `components/PanelAdmin.tsx` — panel de administración. `ADMIN_EMAILS = ["firestarshyni@gmail.com"]`. Incluye sección "Solicitudes pendientes" con badge numérico, tarjetas por solicitante y botones Aprobar/Rechazar con toast de confirmación. Tras aprobar/rechazar llama a `/api/notificar-solicitud` para enviar email al solicitante. **Realtime activo**: suscripción `postgres_changes` en tabla `solicitudes` (INSERT) — nuevas solicitudes aparecen en vivo con toast.
 
 ## Componentes
 
-- `components/Navbar.tsx` — barra (client). Layout 3 columnas (`grid-cols-[1fr_auto_1fr]`): menús izquierda / logo centrado / menús derecha + acciones. Dropdowns en escritorio (`lg`); hamburguesa en móvil. Incluye buscador (`Ctrl+K`), favoritos con badge, `BotonAuth` y `BotonTema`. Fetcha `getArtistas()` y `getFichas()` en `useEffect` y los pasa como props a `BuscadorModal`.
-- `components/BuscadorModal.tsx` — modal de búsqueda (client). Props: `open`, `onClose`, `query`, `setQuery`, `artistas: Artista[]`, `fichas: FichaArte[]` (recibidos desde Navbar via Supabase). Busca al instante; Enter navega al primer resultado.
+- `components/Navbar.tsx` — barra (client). Layout 3 columnas (`grid-cols-[1fr_auto_1fr]`): menús izquierda / logo centrado / menús derecha + acciones. Dropdowns en escritorio (`lg`); hamburguesa en móvil. Incluye buscador (`Ctrl+K`), favoritos con badge, `BotonAuth` y `BotonTema`. **No pre-carga artistas/fichas** — la búsqueda es lazy server-side.
+- `components/BuscadorModal.tsx` — modal de búsqueda (client). Props: `open`, `onClose`, `query`, `setQuery`. Debounce 300ms + AbortController — llama a `/api/buscar?q=X` solo al escribir ≥2 chars. Spinner en ícono mientras fetcha. No recibe artistas/fichas como props.
 - `components/Footer.tsx` — footer (client): 4 columnas (Marca, Explorar, Servicios, Newsletter). El formulario de newsletter muestra confirmación amber al suscribirse. Enlaces de Explorar/Servicios apuntan a las páginas reales (`/artistas`, `/catalogo`, `/favoritos`, `/servicios#...`).
 - `components/BotonFavorito.tsx` — botón corazón (client, prop `id`, `tamano: "sm" | "lg"`). Usa `useFavoritos`; `e.preventDefault()`/`stopPropagation()` para no disparar el `Link` padre.
 - `components/PaginaArtistas.tsx` / `PaginaCatalogo.tsx` / `PaginaServicios.tsx` / `PaginaFavoritos.tsx` — contenido de esas páginas (ver arriba).
 - `components/SeccionEventos.tsx` — fila horizontal (server, scroll nativo sin JS) de `data/eventos.ts`: badge de fecha, tipo (Subasta/Exposición), modalidad, lugar, descripción y botón "Más información" (decorativo).
-- `components/Carousel.tsx` — carrusel (client): auto-avance 6 s, pausa con hover, flechas, puntos.
+- `components/Carousel.tsx` — carrusel (client): auto-avance 6 s, pausa con hover, flechas, puntos. Recibe `obras: Obra[]` como prop (top 4 por `vistas` desde Supabase). Botón "Ver más" → `<Link href="/obra/[id]">`.
+- `components/RegistrarVisita.tsx` — client component invisible. Dispara `incrementarVistas(id)` en `useEffect` al entrar a `/obra/[id]`. No renderiza nada.
+- `components/SeccionResenas.tsx` — sección de comentarios/estrellas bajo cada obra. `agregar()` es async (POST a `/api/resenas`). Muestra "Publicando…" y bloquea el botón durante el envío. Muestra error de la API (ej. reseña duplicada por email).
 - `components/FichaObra.tsx` — tarjeta de obra: imagen 3:4, título/año, descripción (hover expande), estrellas, cápsula del artista. Prop `fluida` (true = `w-full` para cuadrícula, false = ancho fijo para fila).
 - `components/FilaFichas.tsx` — fila horizontal scroll-snap (client). Recibe `titulo` y `lista: FichaArte[]`.
 - `components/GaleriaObras.tsx` — galería (client + Suspense interno). Filtros OR/AND con `useSearchParams` como fuente de verdad: URL `?tamano=grande&movimiento=muralismo` activa chips. `router.replace` sincroniza URL al toglear.
@@ -81,22 +90,26 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 ## Base de datos (Supabase)
 
 - Esquema completo en `database/schema.sql`.
-- Tabla `perfiles` — vinculada a `auth.users` (FK uuid). Campos: `rol`, `nombre`, `bio`, `especialidad`, `pais`, `slug`. RLS activo: cada usuario solo ve/edita su fila.
-- Tabla `artistas` — 13 artistas migrados (ids 5–17). Columnas: `id_artista`, `nombre`, `vida`, `origen`, `foto_perfil`, `biografia`. RLS: select público.
-- Tabla `obras` — 15 obras migradas (ids 9–23). Columnas: `id_obra`, `titulo`, `anio`, `descripcion`, `estrellas`, `imagen_principal`, `id_artista`, `tamano`, `color`, `movimiento`, `tecnica`, `precio`, `tipo`, `perspectivas` (jsonb), `grafica_valor` (jsonb), `grafica_interes` (jsonb), `certificaciones` (jsonb). RLS: select público.
-- Tabla `usuarios` — usuarios registrados sin Supabase Auth. PK: `email`. Campos: `clave`, `rol` (artista/comprador/empresa), `nombre`, `bio`, `especialidad`, `pais`, `slug`, `avatar_url`, `created_at`. RLS: select+insert público (anon).
-- Tabla `solicitudes` — solicitudes de acceso de artistas y empresas en evaluación. Campos: `id` serial, `email` unique, `clave`, `rol`, `nombre`, `bio`, `especialidad`, `pais`, `motivacion`, `estado` (pendiente/aprobado/rechazado), `created_at`, `revisado_at`.
-- Bucket Storage `obras` — público, acepta INSERT/SELECT anon+authenticated. Usado para subir imágenes WebP de obras.
-- Confirmación de email **desactivada** en Supabase (Authentication → Providers → Email).
-- `lib/db.ts` — funciones `getArtistas()` y `getFichas()` con mappers `mapArtista` / `mapFicha`. Puente entre nombres de columna BD (`id_artista`, `foto_perfil`, etc.) y los tipos TypeScript (`id`, `foto`, etc.).
+- Tabla `perfiles` — vinculada a `auth.users` (FK uuid). Campos: `rol`, `nombre`, `bio`, `especialidad`, `pais`, `slug`. RLS activo.
+- Tabla `artistas` — 13 artistas (ids 5–17). Columnas: `id_artista`, `nombre`, `vida`, `origen`, `foto_perfil`, `biografia`. RLS: select público.
+- Tabla `obras` — 15 obras (ids 9–23). Columnas: `id_obra`, `titulo`, `anio`, `descripcion`, `estrellas`, `imagen_principal`, `id_artista`, `tamano`, `color`, `movimiento`, `tecnica`, `precio`, `tipo`, `perspectivas` (jsonb), `grafica_valor` (jsonb), `grafica_interes` (jsonb), `certificaciones` (jsonb), **`vistas` integer default 0**. RLS: select público.
+- Tabla `usuarios` — usuarios sin Supabase Auth. PK: `email`. RLS: select+insert público.
+- Tabla `solicitudes` — solicitudes artistas/empresas. Campos: `id`, `email`, `clave`, `rol`, `nombre`, `bio`, `especialidad`, `pais`, `motivacion`, `estado` (pendiente/aprobado/rechazado), `created_at`, `revisado_at`. Realtime habilitado.
+- Tabla `resenas` — comentarios por obra. Campos: `id`, `obra_id` (FK `obras.id_obra`), `nombre`, `email`, `estrellas` (1–5), `comentario`, `created_at`. RLS: select+insert público. Anti-duplicado por email controlado en la API.
+- Tabla `ventas` — órdenes Mercado Pago. Campos: `id`, `obra_id`, `titulo`, `precio`, `tipo`, `comprador_nombre`, `comprador_email`, `comprador_telefono`, `mensaje`, `estado` (pendiente/pagado/en_proceso/cancelado), `mp_preference_id`, `mp_payment_id`, `created_at`. RLS: select público.
+- RPC SQL `incrementar_vistas(obra_id int)` — incremento atómico de `obras.vistas` con `security definer`.
+- Bucket Storage `obras` — público, acepta INSERT/SELECT anon+authenticated.
+- Confirmación de email **desactivada** (Authentication → Providers → Email).
+- `lib/db.ts` — mappers `mapArtista`, `mapObra`. Funciones: `getArtistas()`, `getFichas()`, `getCarousel()` (top 4 por vistas), `incrementarVistas(id)`.
+- `lib/supabase-server.ts` — `getServerSupabase()`: cliente con service role key. Solo para Route Handlers. **Nunca importar en componentes cliente.**
 
 ## Datos
 
-- `data/navegacion.ts` — fuente única del menú. Los items de Obras ya usan query params reales (`?tecnica=oleo`, `?movimiento=muralismo`, `?tamano=grande`, etc.). Artistas/Catálogo/Servicios ya enlazan a `/artistas`, `/catalogo#...`, `/servicios#...` en vez de `#`.
-- `data/eventos.ts` — 4 eventos de muestra (Subasta/Exposición × En línea/Presencial) con fechas relativas a 2026. Cada uno: `fechaCorta` (día+mes para el badge), `lugar`, `imagen`, `descripcion`.
-- `data/obras.ts` — 4 obras estáticas del carrusel de inicio. **Pendiente migrar** a Supabase con columna `vistas` para mostrar las más vistas dinámicamente.
-- `data/artistas.ts` — **SOLO fuente de tipos** (`interface Artista`). Los 13 artistas ya están en Supabase tabla `artistas`. No usar para datos en runtime.
-- `data/fichas.ts` — **SOLO fuente de tipos** (`interface FichaArte`, `PuntoGrafica`, etc.). Las 15 obras ya están en Supabase tabla `obras`. No usar para datos en runtime.
+- `data/navegacion.ts` — fuente única del menú.
+- `data/eventos.ts` — 4 eventos de muestra.
+- `data/obras.ts` — **SOLO fuente de tipos** (`interface Obra`). El carousel ahora usa `getCarousel()` desde Supabase (top 4 por `vistas`). No usar para datos en runtime.
+- `data/artistas.ts` — **SOLO fuente de tipos** (`interface Artista`). No usar para datos en runtime.
+- `data/fichas.ts` — **SOLO fuente de tipos** (`interface FichaArte`, `PuntoGrafica`, etc.). No usar para datos en runtime.
 - **Moneda**: todos los precios y gráficas en MXN (pesos mexicanos). Formato `toLocaleString("es-MX")`.
 - `data/servicios.ts` — 6 servicios con slug, titulo, descripcion, detalle, beneficios, proceso (4 pasos), desde, icono, imagen, acento. Helper `getServicio(slug)`. Cada una tiene: `id`, `titulo`, `anio`, `descripcion`, `estrellas`, `imagen`, `artista`, `perspectivas` (4 vistas derivadas), `tamano`, `color`, `movimiento`, `tecnica`, `precio` (USD real), `tipo` ("Físico" | "JPG Certificado" | "Impresión Oficial"), `graficaValor` (12 puntos mensuales en USD reales), `graficaInteres` (7 puntos 0-100), `certificaciones` (lista única por obra). Helper `obrasDeArtista(id)`.
 
@@ -133,17 +146,45 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - **Problema resuelto**: había un git submodule fantasma `ERUDITO Galery` (modo 160000); eliminado con `git rm --cached`.
 - Flujo: push a `master` desde GitKraken → Vercel detecta → build ~30-60 s → producción actualizada.
 
+## API Routes
+
+- `app/api/upload/route.ts` — sube imagen al bucket Supabase Storage. Recibe `FormData` + query `?carpeta=X`. Devuelve `{ url }`.
+- `app/api/buscar/route.ts` — búsqueda server-side. GET `?q=X` (mín 2 chars). ILIKE en `obras` y `artistas`. Cache 15s. Devuelve `{ obras, artistas }`.
+- `app/api/resenas/route.ts` — GET `?obra_id=X` (cache 30s) / POST (insert con anti-duplicado por email, 409 si ya reseñó). Usa cliente anon.
+- `app/api/notificar-solicitud/route.ts` — POST `{ email, nombre, rol, estado }`. Llama Resend API con `RESEND_API_KEY`. FROM: `notificaciones@erudito-galeria.vercel.app`.
+- `app/api/pagos/crear-preferencia/route.ts` — POST `{ obra_id, titulo, precio, tipo, nombre, email, telefono?, mensaje? }`. Crea venta en `ventas` + Preference de Mercado Pago. Devuelve `{ init_point, venta_id }`. Usa `getServerSupabase()`.
+- `app/api/pagos/webhook/route.ts` — GET (validación MP) / POST (actualiza estado de venta). Re-consulta pago en MP API. Idempotente: `.neq("estado","pagado")`. Siempre 200. Usa `getServerSupabase()`.
+
+## Lib
+
+- `lib/supabase.ts` — cliente público (anon key), patrón Proxy lazy.
+- `lib/supabase-server.ts` — `getServerSupabase()`: service role key, sin sesión, solo Route Handlers.
+- `lib/db.ts` — mappers y funciones: `getArtistas()`, `getFichas()`, `getCarousel()`, `incrementarVistas(id)`.
+- `lib/uploadWebp.ts` — `"use client"`. `convertToWebp()` (Canvas API), `uploadImagenWebp(file, carpeta)`, `uploadWebp(file, urlOrCarpeta)` (alias de compatibilidad).
+
+## Hooks
+
+- `hooks/useResenas.ts` — `cargar()` → GET `/api/resenas?obra_id=X`; `agregar()` → POST async, devuelve `{ ok, error? }`. Usa `usePerfil()` para email del usuario.
+
 ## Pendientes
 
-- **Carousel** (`data/obras.ts`) — migrar a Supabase con columna `vistas`. Plan: incrementar `vistas` al entrar a `/obra/[id]`, home muestra top 4 por vistas. Botón "Ver más" sigue sin href.
-- **Notificaciones por email** — avisar al artista/empresa cuando su solicitud es aprobada o rechazada (Resend o SendGrid pendiente).
-- **Motivo de rechazo** — el admin no puede añadir nota al rechazar una solicitud (campo `motivo` pendiente).
-- Flujo de compra real (botón COMPRAR es decorativo). Integrar Mercado Pago (Route Handlers + service role, igual que Order Express).
-- Reemplazar fotos de perfil de artista (picsum.photos) — pendiente fotos reales. Flujo: usuario deja imagen en `Pruebas/` → asistente la copia a `public/artistas/[slug]/` → actualiza `foto_perfil` en Supabase tabla `artistas`.
-- El botón "Más información" de `SeccionEventos` es decorativo (no hay páginas `/eventos/[id]` todavía).
-- Quedan en `#`: Eventos, Cocina y Alimento, Blog, Newsletter, Contacto — sin página propia todavía.
-- Filtros de `/artistas` (Artesanos / En línea / Presenciales) son decorativos: tabla `artistas` no tiene campo de categoría aún.
-- Página `/perfil` — formulario de edición de nombre, bio, especialidad, país (ya existe `guardar()` en `usePerfil`).
+### Crítico — variables de entorno
+Agregar a `.env.local` y Vercel (Settings → Environment Variables):
+- `SUPABASE_SERVICE_ROLE_KEY` — Supabase Project Settings → API → service_role
+- `RESEND_API_KEY` — Resend dashboard
+- `MP_ACCESS_TOKEN` — Mercado Pago credentials (sandbox o producción)
+- `NEXT_PUBLIC_URL` — `https://erudito-galeria.vercel.app`
+
+Sin estas vars los endpoints `/api/pagos/*` y `/api/notificar-solicitud` retornan error silencioso.
+
+### Mejoras futuras (posibles)
+- **Motivo de rechazo** — el admin no puede añadir nota al rechazar (campo `motivo` pendiente en `solicitudes`).
+- **Filtros `/artistas`** — tabla `artistas` no tiene campo de categoría aún.
+- **Fotos de artistas** — picsum.photos → fotos reales. Flujo: imagen en `Pruebas/` → copiar a `public/artistas/[slug]/` → actualizar `foto_perfil`.
+- **Páginas dinámicas** — `/eventos/[id]` sin contenido, Cocina, Blog, Newsletter, Contacto solo en `#`.
+- **Bottom nav móvil** — diseño pendiente.
+- **CSV export** — datos insuficientes aún.
+- **Búsqueda con IA** — Groq (no contemplado por ahora).
 
 ## Notas del entorno (Windows)
 

@@ -1,65 +1,65 @@
+"use client";
+
 /**
- * Convierte cualquier imagen a WebP (calidad 82 %) usando Canvas API del navegador
- * y la sube al endpoint indicado (POST multipart/form-data).
- *
- * Solo funciona en componentes con "use client" — nunca en el servidor.
- * Usa Canvas API nativa, cero dependencias externas.
- *
- * @param file     Archivo de imagen original (cualquier formato que el navegador soporte)
- * @param endpoint Ruta de la API que recibirá el archivo; por defecto "/api/upload"
- * @returns        URL pública del archivo subido
+ * Convierte cualquier imagen a WebP usando Canvas API nativa (browser only).
+ * Sin dependencias npm.
  */
-export async function uploadWebp(
-  file: File,
-  endpoint = "/api/upload"
-): Promise<string> {
-  const blob =
-    file.type === "image/webp"
-      ? file
-      : await convertirAWebp(file, 0.82);
+export async function convertToWebp(file: File, quality = 0.82): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext("2d")!.drawImage(img, 0, 0);
+      URL.revokeObjectURL(objectUrl);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) { reject(new Error("Canvas toBlob falló")); return; }
+          const stem = file.name.replace(/\.[^.]+$/, "");
+          resolve(new File([blob], `${stem}.webp`, { type: "image/webp" }));
+        },
+        "image/webp",
+        quality
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("No se pudo cargar la imagen"));
+    };
+    img.src = objectUrl;
+  });
+}
 
-  const fd = new FormData();
-  fd.append("file", blob, "imagen.webp");
-
-  const res = await fetch(endpoint, { method: "POST", body: fd });
+/**
+ * Convierte un File a WebP y lo sube al bucket de Supabase via /api/upload.
+ * Devuelve la URL pública.
+ */
+export async function uploadImagenWebp(file: File, carpeta: string): Promise<string> {
+  const webp = await convertToWebp(file);
+  const form = new FormData();
+  form.append("file", webp);
+  const res = await fetch(`/api/upload?carpeta=${encodeURIComponent(carpeta)}`, {
+    method: "POST",
+    body: form,
+  });
   if (!res.ok) {
     const { error } = await res.json().catch(() => ({ error: "Error desconocido" }));
     throw new Error(error ?? "Error al subir imagen");
   }
-
-  const { url } = (await res.json()) as { url: string };
-  return url;
+  const { url } = await res.json();
+  return url as string;
 }
 
-/** Dibuja el archivo en un <canvas> y exporta como WebP */
-function convertirAWebp(file: File, calidad: number): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width  = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) { reject(new Error("Canvas 2D no disponible")); return; }
-
-      ctx.drawImage(img, 0, 0);
-      canvas.toBlob(
-        (blob) => {
-          URL.revokeObjectURL(img.src);
-          blob ? resolve(blob) : reject(new Error("canvas.toBlob devolvió null"));
-        },
-        "image/webp",
-        calidad
-      );
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(img.src);
-      reject(new Error("No se pudo cargar la imagen"));
-    };
-
-    img.src = URL.createObjectURL(file);
-  });
+/** Alias de compatibilidad: acepta URL completa o nombre de carpeta. */
+export async function uploadWebp(file: File, urlOrCarpeta: string): Promise<string> {
+  let carpeta = urlOrCarpeta;
+  try {
+    const u = new URL(urlOrCarpeta, "http://localhost");
+    carpeta = u.searchParams.get("carpeta") ?? "";
+  } catch {
+    // ya es nombre de carpeta
+  }
+  return uploadImagenWebp(file, carpeta);
 }

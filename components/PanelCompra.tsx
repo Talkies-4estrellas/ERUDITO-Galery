@@ -29,11 +29,7 @@ const ENTREGABLE: Record<FichaArte["tipo"], string[]> = {
   "Impresión Oficial": ["Impresión de alta calidad", "Certificado de edición limitada", "Ficha técnica completa"],
 };
 
-type Fase = "idle" | "form" | "resumen" | "enviado";
-
-function generarNumOrden() {
-  return "ER-" + Math.floor(10000 + Math.random() * 90000);
-}
+type Fase = "idle" | "form" | "resumen" | "procesando";
 
 export default function PanelCompra({ ficha }: { ficha: FichaArte }) {
   const [fase, setFase] = useState<Fase>("idle");
@@ -41,28 +37,38 @@ export default function PanelCompra({ ficha }: { ficha: FichaArte }) {
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
   const [mensaje, setMensaje] = useState("");
-  const [numOrden, setNumOrden] = useState("");
+  const [errorPago, setErrorPago] = useState("");
 
   function irAResumen(e: React.FormEvent) {
     e.preventDefault();
+    setErrorPago("");
     setFase("resumen");
   }
 
-  function confirmar() {
-    const orden = generarNumOrden();
-    setNumOrden(orden);
-    const pedidos = JSON.parse(localStorage.getItem("erudito-pedidos") || "[]");
-    pedidos.push({
-      id: orden,
-      obraId: ficha.id,
-      titulo: ficha.titulo,
-      precio: ficha.precio,
-      tipo: ficha.tipo,
-      nombre, email, telefono, mensaje,
-      fecha: new Date().toISOString(),
-    });
-    localStorage.setItem("erudito-pedidos", JSON.stringify(pedidos));
-    setFase("enviado");
+  async function pagar() {
+    setFase("procesando");
+    setErrorPago("");
+    try {
+      const res = await fetch("/api/pagos/crear-preferencia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          obra_id: ficha.id,
+          titulo: ficha.titulo,
+          precio: ficha.precio,
+          tipo: ficha.tipo,
+          nombre, email,
+          telefono: telefono || undefined,
+          mensaje: mensaje || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Error al iniciar el pago");
+      window.location.href = data.init_point;
+    } catch (err) {
+      setErrorPago(err instanceof Error ? err.message : "No se pudo conectar con Mercado Pago");
+      setFase("resumen");
+    }
   }
 
   const INPUT = "w-full rounded-xl bg-zinc-800 px-3 py-2.5 text-sm text-zinc-200 placeholder-zinc-500 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-amber-400/50";
@@ -119,7 +125,7 @@ export default function PanelCompra({ ficha }: { ficha: FichaArte }) {
         )}
 
         {/* RESUMEN */}
-        {fase === "resumen" && (
+        {(fase === "resumen" || fase === "procesando") && (
           <div className="space-y-4">
             <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Resumen del pedido</p>
 
@@ -146,32 +152,38 @@ export default function PanelCompra({ ficha }: { ficha: FichaArte }) {
               {mensaje && <p className="mt-1 text-xs italic text-zinc-500">"{mensaje}"</p>}
             </div>
 
-            <div className="flex gap-2">
-              <button type="button" onClick={confirmar}
-                className="flex-1 rounded-full bg-amber-400 py-3 text-sm font-bold text-zinc-900 hover:bg-amber-300 active:scale-95">
-                Confirmar consulta
-              </button>
-              <button type="button" onClick={() => setFase("form")}
-                className="rounded-full bg-white/5 px-4 text-xs text-zinc-400 ring-1 ring-white/10 hover:bg-white/10">
-                Editar
-              </button>
-            </div>
-          </div>
-        )}
+            {errorPago && (
+              <p className="rounded-xl bg-rose-400/10 px-4 py-2.5 text-xs text-rose-400 ring-1 ring-rose-400/20">
+                {errorPago}
+              </p>
+            )}
 
-        {/* ENVIADO */}
-        {fase === "enviado" && (
-          <div className="rounded-2xl bg-emerald-400/8 p-5 ring-1 ring-emerald-400/20 text-center space-y-2">
-            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-400/15">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-6 text-emerald-400">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-              </svg>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={pagar}
+                disabled={fase === "procesando"}
+                className="flex-1 flex items-center justify-center gap-2 rounded-full bg-amber-400 py-3 text-sm font-bold text-zinc-900 hover:bg-amber-300 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed transition"
+              >
+                {fase === "procesando" ? (
+                  <>
+                    <svg className="size-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3" />
+                      <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                    </svg>
+                    Redirigiendo…
+                  </>
+                ) : (
+                  "Pagar con Mercado Pago"
+                )}
+              </button>
+              {fase !== "procesando" && (
+                <button type="button" onClick={() => setFase("form")}
+                  className="rounded-full bg-white/5 px-4 text-xs text-zinc-400 ring-1 ring-white/10 hover:bg-white/10">
+                  Editar
+                </button>
+              )}
             </div>
-            <p className="text-sm font-bold text-emerald-400">Consulta enviada</p>
-            <p className="text-xs text-zinc-400">Nos pondremos en contacto contigo en menos de 24 h.</p>
-            <p className="rounded-lg bg-zinc-800/60 px-3 py-1.5 text-[11px] font-mono text-zinc-300">
-              Ref. {numOrden}
-            </p>
           </div>
         )}
       </div>

@@ -16,7 +16,7 @@ interface ObraRow {
   anio: string;
   precio: number | null;
   tipo: string | null;
-  artistas: { nombre: string } | null;
+  artistas: { nombre: string }[] | null;
 }
 
 interface EventoRow {
@@ -85,6 +85,7 @@ export default function PanelAdmin() {
   const [cargandoData, setCargandoData] = useState(true);
   const [accionando, setAccionando]     = useState<number | null>(null);
 
+  // ── carga inicial ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!listo) return;
     if (!perfil || perfil.rol !== "admin") {
@@ -117,6 +118,36 @@ export default function PanelAdmin() {
     });
   }, [listo, perfil]);
 
+  // ── Realtime: nuevas solicitudes ──────────────────────────────────────
+  useEffect(() => {
+    if (!listo || !perfil || perfil.rol !== "admin") return;
+
+    const canal = supabase
+      .channel("solicitudes-admin")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "solicitudes" },
+        (payload) => {
+          const nueva = payload.new as SolicitudRow;
+          if (nueva.estado === "pendiente") {
+            setSolicitudes((prev) => [nueva, ...prev]);
+            toast(`Nueva solicitud de ${nueva.nombre}`, { icono: "🔔" });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(canal); };
+  }, [listo, perfil, toast]);
+
+  async function notificar(email: string, nombre: string, rol: string, estado: "aprobado" | "rechazado") {
+    fetch("/api/notificar-solicitud", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, nombre, rol, estado }),
+    }).catch(() => {});
+  }
+
   async function aprobar(s: SolicitudRow) {
     setAccionando(s.id);
     try {
@@ -140,6 +171,7 @@ export default function PanelAdmin() {
 
       setSolicitudes((prev) => prev.filter((x) => x.id !== s.id));
       toast(`${s.nombre} aprobado`, { icono: "✓" });
+      notificar(s.email, s.nombre, s.rol, "aprobado");
     } catch (err) {
       console.error("Error al aprobar:", err);
       toast("Error al aprobar la solicitud", { icono: "✗" });
@@ -157,6 +189,7 @@ export default function PanelAdmin() {
 
       setSolicitudes((prev) => prev.filter((x) => x.id !== s.id));
       toast(`Solicitud de ${s.nombre} rechazada`, { icono: "✗" });
+      notificar(s.email, s.nombre, s.rol, "rechazado");
     } catch (err) {
       console.error("Error al rechazar:", err);
       toast("Error al rechazar la solicitud", { icono: "✗" });
@@ -349,7 +382,7 @@ export default function PanelAdmin() {
                         {o.anio && <span className="ml-2 text-xs text-zinc-500">{o.anio}</span>}
                       </td>
                       <td className="px-4 py-3 text-zinc-400">
-                        {o.artistas?.nombre ?? <span className="text-zinc-600">—</span>}
+                        {o.artistas?.[0]?.nombre ?? <span className="text-zinc-600">—</span>}
                       </td>
                       <td className="px-4 py-3 font-semibold text-amber-400">
                         {o.precio != null

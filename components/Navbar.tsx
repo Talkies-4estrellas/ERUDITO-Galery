@@ -7,9 +7,6 @@ import BuscadorModal from "@/components/BuscadorModal";
 import BotonTema from "@/components/BotonTema";
 import BotonAuth from "@/components/BotonAuth";
 import { useFavoritos } from "@/hooks/useFavoritos";
-import { getArtistas, getFichas } from "@/lib/db";
-import type { Artista } from "@/data/artistas";
-import type { FichaArte } from "@/data/fichas";
 
 /* ─── Separar menús en dos mitades (excluyendo "Inicio" que va en el logo) ─── */
 const todosMenus = menus.filter((m) => m.etiqueta !== "Inicio");
@@ -205,14 +202,7 @@ export default function Navbar() {
   const [movilAbierto, setMovilAbierto]   = useState(false);
   const [buscadorAbierto, setBuscadorAbierto] = useState(false);
   const [queryBusqueda, setQueryBusqueda] = useState("");
-  const [artistas, setArtistas] = useState<Artista[]>([]);
-  const [fichas,   setFichas]   = useState<FichaArte[]>([]);
   const { favoritos, listo: favoritosListos } = useFavoritos();
-
-  useEffect(() => {
-    getArtistas().then(setArtistas).catch(() => {});
-    getFichas().then(setFichas).catch(() => {});
-  }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -351,8 +341,6 @@ export default function Navbar() {
         onClose={() => { setBuscadorAbierto(false); setQueryBusqueda(""); }}
         query={queryBusqueda}
         setQuery={setQueryBusqueda}
-        artistas={artistas}
-        fichas={fichas}
       />
     </>
   );

@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import Carousel from "@/components/Carousel";
 import SeccionEventos from "@/components/SeccionEventos";
 import FilaFichas from "@/components/FilaFichas";
-import { getFichas, getEventos } from "@/lib/db";
+import { getFichas, getEventos, getCarousel } from "@/lib/db";
 
 export const metadata: Metadata = {
   title: "ERUDITO Galery — Arte con historia y valor",
@@ -18,13 +18,17 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [fichas, eventos] = await Promise.all([getFichas(), getEventos()]);
+  const [fichas, eventos, carousel] = await Promise.all([
+    getFichas(),
+    getEventos(),
+    getCarousel(),
+  ]);
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-950">
       <Navbar />
       <main className="flex flex-1 flex-col">
-        <Carousel />
+        <Carousel obras={carousel} />
         <SeccionEventos eventos={eventos} />
         <FilaFichas lista={fichas} />
       </main>

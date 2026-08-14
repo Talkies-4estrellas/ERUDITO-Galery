@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import type { Artista } from "@/data/artistas";
 import type { FichaArte } from "@/data/fichas";
 import type { Evento } from "@/data/eventos";
+import type { Obra } from "@/data/obras";
 
 // ── Mappers DB → tipos TypeScript ─────────────────────────────
 
@@ -59,6 +60,19 @@ function mapEvento(row: any): Evento {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapObra(row: any): Obra {
+  return {
+    id: row.id_obra,
+    titulo: row.titulo,
+    autor: row.artistas?.nombre ?? "",
+    anio: row.anio ?? "",
+    descripcion: row.descripcion ?? "",
+    estrellas: row.estrellas ?? 5,
+    imagen: row.imagen_principal ?? "",
+  };
+}
+
 // ── Artistas ───────────────────────────────────────────────────
 
 export async function getArtistas(): Promise<Artista[]> {
@@ -111,6 +125,22 @@ export async function getFichasPorArtista(
     .order("id_obra");
   if (error) throw new Error(error.message);
   return (data ?? []).map(mapFicha);
+}
+
+// ── Carousel ───────────────────────────────────────────────────
+
+export async function getCarousel(): Promise<Obra[]> {
+  const { data, error } = await supabase
+    .from("obras")
+    .select("id_obra, titulo, anio, descripcion, estrellas, imagen_principal, artistas(nombre)")
+    .order("vistas", { ascending: false })
+    .limit(4);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(mapObra);
+}
+
+export async function incrementarVistas(id: number): Promise<void> {
+  await supabase.rpc("incrementar_vistas", { obra_id: id });
 }
 
 // ── Eventos ────────────────────────────────────────────────────

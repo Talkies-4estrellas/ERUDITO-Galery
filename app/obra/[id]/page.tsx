@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import DetalleObra from "@/components/DetalleObra";
+import RegistrarVisita from "@/components/RegistrarVisita";
 import { getFichas, getFicha } from "@/lib/db";
 
 export async function generateStaticParams() {
@@ -47,6 +48,7 @@ export default async function PaginaObra({
     <div className="flex min-h-screen flex-col bg-zinc-950">
       <Navbar />
       <main className="flex flex-1 flex-col">
+        <RegistrarVisita id={Number(id)} />
         <DetalleObra ficha={ficha} similares={similares} />
       </main>
     </div>

@@ -28,13 +28,15 @@ const normalizar = (s: string) =>
     .toLowerCase()
     .trim();
 
-function seleccionDesdeParams(params: URLSearchParams): Seleccion {
+function seleccionDesdeParams(
+  params: URLSearchParams,
+  valoresDe: (clave: ClaveFiltro) => string[]
+): Seleccion {
   const sel: Seleccion = { tamano: [], color: [], movimiento: [], tecnica: [] };
   for (const clave of claves) {
     const urlVals = params.getAll(clave);
     if (!urlVals.length) continue;
     const chips = valoresDe(clave);
-    // Activa el chip cuyo valor normalizado coincide con el param
     sel[clave] = urlVals.flatMap((v) =>
       chips.filter((c) => normalizar(c) === normalizar(v))
     );
@@ -56,7 +58,8 @@ function GaleriaObrasInner({ fichas }: { fichas: FichaArte[] }) {
 
   // URL como única fuente de verdad — se recalcula en cada cambio de URL
   const seleccion = useMemo(
-    () => seleccionDesdeParams(new URLSearchParams(searchParams.toString())),
+    () => seleccionDesdeParams(new URLSearchParams(searchParams.toString()), valoresDe),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [searchParams]
   );
 

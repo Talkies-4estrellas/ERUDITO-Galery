@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { obras } from "@/data/obras";
+import Link from "next/link";
+import type { Obra } from "@/data/obras";
 
 const INTERVALO_MS = 6000;
 
-export default function Carousel() {
+export default function Carousel({ obras }: { obras: Obra[] }) {
   const [actual, setActual] = useState(0);
   const [pausado, setPausado] = useState(false);
 
@@ -75,12 +76,12 @@ export default function Carousel() {
                 </span>
               ))}
             </div>
-            <button
-              type="button"
+            <Link
+              href={`/obra/${obra.id}`}
               className="rounded-full bg-white/90 px-4 py-1.5 text-xs font-semibold text-zinc-900 transition hover:bg-amber-400"
             >
               Ver más
-            </button>
+            </Link>
           </div>
         </div>
 

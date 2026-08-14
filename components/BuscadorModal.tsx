@@ -1,24 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import type { FichaArte } from "@/data/fichas";
-import type { Artista } from "@/data/artistas";
+
+interface ObraResult  { id: number; titulo: string; anio: string; tecnica: string; imagen: string; artista: string; }
+interface ArtistaResult { id: number; nombre: string; vida: string; origen: string; foto: string; }
 
 interface Props {
   open: boolean;
   onClose: () => void;
   query: string;
   setQuery: (q: string) => void;
-  artistas: Artista[];
-  fichas: FichaArte[];
 }
 
-export default function BuscadorModal({ open, onClose, query, setQuery, artistas, fichas }: Props) {
+export default function BuscadorModal({ open, onClose, query, setQuery }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
+  const router   = useRouter();
+
+  const [obras,    setObras]    = useState<ObraResult[]>([]);
+  const [artistas, setArtistas] = useState<ArtistaResult[]>([]);
+  const [buscando, setBuscando] = useState(false);
 
   // Auto-focus al abrir
   useEffect(() => {
@@ -27,53 +30,42 @@ export default function BuscadorModal({ open, onClose, query, setQuery, artistas
 
   // Cerrar con Escape
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  const q = query.toLowerCase().trim();
+  // Búsqueda server-side con debounce 300 ms
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) { setObras([]); setArtistas([]); return; }
 
-  const obrasFiltradas = useMemo(() => {
-    if (!q) return [];
-    return fichas
-      .filter(
-        (f) =>
-          f.titulo.toLowerCase().includes(q) ||
-          f.descripcion.toLowerCase().includes(q) ||
-          f.artista.nombre.toLowerCase().includes(q) ||
-          f.tecnica.toLowerCase().includes(q) ||
-          f.movimiento.toLowerCase().includes(q)
-      )
-      .slice(0, 5);
-  }, [q]);
+    const ctrl = new AbortController();
+    const timer = setTimeout(async () => {
+      setBuscando(true);
+      try {
+        const res = await fetch(`/api/buscar?q=${encodeURIComponent(q)}`, { signal: ctrl.signal });
+        if (!res.ok) return;
+        const data = await res.json();
+        setObras(data.obras ?? []);
+        setArtistas(data.artistas ?? []);
+      } catch {
+        // AbortError ignorado
+      } finally {
+        setBuscando(false);
+      }
+    }, 300);
 
-  const artistasFiltrados = useMemo(() => {
-    if (!q) return [];
-    return artistas
-      .filter(
-        (a) =>
-          a.nombre.toLowerCase().includes(q) ||
-          a.origen.toLowerCase().includes(q) ||
-          a.bio.toLowerCase().includes(q)
-      )
-      .slice(0, 3);
-  }, [q]);
+    return () => { clearTimeout(timer); ctrl.abort(); };
+  }, [query]);
 
-  const hayResultados = obrasFiltradas.length > 0 || artistasFiltrados.length > 0;
+  const hayResultados = obras.length > 0 || artistas.length > 0;
+  const q = query.trim();
 
-  // Enter → navegar al primer resultado
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      if (obrasFiltradas.length > 0) {
-        router.push(`/obra/${obrasFiltradas[0].id}`);
-        onClose();
-      } else if (artistasFiltrados.length > 0) {
-        router.push(`/artista/${artistasFiltrados[0].id}`);
-        onClose();
-      }
+      if (obras.length > 0)    { router.push(`/obra/${obras[0].id}`);       onClose(); }
+      else if (artistas.length > 0) { router.push(`/artista/${artistas[0].id}`); onClose(); }
     }
   };
 
@@ -90,19 +82,16 @@ export default function BuscadorModal({ open, onClose, query, setQuery, artistas
       >
         {/* Campo de búsqueda */}
         <div className="flex items-center gap-3 border-b border-zinc-800 px-4 py-3">
-          <svg
-            className="size-5 shrink-0 text-zinc-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-            />
-          </svg>
+          {buscando ? (
+            <svg className="size-5 shrink-0 animate-spin text-amber-400" fill="none" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.2" />
+              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg className="size-5 shrink-0 text-zinc-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+          )}
           <input
             ref={inputRef}
             value={query}
@@ -124,18 +113,22 @@ export default function BuscadorModal({ open, onClose, query, setQuery, artistas
             </p>
           )}
 
-          {q && !hayResultados && (
+          {q && q.length < 2 && (
+            <p className="px-4 py-10 text-center text-sm text-zinc-500">
+              Escribe al menos 2 caracteres…
+            </p>
+          )}
+
+          {q.length >= 2 && !buscando && !hayResultados && (
             <p className="px-4 py-10 text-center text-sm text-zinc-500">
               Sin resultados para «{query}»
             </p>
           )}
 
-          {obrasFiltradas.length > 0 && (
+          {obras.length > 0 && (
             <div>
-              <p className="px-4 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
-                Obras
-              </p>
-              {obrasFiltradas.map((f) => (
+              <p className="px-4 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Obras</p>
+              {obras.map((f) => (
                 <Link
                   key={f.id}
                   href={`/obra/${f.id}`}
@@ -143,38 +136,22 @@ export default function BuscadorModal({ open, onClose, query, setQuery, artistas
                   className="flex items-center gap-3 px-4 py-2.5 transition hover:bg-white/5"
                 >
                   <div className="relative size-10 shrink-0 overflow-hidden rounded-lg">
-                    <Image
-                      src={f.imagen}
-                      alt={f.titulo}
-                      fill
-                      sizes="40px"
-                      className="object-cover"
-                    />
+                    <Image src={f.imagen} alt={f.titulo} fill sizes="40px" className="object-cover" />
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-white">
-                      {f.titulo}
-                    </p>
-                    <p className="truncate text-xs text-zinc-400">
-                      {f.artista.nombre} · {f.tecnica} · {f.anio}
-                    </p>
+                    <p className="truncate text-sm font-medium text-white">{f.titulo}</p>
+                    <p className="truncate text-xs text-zinc-400">{f.artista} · {f.tecnica} · {f.anio}</p>
                   </div>
-                  <span className="ml-auto shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-zinc-500">
-                    Obra
-                  </span>
+                  <span className="ml-auto shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-zinc-500">Obra</span>
                 </Link>
               ))}
             </div>
           )}
 
-          {artistasFiltrados.length > 0 && (
-            <div
-              className={obrasFiltradas.length > 0 ? "border-t border-zinc-800" : ""}
-            >
-              <p className="px-4 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
-                Artistas
-              </p>
-              {artistasFiltrados.map((a) => (
+          {artistas.length > 0 && (
+            <div className={obras.length > 0 ? "border-t border-zinc-800" : ""}>
+              <p className="px-4 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Artistas</p>
+              {artistas.map((a) => (
                 <Link
                   key={a.id}
                   href={`/artista/${a.id}`}
@@ -182,25 +159,13 @@ export default function BuscadorModal({ open, onClose, query, setQuery, artistas
                   className="flex items-center gap-3 px-4 py-2.5 transition hover:bg-white/5"
                 >
                   <div className="relative size-10 shrink-0 overflow-hidden rounded-full">
-                    <Image
-                      src={a.foto}
-                      alt={a.nombre}
-                      fill
-                      sizes="40px"
-                      className="object-cover"
-                    />
+                    <Image src={a.foto} alt={a.nombre} fill sizes="40px" className="object-cover" />
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-white">
-                      {a.nombre}
-                    </p>
-                    <p className="truncate text-xs text-zinc-400">
-                      {a.vida} · {a.origen}
-                    </p>
+                    <p className="truncate text-sm font-medium text-white">{a.nombre}</p>
+                    <p className="truncate text-xs text-zinc-400">{a.vida} · {a.origen}</p>
                   </div>
-                  <span className="ml-auto shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-zinc-500">
-                    Artista
-                  </span>
+                  <span className="ml-auto shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-zinc-500">Artista</span>
                 </Link>
               ))}
             </div>
@@ -209,9 +174,8 @@ export default function BuscadorModal({ open, onClose, query, setQuery, artistas
           {hayResultados && (
             <div className="border-t border-zinc-800 px-4 py-2">
               <p className="text-[10px] text-zinc-600">
-                {obrasFiltradas.length + artistasFiltrados.length} resultado
-                {obrasFiltradas.length + artistasFiltrados.length !== 1 ? "s" : ""} ·
-                Enter para ir al primero
+                {obras.length + artistas.length} resultado
+                {obras.length + artistas.length !== 1 ? "s" : ""} · Enter para ir al primero
               </p>
             </div>
           )}

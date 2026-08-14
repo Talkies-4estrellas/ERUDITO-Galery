@@ -56,13 +56,24 @@ export default function SeccionResenas({ obraId }: Props) {
   const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  const [enviando, setEnviando] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!nombre.trim()) { setError("Escribe tu nombre."); return; }
     if (estrellas === 0)  { setError("Selecciona una puntuación."); return; }
     if (!comentario.trim()) { setError("Escribe un comentario."); return; }
+    if (comentario.trim().length < 10) { setError("El comentario debe tener al menos 10 caracteres."); return; }
 
-    agregar({ nombre: nombre.trim(), estrellas, comentario: comentario.trim() });
+    setEnviando(true);
+    const resultado = await agregar({ nombre: nombre.trim(), estrellas, comentario: comentario.trim() });
+    setEnviando(false);
+
+    if (!resultado.ok) {
+      setError(resultado.error ?? "No se pudo publicar la reseña.");
+      return;
+    }
+
     setEnviado(true);
     setNombre("");
     setEstrellas(0);
@@ -150,9 +161,10 @@ export default function SeccionResenas({ obraId }: Props) {
         ) : (
           <button
             type="submit"
-            className="w-full rounded-xl bg-amber-400 py-2.5 text-sm font-bold text-zinc-900 transition hover:bg-amber-300 active:scale-95"
+            disabled={enviando}
+            className="w-full rounded-xl bg-amber-400 py-2.5 text-sm font-bold text-zinc-900 transition hover:bg-amber-300 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Publicar reseña
+            {enviando ? "Publicando…" : "Publicar reseña"}
           </button>
         )}
       </form>
