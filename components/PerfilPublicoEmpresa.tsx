@@ -41,6 +41,8 @@ export default function PerfilPublicoEmpresa({ slug }: Props) {
             slug: data.slug ?? slug,
             avatar_url: data.avatar_url ?? undefined,
           });
+          const obrasRes = await fetch(`/api/empresa/obras?email=${encodeURIComponent(data.email ?? "")}`).then((r) => r.json()).catch(() => ({ obras: [] }));
+          setObras(obrasRes.obras ?? []);
         }
       } catch { /* noop */ }
       setListo(true);

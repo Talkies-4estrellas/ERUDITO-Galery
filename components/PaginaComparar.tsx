@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { FichaArte } from "@/data/fichas";
 import { useComparacion } from "@/hooks/useComparacion";
 
-const MES_ACTUAL = 5;
+const MES_ACTUAL = new Date().getMonth();
 
 function filaComparacion(
   etiqueta: string,
@@ -117,8 +117,9 @@ export default function PaginaComparar({ fichas }: { fichas: FichaArte[] }) {
           </span>
         ))}
         {filaComparacion("Tendencia", obras, (f) => {
-          const actual = f.graficaValor[MES_ACTUAL].valor;
-          const anterior = f.graficaValor[MES_ACTUAL - 1].valor;
+          const mesIdx = Math.min(MES_ACTUAL, f.graficaValor.length - 1);
+          const actual = f.graficaValor[mesIdx].valor;
+          const anterior = f.graficaValor[Math.max(0, mesIdx - 1)].valor;
           const cambio = (((actual - anterior) / anterior) * 100).toFixed(1);
           const subio = actual >= anterior;
           return (

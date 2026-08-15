@@ -122,15 +122,15 @@ export const menus: MenuNav[] = [
         items: [
           {
             etiqueta: "Subastas",
-            href: "#",
+            href: "/eventos",
             hijos: [
-              { etiqueta: "Subastas en línea", href: "#" },
-              { etiqueta: "Subastas presenciales", href: "#" },
+              { etiqueta: "Subastas en línea", href: "/eventos" },
+              { etiqueta: "Subastas presenciales", href: "/eventos" },
             ],
           },
-          { etiqueta: "Exposiciones", href: "#" },
-          { etiqueta: "Museos, Asociaciones y Galerías", href: "#" },
-          { etiqueta: "Manager de Ventas", href: "#" },
+          { etiqueta: "Exposiciones", href: "/eventos" },
+          { etiqueta: "Museos, Asociaciones y Galerías", href: "/servicios#museos-asociaciones-y-galerias" },
+          { etiqueta: "Manager de Ventas", href: "/servicios#manager-de-ventas" },
         ],
       },
     ],
@@ -142,15 +142,15 @@ export const menus: MenuNav[] = [
         items: [
           {
             etiqueta: "Productos",
-            href: "#",
+            href: "/cocina",
             descripcion: "La comida hoy en día también es un lujo",
           },
         ],
       },
     ],
   },
-  { etiqueta: "Blog", href: "#" },
-  { etiqueta: "Newsletter", href: "#" },
-  { etiqueta: "Privado", href: "#" },
-  { etiqueta: "Contacto", href: "#" },
+  { etiqueta: "Blog", href: "/blog" },
+  { etiqueta: "Newsletter", href: "/#newsletter" },
+  { etiqueta: "Privado", href: "/privado" },
+  { etiqueta: "Contacto", href: "/contacto" },
 ];

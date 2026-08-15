@@ -66,9 +66,9 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 ## Componentes
 
-- `components/Navbar.tsx` — barra (client). Layout 3 columnas (`grid-cols-[1fr_auto_1fr]`): menús izquierda / logo centrado / menús derecha + acciones. Dropdowns en escritorio (`lg`); hamburguesa en móvil. Incluye buscador (`Ctrl+K`), favoritos con badge, `BotonAuth` y `BotonTema`. **No pre-carga artistas/fichas** — la búsqueda es lazy server-side.
+- `components/Navbar.tsx` — barra (client). Layout 3 columnas (`grid-cols-[1fr_auto_1fr]`): menús izquierda / logo centrado / menús derecha + acciones. Dropdowns en escritorio (`lg`); hamburguesa en móvil. Incluye buscador (`Ctrl+K`), favoritos con badge, `BotonAuth` y `BotonTema`. **No pre-carga artistas/fichas** — la búsqueda es lazy server-side. **Todos los links usan `<Link>` de Next.js** (logo, dropdown, menú móvil) — sin hard reload.
 - `components/BuscadorModal.tsx` — modal de búsqueda (client). Props: `open`, `onClose`, `query`, `setQuery`. Debounce 300ms + AbortController — llama a `/api/buscar?q=X` solo al escribir ≥2 chars. Spinner en ícono mientras fetcha. No recibe artistas/fichas como props.
-- `components/Footer.tsx` — footer (client): 4 columnas (Marca, Explorar, Servicios, Newsletter). El formulario de newsletter muestra confirmación amber al suscribirse. Enlaces de Explorar/Servicios apuntan a las páginas reales (`/artistas`, `/catalogo`, `/favoritos`, `/servicios#...`).
+- `components/Footer.tsx` — footer (client): 4 columnas (Marca, Explorar, Servicios, Newsletter). El formulario de newsletter muestra confirmación amber al suscribirse. Todos los hrefs de Explorar/Servicios/Contacto apuntan a rutas reales (`/artistas`, `/catalogo`, `/favoritos`, `/cocina`, `/eventos`, `/blog`, `/contacto`, `/servicios#...`). Redes sociales y Privacidad/Términos aún en `"#"` (sin URLs reales).
 - `components/BotonFavorito.tsx` — botón corazón (client, prop `id`, `tamano: "sm" | "lg"`). Usa `useFavoritos`; `e.preventDefault()`/`stopPropagation()` para no disparar el `Link` padre.
 - `components/PaginaArtistas.tsx` / `PaginaCatalogo.tsx` / `PaginaServicios.tsx` / `PaginaFavoritos.tsx` — contenido de esas páginas (ver arriba).
 - `components/SeccionEventos.tsx` — fila horizontal (server, scroll nativo sin JS) de `data/eventos.ts`: badge de fecha, tipo (Subasta/Exposición), modalidad, lugar, descripción y botón "Más información" (decorativo).
@@ -96,7 +96,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - Esquema completo en `database/schema.sql`.
 - Tabla `perfiles` — vinculada a `auth.users` (FK uuid). Campos: `rol`, `nombre`, `bio`, `especialidad`, `pais`, `slug`. RLS activo.
 - Tabla `artistas` — 13 artistas (ids 5–17). Columnas: `id_artista`, `nombre`, `vida`, `origen`, `foto_perfil`, `biografia`. RLS: select público.
-- Tabla `obras` — 15 obras (ids 9–23) + obras de artistas de plataforma. `id_artista` **nullable**. Col `artista_email` (text, nullable) para obras de artistas registrados vía plataforma. Col `vistas` (integer default 0). RLS: select público.
+- Tabla `obras` — 15 obras (ids 9–23) + obras de artistas/empresas de plataforma. `id_artista` **nullable**. Col `artista_email` (text, nullable) para obras de artistas registrados vía plataforma. Col `empresa_email` (text, nullable) para obras publicadas por galerías/empresas. Col `nombre_artista` (text, nullable) para el nombre del artista representado por la empresa. Col `vistas` (integer default 0). RLS: select público.
 - Tabla `usuarios` — usuarios sin Supabase Auth. PK: `email`. Col `slug` (texto único por empresa). RLS: select+insert público.
 - Tabla `solicitudes` — solicitudes artistas/empresas. Realtime habilitado.
 - Tabla `resenas` — comentarios por obra, anti-duplicado por email en API.
@@ -129,9 +129,9 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 ## Estadísticas de valor — cómo funciona
 
-- `graficaValor` tiene precios reales en **MXN** (no porcentajes). El componente los normaliza a 15-100% para las barras; el mes actual (Jun = índice 5) se pinta en cyan.
+- `graficaValor` tiene precios reales en **MXN** (no porcentajes). El componente los normaliza a 15-100% para las barras; el mes actual (`new Date().getMonth()`, clampado a `length - 1`) se pinta en cyan.
 - `graficaInteres` tiene valores 0-100. Las barras se escalan al máximo del array.
-- El % de cambio se calcula entre índices 4 y 5 (May → Jun).
+- El % de cambio se calcula entre el mes anterior y el mes actual (dinámico, con clamp a índice 0 para Enero).
 - Las certificaciones del acordeón son únicas: Rivera icónico → "Clase AAA / Christie's / UNESCO"; obras modestas → solo "Verificada por ERUDITO".
 
 ## Navegación (definida por el dueño en mapas mentales)
@@ -163,6 +163,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `app/api/contacto/route.ts` — POST `{ nombre, email, asunto, mensaje }`. Inserta en `contactos` + email al admin vía Resend. Usa service role.
 - `app/api/registros-eventos/route.ts` — POST `{ evento_id, nombre, email, telefono? }`. Inserta en `registros_eventos`. Usa service role.
 - `app/api/artista/obras/route.ts` — CRUD de obras para artistas de plataforma. GET `?email=X` / POST / PUT / DELETE (body JSON). Verifica que email exista en `usuarios`. Usa service role. Retorna `ObraPropia` mapeada desde `obras`.
+- `app/api/empresa/obras/route.ts` — CRUD de obras para galerías/empresas. Idéntico patrón que artista/obras. GET `?email=X` / POST / PUT / DELETE (body JSON). Verifica que email exista en `usuarios` con `rol = "empresa"`. Usa `empresa_email` y `nombre_artista` en tabla `obras`. Retorna `ObraEmpresa` mapeada.
 
 ## Lib
 
@@ -175,6 +176,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 - `hooks/useResenas.ts` — `cargar()` → GET `/api/resenas?obra_id=X`; `agregar()` → POST async, devuelve `{ ok, error? }`. Usa `usePerfil()` para email del usuario.
 - `hooks/useObrasArtista.ts` — migrado de localStorage a Supabase. Internamente usa `usePerfil()` para obtener el email. Llama a `/api/artista/obras` (GET/POST/PUT/DELETE). Retorna `{ obras, listo, agregar, actualizar, eliminar }` — misma interfaz que antes.
+- `hooks/useObrasEmpresa.ts` — migrado de localStorage a Supabase. Usa `usePerfil()` para email. Llama a `/api/empresa/obras` (GET/POST/PUT/DELETE). Tipo `ObraEmpresa` incluye `nombreArtista` (artista representado por la galería). Retorna `{ obras, listo, agregar, actualizar, eliminar }`.
 
 ## Despliegue en Vercel — variables de entorno
 
@@ -195,10 +197,6 @@ Sin `MP_ACCESS_TOKEN`, `/api/pagos/*` no funciona. El resto ya está operativo.
 - `MP_ACCESS_TOKEN` — Mercado Pago → Developers → Panel → Credenciales → Access Token (sandbox: `TEST-...`, producción: `APP_USR-...`). Agregar en `.env.local` y Vercel.
 
 ### Rotos conocidos (por atacar)
-- **Hrefs `"#"` en nav** — 11 items en `data/navegacion.ts` y `Footer.tsx` apuntan a `"#"` aunque las páginas existen.
-- **`MES_ACTUAL = 5`** hardcodeado — `EstadisticasValor.tsx` y `PaginaComparar.tsx`; debe ser `new Date().getMonth()`.
-- **Navbar usa `<a>` en lugar de `<Link>`** — hard reload en cada click del menú.
-- **Obras de empresa en localStorage** — `useObrasEmpresa` aún usa localStorage; `PerfilPublicoEmpresa` muestra el perfil pero no las obras a visitantes.
 - **`error.tsx` / `loading.tsx`** globales ausentes — pantalla blanca si Supabase cae.
 - **Páginas post-pago** ignoran `searchParams` de MP — el comprador no ve qué compró.
 

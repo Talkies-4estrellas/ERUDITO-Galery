@@ -7,8 +7,7 @@ interface Props {
   ficha: FichaArte;
 }
 
-// Índice del mes actual (Junio = 5)
-const MES_ACTUAL = 5;
+const MES_ACTUAL = new Date().getMonth();
 
 export default function EstadisticasValor({ ficha }: Props) {
   const [abierta, setAbierta] = useState<string | null>(null);
@@ -28,8 +27,9 @@ export default function EstadisticasValor({ ficha }: Props) {
   // Normaliza a 15-100% para que siempre haya barra visible
   const alturaPct = (v: number) => 15 + ((v - minPrecio) / rango) * 85;
 
-  const precioActual = ficha.graficaValor[MES_ACTUAL].valor;
-  const precioAnterior = ficha.graficaValor[MES_ACTUAL - 1].valor;
+  const mesIdx = Math.min(MES_ACTUAL, ficha.graficaValor.length - 1);
+  const precioActual = ficha.graficaValor[mesIdx].valor;
+  const precioAnterior = ficha.graficaValor[Math.max(0, mesIdx - 1)].valor;
   const cambioPct = (((precioActual - precioAnterior) / precioAnterior) * 100).toFixed(1);
   const subio = precioActual >= precioAnterior;
 
@@ -131,7 +131,7 @@ export default function EstadisticasValor({ ficha }: Props) {
                     >
                       <div
                         className={`w-full rounded-sm ${
-                          i === MES_ACTUAL ? "bg-cyan-400" : "bg-zinc-600"
+                          i === mesIdx ? "bg-cyan-400" : "bg-zinc-600"
                         }`}
                         style={{ height: `${alturaPct(valor)}%` }}
                       />

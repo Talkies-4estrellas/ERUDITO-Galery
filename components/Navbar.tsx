@@ -51,7 +51,7 @@ function PanelDesplegable({
             <ul className="space-y-0.5">
               {seccion.items.map((item) => (
                 <li key={item.etiqueta}>
-                  <a
+                  <Link
                     href={item.href}
                     className="block rounded-lg px-2 py-1.5 text-sm text-zinc-300 transition-colors hover:bg-white/5 hover:text-amber-400"
                   >
@@ -59,14 +59,14 @@ function PanelDesplegable({
                     {item.descripcion && (
                       <span className="mt-0.5 block text-xs text-zinc-500">{item.descripcion}</span>
                     )}
-                  </a>
+                  </Link>
                   {item.hijos && (
                     <ul className="ml-3 border-l border-white/10 pl-2">
                       {item.hijos.map((hijo) => (
                         <li key={hijo.etiqueta}>
-                          <a href={hijo.href} className="block rounded-lg px-2 py-1 text-xs text-zinc-400 transition-colors hover:bg-white/5 hover:text-amber-400">
+                          <Link href={hijo.href} className="block rounded-lg px-2 py-1 text-xs text-zinc-400 transition-colors hover:bg-white/5 hover:text-amber-400">
                             {hijo.etiqueta}
-                          </a>
+                          </Link>
                         </li>
                       ))}
                     </ul>
@@ -96,13 +96,13 @@ function ItemMenu({
 
   if (!menu.secciones) {
     return (
-      <a
-        href={menu.href}
+      <Link
+        href={menu.href ?? "/"}
         onMouseEnter={() => setMenuAbierto(null)}
         className="rounded-full px-2.5 py-1.5 text-[13px] text-zinc-400 transition-colors hover:text-white whitespace-nowrap"
       >
         {menu.etiqueta}
-      </a>
+      </Link>
     );
   }
 
@@ -160,18 +160,18 @@ function MenuMovil({ alCerrar }: { alCerrar: () => void }) {
                         <ul>
                           {seccion.items.map((item) => (
                             <li key={item.etiqueta}>
-                              <a href={item.href} onClick={alCerrar}
+                              <Link href={item.href} onClick={alCerrar}
                                 className="block rounded-lg px-2 py-1.5 text-sm text-zinc-400 hover:text-amber-400">
                                 {item.etiqueta}
-                              </a>
+                              </Link>
                               {item.hijos && (
                                 <ul className="ml-4 border-l border-white/10 pl-2">
                                   {item.hijos.map((hijo) => (
                                     <li key={hijo.etiqueta}>
-                                      <a href={hijo.href} onClick={alCerrar}
+                                      <Link href={hijo.href} onClick={alCerrar}
                                         className="block px-2 py-1 text-xs text-zinc-500 hover:text-amber-400">
                                         {hijo.etiqueta}
-                                      </a>
+                                      </Link>
                                     </li>
                                   ))}
                                 </ul>
@@ -185,10 +185,10 @@ function MenuMovil({ alCerrar }: { alCerrar: () => void }) {
                 )}
               </>
             ) : (
-              <a href={menu.href} onClick={alCerrar}
+              <Link href={menu.href ?? "/"} onClick={alCerrar}
                 className="block rounded-lg px-3 py-2 text-sm text-zinc-200 hover:bg-white/5">
                 {menu.etiqueta}
-              </a>
+              </Link>
             )}
           </li>
         ))}
@@ -242,14 +242,14 @@ export default function Navbar() {
               </ul>
 
               {/* ── Columna central: logo ── */}
-              <a
+              <Link
                 href="/"
                 className="select-none text-center text-base font-bold tracking-[0.2em] text-white transition hover:opacity-80"
                 onMouseEnter={() => setMenuAbierto(null)}
               >
                 ERUDITO<br />
                 <span className="text-amber-400 tracking-[0.3em]">GALERY</span>
-              </a>
+              </Link>
 
               {/* ── Columna derecha: menús + acciones ── */}
               <div className="flex items-center justify-end gap-0.5">

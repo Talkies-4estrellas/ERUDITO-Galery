@@ -57,9 +57,9 @@ export default function Footer() {
                 { label: "Artistas", href: "/artistas" },
                 { label: "Catálogo", href: "/catalogo" },
                 { label: "Favoritos", href: "/favoritos" },
-                { label: "Cocina y Alimento", href: "#" },
-                { label: "Eventos", href: "#" },
-                { label: "Blog", href: "#" },
+                { label: "Cocina y Alimento", href: "/cocina" },
+                { label: "Eventos", href: "/eventos" },
+                { label: "Blog", href: "/blog" },
               ].map(({ label, href }) => (
                 <li key={label}>
                   <Link
@@ -140,13 +140,17 @@ export default function Footer() {
             © 2026 ERUDITO Galery. Todos los derechos reservados.
           </p>
           <div className="flex gap-5">
-            {["Privacidad", "Términos", "Contacto"].map((l) => (
+            {[
+              { label: "Privacidad", href: "#" },
+              { label: "Términos", href: "#" },
+              { label: "Contacto", href: "/contacto" },
+            ].map(({ label, href }) => (
               <Link
-                key={l}
-                href="#"
+                key={label}
+                href={href}
                 className="text-xs text-zinc-600 transition hover:text-zinc-400"
               >
-                {l}
+                {label}
               </Link>
             ))}
           </div>
