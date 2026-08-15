@@ -3,7 +3,7 @@ import { getArtistas, getFichas } from "@/lib/db";
 import { articulos } from "@/data/articulos";
 import { servicios } from "@/data/servicios";
 
-const BASE = "https://erudito-galery.vercel.app";
+const BASE = process.env.NEXT_PUBLIC_URL ?? "https://erudito-galeria.vercel.app";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [artistas, fichas] = await Promise.all([getArtistas(), getFichas()]);

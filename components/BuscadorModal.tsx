@@ -63,9 +63,10 @@ export default function BuscadorModal({ open, onClose, query, setQuery }: Props)
   const q = query.trim();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      if (obras.length > 0)    { router.push(`/obra/${obras[0].id}`);       onClose(); }
+    if (e.key === "Enter" && query.trim().length >= 2) {
+      if (obras.length > 0)         { router.push(`/obra/${obras[0].id}`);       onClose(); }
       else if (artistas.length > 0) { router.push(`/artista/${artistas[0].id}`); onClose(); }
+      else if (!buscando)           { router.push(`/obras?q=${encodeURIComponent(query.trim())}`); onClose(); }
     }
   };
 
@@ -172,11 +173,18 @@ export default function BuscadorModal({ open, onClose, query, setQuery }: Props)
           )}
 
           {hayResultados && (
-            <div className="border-t border-zinc-800 px-4 py-2">
+            <div className="flex items-center justify-between border-t border-zinc-800 px-4 py-2">
               <p className="text-[10px] text-zinc-600">
                 {obras.length + artistas.length} resultado
                 {obras.length + artistas.length !== 1 ? "s" : ""} · Enter para ir al primero
               </p>
+              <Link
+                href={`/obras?q=${encodeURIComponent(query.trim())}`}
+                onClick={onClose}
+                className="text-[10px] text-amber-400 transition hover:text-amber-300"
+              >
+                Ver todos en catálogo →
+              </Link>
             </div>
           )}
         </div>

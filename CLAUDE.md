@@ -43,10 +43,12 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `app/privado/page.tsx` — compone `PaginaPrivado` (requiere sesión).
 - `app/admin/page.tsx` — compone `PanelAdmin` (solo emails en `ADMIN_EMAILS`).
 - `app/perfil/page.tsx` — edición de perfil del usuario autenticado.
-- `app/pago/exito/page.tsx` — página de retorno MP cuando el pago fue aprobado (ícono verde).
-- `app/pago/fallido/page.tsx` — página de retorno MP cuando el pago fue rechazado (ícono rojo).
-- `app/pago/pendiente/page.tsx` — página de retorno MP cuando el pago está en proceso (ícono ámbar).
-- `app/sitemap.ts` — sitemap dinámico con todas las rutas estáticas y dinámicas.
+- `app/pago/exito/page.tsx` — retorno MP aprobado. Lee `searchParams` (payment_id, payment_type, external_reference) y muestra tarjeta con ID, método y orden. Dinámico (`ƒ`).
+- `app/pago/fallido/page.tsx` — retorno MP rechazado. Muestra referencia de orden. Link a `/contacto`. Dinámico.
+- `app/pago/pendiente/page.tsx` — retorno MP pendiente. Muestra ID y orden. Dinámico.
+- `app/error.tsx` — error boundary global (client). Botón "Reintentar" (`reset()`) + link a inicio.
+- `app/loading.tsx` — loading global. Spinner ámbar centrado en pantalla completa.
+- `app/sitemap.ts` — sitemap dinámico con todas las rutas estáticas y dinámicas. URL base desde `process.env.NEXT_PUBLIC_URL`.
 - `app/robots.ts` — bloquea /admin, /privado, /perfil, /api.
 
 ## Auth y perfiles
@@ -67,10 +69,11 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 ## Componentes
 
 - `components/Navbar.tsx` — barra (client). Layout 3 columnas (`grid-cols-[1fr_auto_1fr]`): menús izquierda / logo centrado / menús derecha + acciones. Dropdowns en escritorio (`lg`); hamburguesa en móvil. Incluye buscador (`Ctrl+K`), favoritos con badge, `BotonAuth` y `BotonTema`. **No pre-carga artistas/fichas** — la búsqueda es lazy server-side. **Todos los links usan `<Link>` de Next.js** (logo, dropdown, menú móvil) — sin hard reload.
-- `components/BuscadorModal.tsx` — modal de búsqueda (client). Props: `open`, `onClose`, `query`, `setQuery`. Debounce 300ms + AbortController — llama a `/api/buscar?q=X` solo al escribir ≥2 chars. Spinner en ícono mientras fetcha. No recibe artistas/fichas como props.
+- `components/BuscadorModal.tsx` — modal de búsqueda (client). Props: `open`, `onClose`, `query`, `setQuery`. Debounce 300ms + AbortController — llama a `/api/buscar?q=X` solo al escribir ≥2 chars. Spinner en ícono mientras fetcha. Enter → primera obra/artista o `/obras?q=` si no hay resultados. Link "Ver todos en catálogo →" en pie cuando hay resultados. No recibe artistas/fichas como props.
 - `components/Footer.tsx` — footer (client): 4 columnas (Marca, Explorar, Servicios, Newsletter). El formulario de newsletter muestra confirmación amber al suscribirse. Todos los hrefs de Explorar/Servicios/Contacto apuntan a rutas reales (`/artistas`, `/catalogo`, `/favoritos`, `/cocina`, `/eventos`, `/blog`, `/contacto`, `/servicios#...`). Redes sociales y Privacidad/Términos aún en `"#"` (sin URLs reales).
 - `components/BotonFavorito.tsx` — botón corazón (client, prop `id`, `tamano: "sm" | "lg"`). Usa `useFavoritos`; `e.preventDefault()`/`stopPropagation()` para no disparar el `Link` padre.
-- `components/PaginaArtistas.tsx` / `PaginaCatalogo.tsx` / `PaginaServicios.tsx` / `PaginaFavoritos.tsx` — contenido de esas páginas (ver arriba).
+- `components/PaginaArtistas.tsx` — client component. Recibe `artistas` y `fichas` como props desde `app/artistas/page.tsx` (server). Barra de búsqueda (filtra por nombre/origen) + chips por `origen`. Muestra contador de resultados y estado vacío con "Limpiar filtros".
+- `components/PaginaCatalogo.tsx` / `PaginaServicios.tsx` / `PaginaFavoritos.tsx` — contenido de esas páginas (ver arriba).
 - `components/SeccionEventos.tsx` — fila horizontal (server, scroll nativo sin JS) de `data/eventos.ts`: badge de fecha, tipo (Subasta/Exposición), modalidad, lugar, descripción y botón "Más información" (decorativo).
 - `components/Carousel.tsx` — carrusel (client): auto-avance 6 s, pausa con hover, flechas, puntos. Recibe `obras: Obra[]` como prop (top 4 por `vistas` desde Supabase). Botón "Ver más" → `<Link href="/obra/[id]">`. Retorna `null` si el array está vacío (guard contra crash).
 - `components/RegistrarVisita.tsx` — client component invisible. Dispara `incrementarVistas(id)` en `useEffect` al entrar a `/obra/[id]`. No renderiza nada.
@@ -80,7 +83,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `components/GaleriaObras.tsx` — galería (client + Suspense interno). Filtros OR/AND con `useSearchParams` como fuente de verdad: URL `?tamano=grande&movimiento=muralismo` activa chips. `router.replace` sincroniza URL al toglear.
 - `components/DetalleObra.tsx` — detalle completo: banner, `VisorPerspectivas`, panel info, `EstadisticasValor`, "Arte similar".
 - `components/VisorPerspectivas.tsx` — visor museo (client): imagen enmarcada, flechas y puntos entre perspectivas. Retorna `null` si `imagenes` está vacío (guard contra crash).
-- `components/EstadisticasValor.tsx` — sección de valor (client). Recibe `ficha: FichaArte`. Gráfica de interés (barras purple, escala dinámica), gráfica de valor 12 meses (Jun resaltado cyan, normalizada 15-100%), precio real, tipo de entrega, % de cambio vs mes anterior, acordeones con certificaciones únicas por obra, columna de compra.
+- `components/EstadisticasValor.tsx` — sección de valor (client). Recibe `ficha: FichaArte`. Gráfica de interés (barras purple, escala dinámica), gráfica de valor 12 meses (mes actual dinámico resaltado cyan, normalizada 15-100%), precio real, tipo de entrega, % de cambio vs mes anterior, acordeones con certificaciones únicas por obra, columna de compra.
 - `components/CapsulaArtista.tsx` — píldora: avatar, nombre, vida, botón Perfil → `/artista/[id]`.
 - `components/PerfilArtista.tsx` — perfil: foto, bio, datos rápidos, timeline "Trayectoria", fila de obras.
 - `components/PanelCompra.tsx` — panel de compra en `/obra/[id]`. Fases: `idle → form → resumen → procesando`. Formulario de datos de contacto → resumen con precio → botón "Pagar con Mercado Pago" (llama `/api/pagos/crear-preferencia` y redirige a `init_point`). Muestra spinner en fase `procesando` y error si falla la conexión con MP.
@@ -197,14 +200,13 @@ Sin `MP_ACCESS_TOKEN`, `/api/pagos/*` no funciona. El resto ya está operativo.
 - `MP_ACCESS_TOKEN` — Mercado Pago → Developers → Panel → Credenciales → Access Token (sandbox: `TEST-...`, producción: `APP_USR-...`). Agregar en `.env.local` y Vercel.
 
 ### Rotos conocidos (por atacar)
-- **`error.tsx` / `loading.tsx`** globales ausentes — pantalla blanca si Supabase cae.
-- **Páginas post-pago** ignoran `searchParams` de MP — el comprador no ve qué compró.
+_(todos resueltos — ver mejoras futuras para próximos pasos)_
 
 ### Mejoras futuras (posibles)
-- Filtros y búsqueda en `/artistas`.
-- Motivo de rechazo en solicitudes (campo `motivo` en tabla).
+- **Motivo de rechazo** en solicitudes — `ALTER TABLE solicitudes ADD COLUMN motivo TEXT;` + modal con textarea en `PanelAdmin.tsx`.
 - Fotos reales de artistas (reemplazar picsum.photos).
-- Bottom nav móvil, CSV export, búsqueda con IA (Groq).
+- Bottom nav móvil, CSV export admin, búsqueda con IA (Groq).
+- Autenticación con hash de contraseña real (bcrypt) — actualmente texto plano en `usuarios.clave`.
 
 ## Notas del entorno (Windows)
 

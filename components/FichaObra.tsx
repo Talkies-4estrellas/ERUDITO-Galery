@@ -104,7 +104,7 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
             </div>
             {ficha.precio > 0 && (
               <span className="shrink-0 rounded-full bg-black/50 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
-                ${ficha.precio.toLocaleString("en-US")}
+                ${ficha.precio.toLocaleString("es-MX")}
               </span>
             )}
           </div>
