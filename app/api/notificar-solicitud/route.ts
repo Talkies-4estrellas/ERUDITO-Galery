@@ -21,7 +21,13 @@ function htmlAprobado(nombre: string, rol: string) {
     </div>`;
 }
 
-function htmlRechazado(nombre: string, rol: string) {
+function htmlRechazado(nombre: string, rol: string, motivo?: string) {
+  const bloqueMotivo = motivo
+    ? `<div style="background:#27272a;border-left:3px solid #f87171;border-radius:8px;padding:12px 16px;margin:0 0 20px">
+        <p style="color:#a1a1aa;font-size:12px;margin:0 0 4px;text-transform:uppercase;letter-spacing:0.05em">Motivo</p>
+        <p style="color:#e4e4e7;margin:0;font-size:14px">${motivo}</p>
+       </div>`
+    : "";
   return `
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px;background:#18181b;border-radius:16px;color:#fff">
       <h1 style="color:#f87171;font-size:22px;margin:0 0 12px">Solicitud no aprobada</h1>
@@ -29,8 +35,9 @@ function htmlRechazado(nombre: string, rol: string) {
       <p style="color:#a1a1aa;margin:0 0 20px">
         Lamentamos informarte que tu solicitud como <strong style="color:#fff">${rol}</strong>
         en <strong style="color:#fbbf24">ERUDITO Galery</strong> no fue aprobada en esta ocasión.
-        Si tienes dudas, contáctanos respondiendo este correo.
       </p>
+      ${bloqueMotivo}
+      <p style="color:#a1a1aa;margin:0 0 20px">Si tienes dudas, contáctanos respondiendo este correo.</p>
       <p style="color:#52525b;font-size:12px;margin:24px 0 0">ERUDITO Galery — Arte con historia y valor</p>
     </div>`;
 }
@@ -41,8 +48,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "RESEND_API_KEY no configurada" }, { status: 500 });
   }
 
-  const { email, nombre, rol, estado } = await req.json() as {
-    email: string; nombre: string; rol: string; estado: "aprobado" | "rechazado";
+  const { email, nombre, rol, estado, motivo } = await req.json() as {
+    email: string; nombre: string; rol: string; estado: "aprobado" | "rechazado"; motivo?: string;
   };
 
   if (!email || !nombre || !estado) {
@@ -55,7 +62,7 @@ export async function POST(req: NextRequest) {
 
   const html = estado === "aprobado"
     ? htmlAprobado(nombre, rol)
-    : htmlRechazado(nombre, rol);
+    : htmlRechazado(nombre, rol, motivo);
 
   const res = await fetch(RESEND_URL, {
     method: "POST",

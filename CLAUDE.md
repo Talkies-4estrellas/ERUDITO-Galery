@@ -64,7 +64,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `components/BotonAuth.tsx` — en Navbar: muestra "Entrar" si no hay sesión, o avatar amber con dropdown (Mi perfil / Área privada / Administración / Cerrar sesión) si hay sesión.
 - `components/AuthGuard.tsx` — acepta dos tipos de sesión: Supabase Auth (`user` del hook) O sesión de prueba en `localStorage` (clave `erudito-perfil`). Redirige a `/login` solo si ninguna de las dos existe.
 - `components/PaginaPrivado.tsx` — vista bloqueada si no autenticado; contenido premium si autenticado.
-- `components/PanelAdmin.tsx` — panel de administración. `ADMIN_EMAILS = ["firestarshyni@gmail.com"]`. Incluye sección "Solicitudes pendientes" con badge numérico, tarjetas por solicitante y botones Aprobar/Rechazar con toast de confirmación. Tras aprobar/rechazar llama a `/api/notificar-solicitud` para enviar email al solicitante. **Realtime activo**: suscripción `postgres_changes` en tabla `solicitudes` (INSERT) — nuevas solicitudes aparecen en vivo con toast.
+- `components/PanelAdmin.tsx` — panel de administración. `ADMIN_EMAILS = ["firestarshyni@gmail.com"]`. Incluye sección "Solicitudes pendientes" con badge numérico, tarjetas por solicitante y botones Aprobar/Rechazar. **Rechazar abre `ModalRechazo`**: textarea opcional de motivo → guarda `motivo` en `solicitudes` + lo incluye en el email de rechazo. Tras aprobar/rechazar llama a `/api/notificar-solicitud`. **Realtime activo**: suscripción `postgres_changes` en tabla `solicitudes` (INSERT) — nuevas solicitudes aparecen en vivo con toast.
 
 ## Componentes
 
@@ -101,7 +101,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - Tabla `artistas` — 13 artistas (ids 5–17). Columnas: `id_artista`, `nombre`, `vida`, `origen`, `foto_perfil`, `biografia`. RLS: select público.
 - Tabla `obras` — 15 obras (ids 9–23) + obras de artistas/empresas de plataforma. `id_artista` **nullable**. Col `artista_email` (text, nullable) para obras de artistas registrados vía plataforma. Col `empresa_email` (text, nullable) para obras publicadas por galerías/empresas. Col `nombre_artista` (text, nullable) para el nombre del artista representado por la empresa. Col `vistas` (integer default 0). RLS: select público.
 - Tabla `usuarios` — usuarios sin Supabase Auth. PK: `email`. Col `slug` (texto único por empresa). RLS: select+insert público.
-- Tabla `solicitudes` — solicitudes artistas/empresas. Realtime habilitado.
+- Tabla `solicitudes` — solicitudes artistas/empresas. Col `motivo TEXT` (nullable) para el motivo de rechazo escrito por el admin. Realtime habilitado.
 - Tabla `resenas` — comentarios por obra, anti-duplicado por email en API.
 - Tabla `ventas` — órdenes Mercado Pago.
 - Tabla `suscriptores` — emails de newsletter. PK: `email` unique.
@@ -159,7 +159,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `app/api/upload/route.ts` — sube imagen al bucket Supabase Storage. Recibe `FormData` + query `?carpeta=X`. Devuelve `{ url }`.
 - `app/api/buscar/route.ts` — búsqueda server-side. GET `?q=X` (mín 2 chars). ILIKE en `obras` y `artistas`. Cache 15s. Devuelve `{ obras, artistas }`.
 - `app/api/resenas/route.ts` — GET `?obra_id=X` (cache 30s) / POST (insert con anti-duplicado por email, 409 si ya reseñó). Usa cliente anon.
-- `app/api/notificar-solicitud/route.ts` — POST `{ email, nombre, rol, estado }`. Llama Resend API. FROM: `notificaciones@erudito-galeria.vercel.app`.
+- `app/api/notificar-solicitud/route.ts` — POST `{ email, nombre, rol, estado, motivo? }`. Llama Resend API. FROM: `notificaciones@erudito-galeria.vercel.app`. Email de rechazo incluye bloque con `motivo` si se proporcionó.
 - `app/api/pagos/crear-preferencia/route.ts` — POST `{ obra_id, titulo, precio, tipo, nombre, email, telefono?, mensaje? }`. Crea venta + Preference MP. Devuelve `{ init_point, venta_id }`. Usa service role.
 - `app/api/pagos/webhook/route.ts` — GET (validación MP) / POST (actualiza venta). Idempotente. Siempre 200. Usa service role.
 - `app/api/newsletter/route.ts` — POST `{ email }`. Upsert en tabla `suscriptores`. Usa service role.
@@ -203,7 +203,6 @@ Sin `MP_ACCESS_TOKEN`, `/api/pagos/*` no funciona. El resto ya está operativo.
 _(todos resueltos — ver mejoras futuras para próximos pasos)_
 
 ### Mejoras futuras (posibles)
-- **Motivo de rechazo** en solicitudes — `ALTER TABLE solicitudes ADD COLUMN motivo TEXT;` + modal con textarea en `PanelAdmin.tsx`.
 - Fotos reales de artistas (reemplazar picsum.photos).
 - Bottom nav móvil, CSV export admin, búsqueda con IA (Groq).
 - Autenticación con hash de contraseña real (bcrypt) — actualmente texto plano en `usuarios.clave`.

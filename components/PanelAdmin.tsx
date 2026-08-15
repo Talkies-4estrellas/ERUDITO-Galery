@@ -39,6 +39,7 @@ interface SolicitudRow {
   motivacion: string;
   estado: "pendiente" | "aprobado" | "rechazado";
   created_at: string;
+  motivo?: string;
 }
 
 // ── sub-componentes ───────────────────────────────────────────────────
@@ -73,6 +74,71 @@ function StatCard({
   );
 }
 
+// ── Modal de rechazo ─────────────────────────────────────────────────
+function ModalRechazo({
+  solicitud,
+  motivo,
+  setMotivo,
+  onConfirmar,
+  onCancelar,
+  cargando,
+}: {
+  solicitud: SolicitudRow;
+  motivo: string;
+  setMotivo: (v: string) => void;
+  onConfirmar: () => void;
+  onCancelar: () => void;
+  cargando: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+      onClick={onCancelar}>
+      <div className="w-full max-w-md rounded-3xl bg-zinc-900 p-6 ring-1 ring-white/10 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-red-400">Confirmar rechazo</p>
+          <h2 className="mt-1 text-base font-bold text-white">
+            {solicitud.nombre || "Sin nombre"}
+          </h2>
+          <p className="text-xs text-zinc-500">{solicitud.email} · {solicitud.rol}</p>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-zinc-400">
+            Motivo del rechazo <span className="text-zinc-600">(opcional — se enviará por email)</span>
+          </label>
+          <textarea
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+            rows={3}
+            placeholder="Ej: El portafolio no cumple los requisitos mínimos de la galería…"
+            className="w-full resize-none rounded-xl bg-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 ring-1 ring-white/10 outline-none focus:ring-red-400/40"
+          />
+        </div>
+
+        <div className="mt-5 flex gap-3">
+          <button
+            type="button"
+            onClick={onConfirmar}
+            disabled={cargando}
+            className="flex-1 rounded-full bg-red-500/80 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+          >
+            {cargando ? "Rechazando…" : "Confirmar rechazo"}
+          </button>
+          <button
+            type="button"
+            onClick={onCancelar}
+            disabled={cargando}
+            className="rounded-full bg-white/5 px-5 py-2.5 text-sm text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── componente principal ──────────────────────────────────────────────
 export default function PanelAdmin() {
   const { perfil, listo, cerrarSesion } = usePerfil();
@@ -84,6 +150,8 @@ export default function PanelAdmin() {
   const [solicitudes, setSolicitudes]   = useState<SolicitudRow[]>([]);
   const [cargandoData, setCargandoData] = useState(true);
   const [accionando, setAccionando]     = useState<number | null>(null);
+  const [solicitudArechazar, setSolicitudArechazar] = useState<SolicitudRow | null>(null);
+  const [motivoRechazo, setMotivoRechazo]           = useState("");
 
   // ── carga inicial ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -140,11 +208,11 @@ export default function PanelAdmin() {
     return () => { supabase.removeChannel(canal); };
   }, [listo, perfil, toast]);
 
-  async function notificar(email: string, nombre: string, rol: string, estado: "aprobado" | "rechazado") {
+  async function notificar(email: string, nombre: string, rol: string, estado: "aprobado" | "rechazado", motivo?: string) {
     fetch("/api/notificar-solicitud", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, nombre, rol, estado }),
+      body: JSON.stringify({ email, nombre, rol, estado, motivo }),
     }).catch(() => {});
   }
 
@@ -180,16 +248,16 @@ export default function PanelAdmin() {
     }
   }
 
-  async function rechazar(s: SolicitudRow) {
+  async function rechazar(s: SolicitudRow, motivo: string) {
     setAccionando(s.id);
     try {
       await supabase.from("solicitudes")
-        .update({ estado: "rechazado", revisado_at: new Date().toISOString() })
+        .update({ estado: "rechazado", revisado_at: new Date().toISOString(), motivo: motivo || null })
         .eq("id", s.id);
 
       setSolicitudes((prev) => prev.filter((x) => x.id !== s.id));
       toast(`Solicitud de ${s.nombre} rechazada`, { icono: "✗" });
-      notificar(s.email, s.nombre, s.rol, "rechazado");
+      notificar(s.email, s.nombre, s.rol, "rechazado", motivo || undefined);
     } catch (err) {
       console.error("Error al rechazar:", err);
       toast("Error al rechazar la solicitud", { icono: "✗" });
@@ -333,7 +401,7 @@ export default function PanelAdmin() {
                         {accionando === s.id ? "…" : "Aprobar"}
                       </button>
                       <button
-                        onClick={() => rechazar(s)}
+                        onClick={() => { setSolicitudArechazar(s); setMotivoRechazo(""); }}
                         disabled={accionando === s.id}
                         className="rounded-xl bg-red-400/10 px-3 py-2 text-xs font-semibold text-red-400 ring-1 ring-red-400/20 transition hover:bg-red-400/20 disabled:opacity-50"
                       >
@@ -484,6 +552,20 @@ export default function PanelAdmin() {
         </div>
 
       </section>
+
+      {solicitudArechazar && (
+        <ModalRechazo
+          solicitud={solicitudArechazar}
+          motivo={motivoRechazo}
+          setMotivo={setMotivoRechazo}
+          cargando={accionando === solicitudArechazar.id}
+          onConfirmar={() => {
+            rechazar(solicitudArechazar, motivoRechazo);
+            setSolicitudArechazar(null);
+          }}
+          onCancelar={() => setSolicitudArechazar(null)}
+        />
+      )}
     </PageFade>
   );
 }
