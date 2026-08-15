@@ -7,9 +7,14 @@ export default function Footer() {
   const [email, setEmail] = useState("");
   const [enviado, setEnviado] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email.trim()) return;
+    await fetch("/api/newsletter", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim() }),
+    }).catch(() => {});
     setEnviado(true);
     setEmail("");
   }

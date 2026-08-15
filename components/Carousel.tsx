@@ -8,6 +8,8 @@ import type { Obra } from "@/data/obras";
 const INTERVALO_MS = 6000;
 
 export default function Carousel({ obras }: { obras: Obra[] }) {
+  if (!obras.length) return null;
+
   const [actual, setActual] = useState(0);
   const [pausado, setPausado] = useState(false);
 

@@ -1,12 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-
-const CLAVE = "erudito-mis-obras";
+import { usePerfil } from "@/hooks/usePerfil";
 
 export type TamanoObra = "Pequeño" | "Mediano" | "Grande";
-export type ColorObra = "Cálido" | "Frío" | "Neutro";
-export type TipoObra = "Físico" | "JPG Certificado" | "Impresión Oficial";
+export type ColorObra  = "Cálido" | "Frío" | "Neutro";
+export type TipoObra   = "Físico" | "JPG Certificado" | "Impresión Oficial";
 
 export interface ObraPropia {
   id: string;
@@ -35,55 +34,53 @@ export const OBRA_VACIA: Omit<ObraPropia, "id"> = {
   tipo: "Físico",
 };
 
-function leer(): ObraPropia[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(CLAVE);
-    return raw ? (JSON.parse(raw) as ObraPropia[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function escribir(obras: ObraPropia[]) {
-  localStorage.setItem(CLAVE, JSON.stringify(obras));
-}
-
 export function useObrasArtista() {
+  const { perfil, listo: perfilListo } = usePerfil();
+  const email = perfil?.email ?? "";
+
   const [obras, setObras] = useState<ObraPropia[]>([]);
   const [listo, setListo] = useState(false);
 
   useEffect(() => {
-    setObras(leer());
-    setListo(true);
-  }, []);
+    if (!perfilListo) return;
+    if (!email) { setListo(true); return; }
 
-  const agregar = useCallback((datos: Omit<ObraPropia, "id">) => {
-    const nueva: ObraPropia = {
-      ...datos,
-      id: `obra-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    };
-    const actuales = leer();
-    const nuevas = [...actuales, nueva];
-    escribir(nuevas);
-    setObras(nuevas);
-  }, []);
+    fetch(`/api/artista/obras?email=${encodeURIComponent(email)}`)
+      .then((r) => r.json())
+      .then(({ obras: data }) => { setObras(data ?? []); setListo(true); })
+      .catch(() => setListo(true));
+  }, [email, perfilListo]);
 
-  const actualizar = useCallback((id: string, datos: Omit<ObraPropia, "id">) => {
-    const actuales = leer();
-    const nuevas = actuales.map((o) =>
-      o.id === id ? { ...datos, id } : o
-    );
-    escribir(nuevas);
-    setObras(nuevas);
-  }, []);
+  const agregar = useCallback(async (datos: Omit<ObraPropia, "id">) => {
+    if (!email) return;
+    const res = await fetch("/api/artista/obras", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, ...datos }),
+    });
+    const { obra } = await res.json();
+    if (obra) setObras((prev) => [obra, ...prev]);
+  }, [email]);
 
-  const eliminar = useCallback((id: string) => {
-    const actuales = leer();
-    const nuevas = actuales.filter((o) => o.id !== id);
-    escribir(nuevas);
-    setObras(nuevas);
-  }, []);
+  const actualizar = useCallback(async (id: string, datos: Omit<ObraPropia, "id">) => {
+    if (!email) return;
+    await fetch("/api/artista/obras", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, email, ...datos }),
+    });
+    setObras((prev) => prev.map((o) => (o.id === id ? { ...datos, id } : o)));
+  }, [email]);
+
+  const eliminar = useCallback(async (id: string) => {
+    if (!email) return;
+    await fetch("/api/artista/obras", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, email }),
+    });
+    setObras((prev) => prev.filter((o) => o.id !== id));
+  }, [email]);
 
   return { obras, listo, agregar, actualizar, eliminar };
 }

@@ -11,6 +11,8 @@ interface Props {
 export default function VisorPerspectivas({ titulo, imagenes }: Props) {
   const [actual, setActual] = useState(0);
 
+  if (!imagenes.length) return null;
+
   const irA = (indice: number) =>
     setActual((indice + imagenes.length) % imagenes.length);
 

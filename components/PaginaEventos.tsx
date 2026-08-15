@@ -31,11 +31,13 @@ function ModalRegistro({ evento, onClose }: { evento: Evento; onClose: () => voi
   const [tel, setTel] = useState("");
   const [fase, setFase] = useState<"form" | "enviado">("form");
 
-  function enviar(e: React.FormEvent) {
+  async function enviar(e: React.FormEvent) {
     e.preventDefault();
-    const registros = JSON.parse(localStorage.getItem("erudito-registros-eventos") || "[]");
-    registros.push({ eventoId: evento.id, nombre, email, tel, fecha: new Date().toISOString() });
-    localStorage.setItem("erudito-registros-eventos", JSON.stringify(registros));
+    await fetch("/api/registros-eventos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ evento_id: evento.id, nombre, email, telefono: tel || null }),
+    }).catch(() => {});
     setFase("enviado");
   }
 

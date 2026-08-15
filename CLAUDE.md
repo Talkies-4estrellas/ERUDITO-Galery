@@ -43,6 +43,9 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `app/privado/page.tsx` — compone `PaginaPrivado` (requiere sesión).
 - `app/admin/page.tsx` — compone `PanelAdmin` (solo emails en `ADMIN_EMAILS`).
 - `app/perfil/page.tsx` — edición de perfil del usuario autenticado.
+- `app/pago/exito/page.tsx` — página de retorno MP cuando el pago fue aprobado (ícono verde).
+- `app/pago/fallido/page.tsx` — página de retorno MP cuando el pago fue rechazado (ícono rojo).
+- `app/pago/pendiente/page.tsx` — página de retorno MP cuando el pago está en proceso (ícono ámbar).
 - `app/sitemap.ts` — sitemap dinámico con todas las rutas estáticas y dinámicas.
 - `app/robots.ts` — bloquea /admin, /privado, /perfil, /api.
 
@@ -69,17 +72,18 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `components/BotonFavorito.tsx` — botón corazón (client, prop `id`, `tamano: "sm" | "lg"`). Usa `useFavoritos`; `e.preventDefault()`/`stopPropagation()` para no disparar el `Link` padre.
 - `components/PaginaArtistas.tsx` / `PaginaCatalogo.tsx` / `PaginaServicios.tsx` / `PaginaFavoritos.tsx` — contenido de esas páginas (ver arriba).
 - `components/SeccionEventos.tsx` — fila horizontal (server, scroll nativo sin JS) de `data/eventos.ts`: badge de fecha, tipo (Subasta/Exposición), modalidad, lugar, descripción y botón "Más información" (decorativo).
-- `components/Carousel.tsx` — carrusel (client): auto-avance 6 s, pausa con hover, flechas, puntos. Recibe `obras: Obra[]` como prop (top 4 por `vistas` desde Supabase). Botón "Ver más" → `<Link href="/obra/[id]">`.
+- `components/Carousel.tsx` — carrusel (client): auto-avance 6 s, pausa con hover, flechas, puntos. Recibe `obras: Obra[]` como prop (top 4 por `vistas` desde Supabase). Botón "Ver más" → `<Link href="/obra/[id]">`. Retorna `null` si el array está vacío (guard contra crash).
 - `components/RegistrarVisita.tsx` — client component invisible. Dispara `incrementarVistas(id)` en `useEffect` al entrar a `/obra/[id]`. No renderiza nada.
 - `components/SeccionResenas.tsx` — sección de comentarios/estrellas bajo cada obra. `agregar()` es async (POST a `/api/resenas`). Muestra "Publicando…" y bloquea el botón durante el envío. Muestra error de la API (ej. reseña duplicada por email).
 - `components/FichaObra.tsx` — tarjeta de obra: imagen 3:4, título/año, descripción (hover expande), estrellas, cápsula del artista. Prop `fluida` (true = `w-full` para cuadrícula, false = ancho fijo para fila).
 - `components/FilaFichas.tsx` — fila horizontal scroll-snap (client). Recibe `titulo` y `lista: FichaArte[]`.
 - `components/GaleriaObras.tsx` — galería (client + Suspense interno). Filtros OR/AND con `useSearchParams` como fuente de verdad: URL `?tamano=grande&movimiento=muralismo` activa chips. `router.replace` sincroniza URL al toglear.
 - `components/DetalleObra.tsx` — detalle completo: banner, `VisorPerspectivas`, panel info, `EstadisticasValor`, "Arte similar".
-- `components/VisorPerspectivas.tsx` — visor museo (client): imagen enmarcada, flechas y puntos entre 4 perspectivas.
+- `components/VisorPerspectivas.tsx` — visor museo (client): imagen enmarcada, flechas y puntos entre perspectivas. Retorna `null` si `imagenes` está vacío (guard contra crash).
 - `components/EstadisticasValor.tsx` — sección de valor (client). Recibe `ficha: FichaArte`. Gráfica de interés (barras purple, escala dinámica), gráfica de valor 12 meses (Jun resaltado cyan, normalizada 15-100%), precio real, tipo de entrega, % de cambio vs mes anterior, acordeones con certificaciones únicas por obra, columna de compra.
 - `components/CapsulaArtista.tsx` — píldora: avatar, nombre, vida, botón Perfil → `/artista/[id]`.
 - `components/PerfilArtista.tsx` — perfil: foto, bio, datos rápidos, timeline "Trayectoria", fila de obras.
+- `components/PanelCompra.tsx` — panel de compra en `/obra/[id]`. Fases: `idle → form → resumen → procesando`. Formulario de datos de contacto → resumen con precio → botón "Pagar con Mercado Pago" (llama `/api/pagos/crear-preferencia` y redirige a `init_point`). Muestra spinner en fase `procesando` y error si falla la conexión con MP.
 
 ## Favoritos
 
@@ -92,12 +96,15 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - Esquema completo en `database/schema.sql`.
 - Tabla `perfiles` — vinculada a `auth.users` (FK uuid). Campos: `rol`, `nombre`, `bio`, `especialidad`, `pais`, `slug`. RLS activo.
 - Tabla `artistas` — 13 artistas (ids 5–17). Columnas: `id_artista`, `nombre`, `vida`, `origen`, `foto_perfil`, `biografia`. RLS: select público.
-- Tabla `obras` — 15 obras (ids 9–23). Columnas: `id_obra`, `titulo`, `anio`, `descripcion`, `estrellas`, `imagen_principal`, `id_artista`, `tamano`, `color`, `movimiento`, `tecnica`, `precio`, `tipo`, `perspectivas` (jsonb), `grafica_valor` (jsonb), `grafica_interes` (jsonb), `certificaciones` (jsonb), **`vistas` integer default 0**. RLS: select público.
-- Tabla `usuarios` — usuarios sin Supabase Auth. PK: `email`. RLS: select+insert público.
-- Tabla `solicitudes` — solicitudes artistas/empresas. Campos: `id`, `email`, `clave`, `rol`, `nombre`, `bio`, `especialidad`, `pais`, `motivacion`, `estado` (pendiente/aprobado/rechazado), `created_at`, `revisado_at`. Realtime habilitado.
-- Tabla `resenas` — comentarios por obra. Campos: `id`, `obra_id` (FK `obras.id_obra`), `nombre`, `email`, `estrellas` (1–5), `comentario`, `created_at`. RLS: select+insert público. Anti-duplicado por email controlado en la API.
-- Tabla `ventas` — órdenes Mercado Pago. Campos: `id`, `obra_id`, `titulo`, `precio`, `tipo`, `comprador_nombre`, `comprador_email`, `comprador_telefono`, `mensaje`, `estado` (pendiente/pagado/en_proceso/cancelado), `mp_preference_id`, `mp_payment_id`, `created_at`. RLS: select público.
-- RPC SQL `incrementar_vistas(obra_id int)` — incremento atómico de `obras.vistas` con `security definer`.
+- Tabla `obras` — 15 obras (ids 9–23) + obras de artistas de plataforma. `id_artista` **nullable**. Col `artista_email` (text, nullable) para obras de artistas registrados vía plataforma. Col `vistas` (integer default 0). RLS: select público.
+- Tabla `usuarios` — usuarios sin Supabase Auth. PK: `email`. Col `slug` (texto único por empresa). RLS: select+insert público.
+- Tabla `solicitudes` — solicitudes artistas/empresas. Realtime habilitado.
+- Tabla `resenas` — comentarios por obra, anti-duplicado por email en API.
+- Tabla `ventas` — órdenes Mercado Pago.
+- Tabla `suscriptores` — emails de newsletter. PK: `email` unique.
+- Tabla `contactos` — mensajes del formulario de contacto.
+- Tabla `registros_eventos` — asistentes registrados a eventos (evento_id, nombre, email, telefono).
+- RPC SQL `incrementar_vistas(obra_id int)` — incremento atómico con `security definer`.
 - Bucket Storage `obras` — público, acepta INSERT/SELECT anon+authenticated.
 - Confirmación de email **desactivada** (Authentication → Providers → Email).
 - `lib/db.ts` — mappers `mapArtista`, `mapObra`. Funciones: `getArtistas()`, `getFichas()`, `getCarousel()` (top 4 por vistas), `incrementarVistas(id)`.
@@ -141,9 +148,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 - Repositorio: `Talkies-4estrellas/ERUDITO-Galeria` en GitHub, conectado al proyecto `erudito-galeria` en Vercel.
 - URL de producción: `erudito-galeria.vercel.app` (con "ia", no "y").
-- `vercel.json` especifica `framework: "nextjs"`, `buildCommand` y `outputDirectory` explícitamente.
 - `package.json` tiene `"engines": {"node": ">=20.0.0"}` — necesario por Next.js 16 + React 19 (local: Node 24).
-- **Problema resuelto**: había un git submodule fantasma `ERUDITO Galery` (modo 160000); eliminado con `git rm --cached`.
 - Flujo: push a `master` desde GitKraken → Vercel detecta → build ~30-60 s → producción actualizada.
 
 ## API Routes
@@ -151,9 +156,13 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `app/api/upload/route.ts` — sube imagen al bucket Supabase Storage. Recibe `FormData` + query `?carpeta=X`. Devuelve `{ url }`.
 - `app/api/buscar/route.ts` — búsqueda server-side. GET `?q=X` (mín 2 chars). ILIKE en `obras` y `artistas`. Cache 15s. Devuelve `{ obras, artistas }`.
 - `app/api/resenas/route.ts` — GET `?obra_id=X` (cache 30s) / POST (insert con anti-duplicado por email, 409 si ya reseñó). Usa cliente anon.
-- `app/api/notificar-solicitud/route.ts` — POST `{ email, nombre, rol, estado }`. Llama Resend API con `RESEND_API_KEY`. FROM: `notificaciones@erudito-galeria.vercel.app`.
-- `app/api/pagos/crear-preferencia/route.ts` — POST `{ obra_id, titulo, precio, tipo, nombre, email, telefono?, mensaje? }`. Crea venta en `ventas` + Preference de Mercado Pago. Devuelve `{ init_point, venta_id }`. Usa `getServerSupabase()`.
-- `app/api/pagos/webhook/route.ts` — GET (validación MP) / POST (actualiza estado de venta). Re-consulta pago en MP API. Idempotente: `.neq("estado","pagado")`. Siempre 200. Usa `getServerSupabase()`.
+- `app/api/notificar-solicitud/route.ts` — POST `{ email, nombre, rol, estado }`. Llama Resend API. FROM: `notificaciones@erudito-galeria.vercel.app`.
+- `app/api/pagos/crear-preferencia/route.ts` — POST `{ obra_id, titulo, precio, tipo, nombre, email, telefono?, mensaje? }`. Crea venta + Preference MP. Devuelve `{ init_point, venta_id }`. Usa service role.
+- `app/api/pagos/webhook/route.ts` — GET (validación MP) / POST (actualiza venta). Idempotente. Siempre 200. Usa service role.
+- `app/api/newsletter/route.ts` — POST `{ email }`. Upsert en tabla `suscriptores`. Usa service role.
+- `app/api/contacto/route.ts` — POST `{ nombre, email, asunto, mensaje }`. Inserta en `contactos` + email al admin vía Resend. Usa service role.
+- `app/api/registros-eventos/route.ts` — POST `{ evento_id, nombre, email, telefono? }`. Inserta en `registros_eventos`. Usa service role.
+- `app/api/artista/obras/route.ts` — CRUD de obras para artistas de plataforma. GET `?email=X` / POST / PUT / DELETE (body JSON). Verifica que email exista en `usuarios`. Usa service role. Retorna `ObraPropia` mapeada desde `obras`.
 
 ## Lib
 
@@ -165,26 +174,39 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 ## Hooks
 
 - `hooks/useResenas.ts` — `cargar()` → GET `/api/resenas?obra_id=X`; `agregar()` → POST async, devuelve `{ ok, error? }`. Usa `usePerfil()` para email del usuario.
+- `hooks/useObrasArtista.ts` — migrado de localStorage a Supabase. Internamente usa `usePerfil()` para obtener el email. Llama a `/api/artista/obras` (GET/POST/PUT/DELETE). Retorna `{ obras, listo, agregar, actualizar, eliminar }` — misma interfaz que antes.
+
+## Despliegue en Vercel — variables de entorno
+
+| Variable | `.env.local` | Vercel |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | ✅ |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | ✅ |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | ✅ |
+| `RESEND_API_KEY` | ✅ | ✅ |
+| `NEXT_PUBLIC_URL` | ✅ | ✅ |
+| `MP_ACCESS_TOKEN` | ⏳ pendiente | ⏳ pendiente |
+
+Sin `MP_ACCESS_TOKEN`, `/api/pagos/*` no funciona. El resto ya está operativo.
 
 ## Pendientes
 
-### Crítico — variables de entorno
-Agregar a `.env.local` y Vercel (Settings → Environment Variables):
-- `SUPABASE_SERVICE_ROLE_KEY` — Supabase Project Settings → API → service_role
-- `RESEND_API_KEY` — Resend dashboard
-- `MP_ACCESS_TOKEN` — Mercado Pago credentials (sandbox o producción)
-- `NEXT_PUBLIC_URL` — `https://erudito-galeria.vercel.app`
+### Crítico
+- `MP_ACCESS_TOKEN` — Mercado Pago → Developers → Panel → Credenciales → Access Token (sandbox: `TEST-...`, producción: `APP_USR-...`). Agregar en `.env.local` y Vercel.
 
-Sin estas vars los endpoints `/api/pagos/*` y `/api/notificar-solicitud` retornan error silencioso.
+### Rotos conocidos (por atacar)
+- **Hrefs `"#"` en nav** — 11 items en `data/navegacion.ts` y `Footer.tsx` apuntan a `"#"` aunque las páginas existen.
+- **`MES_ACTUAL = 5`** hardcodeado — `EstadisticasValor.tsx` y `PaginaComparar.tsx`; debe ser `new Date().getMonth()`.
+- **Navbar usa `<a>` en lugar de `<Link>`** — hard reload en cada click del menú.
+- **Obras de empresa en localStorage** — `useObrasEmpresa` aún usa localStorage; `PerfilPublicoEmpresa` muestra el perfil pero no las obras a visitantes.
+- **`error.tsx` / `loading.tsx`** globales ausentes — pantalla blanca si Supabase cae.
+- **Páginas post-pago** ignoran `searchParams` de MP — el comprador no ve qué compró.
 
 ### Mejoras futuras (posibles)
-- **Motivo de rechazo** — el admin no puede añadir nota al rechazar (campo `motivo` pendiente en `solicitudes`).
-- **Filtros `/artistas`** — tabla `artistas` no tiene campo de categoría aún.
-- **Fotos de artistas** — picsum.photos → fotos reales. Flujo: imagen en `Pruebas/` → copiar a `public/artistas/[slug]/` → actualizar `foto_perfil`.
-- **Páginas dinámicas** — `/eventos/[id]` sin contenido, Cocina, Blog, Newsletter, Contacto solo en `#`.
-- **Bottom nav móvil** — diseño pendiente.
-- **CSV export** — datos insuficientes aún.
-- **Búsqueda con IA** — Groq (no contemplado por ahora).
+- Filtros y búsqueda en `/artistas`.
+- Motivo de rechazo en solicitudes (campo `motivo` en tabla).
+- Fotos reales de artistas (reemplazar picsum.photos).
+- Bottom nav móvil, CSV export, búsqueda con IA (Groq).
 
 ## Notas del entorno (Windows)
 

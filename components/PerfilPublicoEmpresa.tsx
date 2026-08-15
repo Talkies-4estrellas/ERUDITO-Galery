@@ -5,9 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { DatosPerfil } from "@/hooks/usePerfil";
 import type { ObraEmpresa } from "@/hooks/useObrasEmpresa";
-
-const CLAVE_PERFIL = "erudito-perfil";
-const CLAVE_OBRAS  = "erudito-mis-obras-empresa";
+import { supabase } from "@/lib/supabase";
 
 function iniciales(nombre: string): string {
   const p = nombre.trim().split(/\s+/);
@@ -24,17 +22,29 @@ export default function PerfilPublicoEmpresa({ slug }: Props) {
   const [artistaActivo, setArtistaActivo] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const rawP = localStorage.getItem(CLAVE_PERFIL);
-      const rawO = localStorage.getItem(CLAVE_OBRAS);
-      const p: DatosPerfil | null = rawP ? JSON.parse(rawP) : null;
-      const o: ObraEmpresa[]      = rawO ? JSON.parse(rawO) : [];
-      if (p?.rol === "empresa" && p?.slug === slug) {
-        setPerfil(p);
-        setObras(o);
-      }
-    } catch { /* noop */ }
-    setListo(true);
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("usuarios")
+          .select("nombre, bio, especialidad, pais, slug, avatar_url, email")
+          .eq("slug", slug)
+          .eq("rol", "empresa")
+          .single();
+        if (data) {
+          setPerfil({
+            rol: "empresa",
+            nombre: data.nombre ?? "",
+            bio: data.bio ?? "",
+            especialidad: data.especialidad ?? "",
+            pais: data.pais ?? "",
+            email: data.email ?? "",
+            slug: data.slug ?? slug,
+            avatar_url: data.avatar_url ?? undefined,
+          });
+        }
+      } catch { /* noop */ }
+      setListo(true);
+    })();
   }, [slug]);
 
   if (!listo) return null;

@@ -56,11 +56,13 @@ export default function PaginaContacto() {
   const [mensaje, setMensaje] = useState("");
   const [enviado, setEnviado] = useState(false);
 
-  function enviar(e: React.FormEvent) {
+  async function enviar(e: React.FormEvent) {
     e.preventDefault();
-    const mensajes = JSON.parse(localStorage.getItem("erudito-contacto") || "[]");
-    mensajes.push({ nombre, email, asunto, mensaje, fecha: new Date().toISOString() });
-    localStorage.setItem("erudito-contacto", JSON.stringify(mensajes));
+    await fetch("/api/contacto", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre, email, asunto, mensaje }),
+    }).catch(() => {});
     toast("Mensaje enviado. Te respondemos en 24 h.", { icono: "✉️" });
     setEnviado(true);
     setNombre(""); setEmail(""); setMensaje(""); setAsunto("Consulta");
