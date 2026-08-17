@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
 import { ToastProvider } from "@/components/ToastProvider";
+import AuroraFondo from "@/components/AuroraFondo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,7 @@ export default function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem('erudito-tema');document.documentElement.setAttribute('data-theme',t==='claro'?'light':'dark');}catch(e){}})();`,
           }}
         />
+        <AuroraFondo />
         <ToastProvider>
           {children}
           <Footer />

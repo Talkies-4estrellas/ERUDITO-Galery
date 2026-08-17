@@ -12,19 +12,30 @@ interface Props {
 }
 
 const TIPO_LABEL: Record<FichaArte["tipo"], string> = {
-  "Físico":           "Original",
-  "JPG Certificado":  "Digital",
-  "Impresión Oficial":"Ed. limitada",
+  "Físico":            "Original",
+  "JPG Certificado":   "Digital",
+  "Impresión Oficial": "Ed. limitada",
 };
+
+function Estrellas({ n }: { n: number }) {
+  return (
+    <div aria-label={`${n} de 5 estrellas`} className="flex gap-0.5">
+      {Array.from({ length: 5 }, (_, i) => (
+        <span key={i} className={`text-xs ${i < n ? "text-amber-400" : "text-white/20"}`}>★</span>
+      ))}
+    </div>
+  );
+}
 
 export default function FichaObra({ ficha, fluida = false, comparable = false }: Props) {
   return (
-    <article className={`group ${fluida ? "w-full" : "w-60 shrink-0 snap-start sm:w-64"}`}>
+    <article className={`group relative hover:z-30 ${fluida ? "w-full" : "w-60 shrink-0 snap-start sm:w-64"}`}>
+
+      {/* ── IMAGEN ─────────────────────────────────────────── */}
       <Link
         href={`/obra/${ficha.id}`}
         className="relative block aspect-[3/4] overflow-hidden rounded-3xl bg-zinc-800 ring-1 ring-white/10"
       >
-        {/* Imagen de fondo */}
         <Image
           src={ficha.imagen}
           alt={ficha.titulo}
@@ -33,92 +44,107 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
-        {/* Badge tipo — top right */}
+        {/* Badge tipo — siempre visible */}
         <div className="absolute right-3 top-3 z-10 rounded-full bg-black/40 px-2.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md">
           {TIPO_LABEL[ficha.tipo]}
         </div>
 
-        {/* Favorito — top left */}
+        {/* Favorito — siempre visible */}
         <div className="absolute left-3 top-3 z-10">
           <BotonFavorito id={ficha.id} />
         </div>
 
-        {/* Comparar — debajo del favorito */}
+        {/* Comparar — siempre visible */}
         {comparable && (
           <div className="absolute left-3 top-12 z-10">
             <BotonComparar id={ficha.id} />
           </div>
         )}
 
-        {/* ── Desenfoque progresivo sobre la imagen ────────────
-            backdrop-blur borra la imagen detrás; la máscara
-            gradiente controla dónde aplica el blur:
-            totalmente borroso abajo → nítido arriba.           */}
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[82%] backdrop-blur-2xl"
-          style={{
-            WebkitMaskImage: "linear-gradient(to top, black 48%, transparent 88%)",
-            maskImage:        "linear-gradient(to top, black 48%, transparent 88%)",
-          }}
-        />
-
-        {/* Oscurecimiento suave encima del blur para legibilidad */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[65%] bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-
-        {/* ── Contenido superpuesto ────────────────────────────── */}
-        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-4">
-
-          {/* Estrellas */}
-          <div aria-label={`${ficha.estrellas} de 5 estrellas`} className="flex gap-0.5">
-            {Array.from({ length: 5 }, (_, i) => (
-              <span key={i} className={`text-xs ${i < ficha.estrellas ? "text-amber-400" : "text-white/20"}`}>
-                ★
-              </span>
-            ))}
-          </div>
-
-          {/* Título */}
-          <div>
-            <h3 className="text-sm font-bold uppercase tracking-wide text-white leading-tight">
-              {ficha.titulo}
-            </h3>
-            <p className="mt-0.5 text-[10px] text-white/50">{ficha.anio}</p>
-          </div>
-
-          {/* Descripción — se expande al hover */}
-          <p className="line-clamp-2 text-[11px] leading-relaxed text-white/70 transition-all duration-300 group-hover:line-clamp-none">
-            {ficha.descripcion}
-          </p>
-
-          {/* Tags + precio */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex flex-wrap gap-1.5">
-              {ficha.movimiento && (
-                <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] text-white/80 backdrop-blur-sm ring-1 ring-white/10">
-                  {ficha.movimiento}
-                </span>
-              )}
-              <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] text-white/60 backdrop-blur-sm ring-1 ring-white/10">
-                {ficha.tamano}
-              </span>
+        {/* Overlay idle: gradiente + título — desaparece en hover */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 transition-opacity duration-300 group-hover:opacity-0">
+          <div
+            className="absolute inset-x-0 bottom-0 h-[55%] backdrop-blur-xl"
+            style={{
+              WebkitMaskImage: "linear-gradient(to top, black 40%, transparent 85%)",
+              maskImage:        "linear-gradient(to top, black 40%, transparent 85%)",
+            }}
+          />
+          <div className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-4">
+            <div className="w-fit rounded-2xl bg-black/60 px-3 py-2.5 backdrop-blur-sm">
+              <div className="mb-1.5">
+                <Estrellas n={ficha.estrellas} />
+              </div>
+              <h3 className="text-sm font-bold uppercase tracking-wide text-amber-400 leading-tight">
+                {ficha.titulo}
+              </h3>
+              <p className="mt-0.5 text-[10px] text-amber-300/70">{ficha.anio}</p>
             </div>
-            {ficha.precio > 0 && (
-              <span className="shrink-0 rounded-full bg-black/50 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
-                ${ficha.precio.toLocaleString("es-MX")}
-              </span>
-            )}
           </div>
+        </div>
 
-          {/* Botón "Ver obra" — pill blanco, como "Add to cart" en la referencia */}
-          <div className="mt-1 w-full rounded-full bg-white py-2.5 text-center text-xs font-bold text-zinc-900 transition-colors duration-200 group-hover:bg-amber-300">
+        {/* Botón "Ver obra" — solo en hover */}
+        <div className="absolute inset-x-4 bottom-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div className="w-full rounded-full bg-amber-300 py-2.5 text-center text-xs font-bold text-zinc-900">
             Ver obra
           </div>
         </div>
       </Link>
 
-      {/* Cápsula del artista */}
-      <div className="mt-3">
-        <CapsulaArtista artista={ficha.artista} />
+      {/* ── SECCIÓN INFERIOR ───────────────────────────────── */}
+      <div className="relative mt-3 h-[52px]">
+
+        {/* Idle: cápsula artista */}
+        <div className="absolute inset-0 transition-opacity duration-200 group-hover:opacity-0 group-hover:pointer-events-none">
+          <CapsulaArtista artista={ficha.artista} />
+        </div>
+
+        {/* Hover: panel con toda la info */}
+        <div className="absolute left-0 right-0 top-0 z-20 pointer-events-none opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:pointer-events-auto">
+          <div className="rounded-2xl bg-zinc-900/95 p-4 shadow-2xl ring-1 ring-white/10 backdrop-blur-sm">
+
+            {/* Título + año */}
+            <p className="truncate text-sm font-bold uppercase tracking-wide text-white leading-tight">
+              {ficha.titulo}
+            </p>
+            <p className="mt-0.5 text-[10px] text-zinc-500">{ficha.anio}</p>
+
+            {/* Estrellas */}
+            <div className="mt-2">
+              <Estrellas n={ficha.estrellas} />
+            </div>
+
+            {/* Descripción */}
+            <p className="mt-1.5 line-clamp-3 text-[11px] leading-relaxed text-zinc-400">
+              {ficha.descripcion}
+            </p>
+
+            {/* Tags + precio */}
+            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap gap-1">
+                {ficha.movimiento && (
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-300 ring-1 ring-white/10">
+                    {ficha.movimiento}
+                  </span>
+                )}
+                <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-400 ring-1 ring-white/10">
+                  {ficha.tamano}
+                </span>
+              </div>
+              {ficha.precio > 0 && (
+                <span className="shrink-0 text-xs font-semibold text-amber-400">
+                  ${ficha.precio.toLocaleString("es-MX")}
+                </span>
+              )}
+            </div>
+
+            {/* Artista */}
+            <div className="mt-3 border-t border-white/10 pt-3">
+              <CapsulaArtista artista={ficha.artista} />
+            </div>
+          </div>
+        </div>
       </div>
     </article>
   );
