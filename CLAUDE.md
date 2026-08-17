@@ -28,11 +28,13 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 - `app/page.tsx` — inicio: Navbar + Carousel + SeccionEventos + FilaFichas + Footer.
 - `app/obra/[id]/page.tsx` — detalle de obra (SSG): resuelve la ficha y compone `DetalleObra`. NO poner clases de Tailwind aquí (ver nota).
-- `app/obras/page.tsx` — galería con filtros: compone `GaleriaObras` dentro de `<Suspense>`.
+- `app/obras/page.tsx` — redirect a `/catalogo` (eliminada la galería con filtros, consolidada en catálogo).
 - `app/artista/[id]/page.tsx` — perfil de artista (SSG): compone `PerfilArtista`. Misma regla.
 - `app/layout.tsx` — raíz: importa `Footer` y `AuroraFondo` (fondo global de aurora naranja).
 - `app/artistas/page.tsx` — compone `PaginaArtistas` (server, sin filtros aún).
-- `app/catalogo/page.tsx` — async server; fetcha `getFichas()` y pasa como prop a `PaginaCatalogo` (client, filtros: búsqueda/tipo/movimiento/técnica/precio/orden).
+- `app/catalogo/page.tsx` — redirect a `/catalogo/fisicos`.
+- `app/catalogo/fisicos/page.tsx` — async server; fetcha `getFichas()`, filtra `tipo="Físico"`, pasa a `PaginaCatalogoSeccion`.
+- `app/catalogo/digitales/page.tsx` — async server; fetcha `getFichas()`, filtra digitales (`JPG Certificado` + `Impresión Oficial`), pasa a `PaginaCatalogoSeccion`.
 - `app/favoritos/page.tsx` — async server; fetcha `getFichas()` y pasa como prop a `PaginaFavoritos` (client, lee de `useFavoritos`).
 - `app/comparar/page.tsx` — async server; fetcha `getFichas()` y pasa como prop a `PaginaComparar`.
 - `app/privado/page.tsx` — async server; fetcha `getFichas()` y pasa como prop a `PaginaPrivado` (requiere sesión).
@@ -73,15 +75,17 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `components/Footer.tsx` — footer (client): 4 columnas (Marca, Explorar, Servicios, Newsletter). El formulario de newsletter muestra confirmación amber al suscribirse. Todos los hrefs de Explorar/Servicios/Contacto apuntan a rutas reales (`/artistas`, `/catalogo`, `/favoritos`, `/cocina`, `/eventos`, `/blog`, `/contacto`, `/servicios#...`). Redes sociales y Privacidad/Términos aún en `"#"` (sin URLs reales).
 - `components/BotonFavorito.tsx` — botón corazón (client, prop `id`, `tamano: "sm" | "lg"`). Usa `useFavoritos`; `e.preventDefault()`/`stopPropagation()` para no disparar el `Link` padre.
 - `components/PaginaArtistas.tsx` — client component. Recibe `artistas` y `fichas` como props desde `app/artistas/page.tsx` (server). Barra de búsqueda (filtra por nombre/origen) + chips por `origen`. Muestra contador de resultados y estado vacío con "Limpiar filtros".
-- `components/PaginaCatalogo.tsx` / `PaginaServicios.tsx` / `PaginaFavoritos.tsx` — contenido de esas páginas (ver arriba).
-- `components/SeccionEventos.tsx` — fila horizontal (server, scroll nativo sin JS) de `data/eventos.ts`: badge de fecha, tipo (Subasta/Exposición), modalidad, lugar, descripción y botón "Más información" (decorativo).
+- `components/PaginaCatalogoSeccion.tsx` — client component reutilizable para `/catalogo/fisicos` y `/catalogo/digitales`. Recibe `fichas` (pre-filtradas por tipo en el server), `titulo`, `descripcion`, `otroHref`/`otroLabel` (link al otro tipo), y `vacio`. Incluye buscador, filtros avanzados (movimiento, técnica, precio, orden) y grid de `FichaObra fluida`. Muestra botón "Ver Digitales/Físicos →" en el encabezado.
+- `components/PaginaCatalogo.tsx` — obsoleto; reemplazado por `PaginaCatalogoSeccion`. Mantener solo como referencia si se necesita la vista combinada en el futuro.
+- `components/PaginaServicios.tsx` / `PaginaFavoritos.tsx` — contenido de esas páginas (ver arriba).
+- `components/SeccionEventos.tsx` — fila horizontal (client, scroll con JS) de `data/eventos.ts`: badge de fecha, tipo (Subasta/Exposición), modalidad, lugar, descripción. Botón **"Ver subastas"** (ámbar pill) → `/eventos`. Flechas de scroll izq/der.
 - `components/Carousel.tsx` — carrusel (client): auto-avance 6 s, pausa con hover, flechas, puntos. Recibe `obras: Obra[]` como prop (top 4 por `vistas` desde Supabase). Botón "Ver más" → `<Link href="/obra/[id]">`. Retorna `null` si el array está vacío (guard contra crash).
 - `components/RegistrarVisita.tsx` — client component invisible. Dispara `incrementarVistas(id)` en `useEffect` al entrar a `/obra/[id]`. No renderiza nada.
 - `components/SeccionResenas.tsx` — sección de comentarios/estrellas bajo cada obra. `agregar()` es async (POST a `/api/resenas`). Muestra "Publicando…" y bloquea el botón durante el envío. Muestra error de la API (ej. reseña duplicada por email).
 - `components/FichaObra.tsx` — tarjeta de obra (rediseñada). **Idle**: imagen 3:4 con gradiente mínimo + pill oscuro (`bg-black/60 backdrop-blur-sm rounded-2xl`) mostrando estrellas + título (`text-amber-400`) + año; CapsulaArtista debajo. **Hover**: overlay desaparece → imagen limpia; botón ámbar "Ver obra" aparece en la imagen; CapsulaArtista se reemplaza por panel info completo (título, estrellas, descripción hasta 3 líneas, tags, precio ámbar, artista). Artículo tiene `hover:z-30` para no quedar tapado. Todo CSS puro con `group`/`group-hover:`. Prop `fluida` (true = `w-full`, false = ancho fijo). Prop `comparable` muestra `BotonComparar` bajo el favorito.
 - `components/AuroraFondo.tsx` — fondo de aurora naranja (client). Fixed, `z-0`, `mix-blend-mode: screen` (el negro predomina). 4 líneas angostas (5–8% ancho) con gradiente naranja/ámbar/blanco-cálido vertical, `filter: blur(22–32px)`. Reacciona a: scroll con parallax distinto por línea (6–14% scrollY), velocidad de scroll (boost de brillo con decay), ratón (parallax horizontal suave). Flicker individual por línea (9–16s). Montado en `app/layout.tsx` antes del `ToastProvider`.
-- `components/FilaFichas.tsx` — fila horizontal scroll-snap (client). Recibe `titulo` y `lista: FichaArte[]`.
-- `components/GaleriaObras.tsx` — galería (client + Suspense interno). Filtros OR/AND con `useSearchParams` como fuente de verdad: URL `?tamano=grande&movimiento=muralismo` activa chips. `router.replace` sincroniza URL al toglear.
+- `components/FilaFichas.tsx` — fila horizontal scroll-snap (client). Recibe `titulo` y `lista: FichaArte[]`. Incluye botón **"Ver más"** (ámbar pill) → `/catalogo/fisicos` y flechas de scroll izq/der.
+- `components/GaleriaObras.tsx` — galería (client + Suspense interno). Ya no se usa directamente (`/obras` redirige). Filtros OR/AND con `useSearchParams`. Conservar por si se reactiva.
 - `components/DetalleObra.tsx` — detalle completo: banner, `VisorPerspectivas`, panel info, `EstadisticasValor`, "Arte similar".
 - `components/VisorPerspectivas.tsx` — visor museo (client): imagen enmarcada, flechas y puntos entre perspectivas. Retorna `null` si `imagenes` está vacío (guard contra crash).
 - `components/EstadisticasValor.tsx` — sección de valor (client). Recibe `ficha: FichaArte`. Gráfica de interés (barras purple, escala dinámica), gráfica de valor 12 meses (mes actual dinámico resaltado cyan, normalizada 15-100%), precio real, tipo de entrega, % de cambio vs mes anterior, acordeones con certificaciones únicas por obra, columna de compra.
