@@ -22,9 +22,12 @@ export default function SeccionEventos({ eventos }: { eventos: Evento[] }) {
           Próximos eventos
         </h2>
         <div className="flex items-center gap-3">
-          <p className="hidden text-xs text-zinc-500 sm:block">
-            Subastas y exposiciones de la galería
-          </p>
+          <Link
+            href="/eventos"
+            className="rounded-full bg-amber-400/10 px-4 py-1.5 text-xs font-semibold text-amber-400 ring-1 ring-amber-400/20 transition hover:bg-amber-400 hover:text-zinc-900"
+          >
+            Ver subastas
+          </Link>
           <div className="flex gap-2">
             <button
               type="button"

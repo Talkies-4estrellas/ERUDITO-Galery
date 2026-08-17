@@ -30,7 +30,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `app/obra/[id]/page.tsx` — detalle de obra (SSG): resuelve la ficha y compone `DetalleObra`. NO poner clases de Tailwind aquí (ver nota).
 - `app/obras/page.tsx` — galería con filtros: compone `GaleriaObras` dentro de `<Suspense>`.
 - `app/artista/[id]/page.tsx` — perfil de artista (SSG): compone `PerfilArtista`. Misma regla.
-- `app/layout.tsx` — raíz: importa `Footer` para que aparezca en todas las páginas.
+- `app/layout.tsx` — raíz: importa `Footer` y `AuroraFondo` (fondo global de aurora naranja).
 - `app/artistas/page.tsx` — compone `PaginaArtistas` (server, sin filtros aún).
 - `app/catalogo/page.tsx` — async server; fetcha `getFichas()` y pasa como prop a `PaginaCatalogo` (client, filtros: búsqueda/tipo/movimiento/técnica/precio/orden).
 - `app/favoritos/page.tsx` — async server; fetcha `getFichas()` y pasa como prop a `PaginaFavoritos` (client, lee de `useFavoritos`).
@@ -78,7 +78,8 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `components/Carousel.tsx` — carrusel (client): auto-avance 6 s, pausa con hover, flechas, puntos. Recibe `obras: Obra[]` como prop (top 4 por `vistas` desde Supabase). Botón "Ver más" → `<Link href="/obra/[id]">`. Retorna `null` si el array está vacío (guard contra crash).
 - `components/RegistrarVisita.tsx` — client component invisible. Dispara `incrementarVistas(id)` en `useEffect` al entrar a `/obra/[id]`. No renderiza nada.
 - `components/SeccionResenas.tsx` — sección de comentarios/estrellas bajo cada obra. `agregar()` es async (POST a `/api/resenas`). Muestra "Publicando…" y bloquea el botón durante el envío. Muestra error de la API (ej. reseña duplicada por email).
-- `components/FichaObra.tsx` — tarjeta de obra: imagen 3:4, título/año, descripción (hover expande), estrellas, cápsula del artista. Prop `fluida` (true = `w-full` para cuadrícula, false = ancho fijo para fila).
+- `components/FichaObra.tsx` — tarjeta de obra (rediseñada). **Idle**: imagen 3:4 con gradiente mínimo + pill oscuro (`bg-black/60 backdrop-blur-sm rounded-2xl`) mostrando estrellas + título (`text-amber-400`) + año; CapsulaArtista debajo. **Hover**: overlay desaparece → imagen limpia; botón ámbar "Ver obra" aparece en la imagen; CapsulaArtista se reemplaza por panel info completo (título, estrellas, descripción hasta 3 líneas, tags, precio ámbar, artista). Artículo tiene `hover:z-30` para no quedar tapado. Todo CSS puro con `group`/`group-hover:`. Prop `fluida` (true = `w-full`, false = ancho fijo). Prop `comparable` muestra `BotonComparar` bajo el favorito.
+- `components/AuroraFondo.tsx` — fondo de aurora naranja (client). Fixed, `z-0`, `mix-blend-mode: screen` (el negro predomina). 4 líneas angostas (5–8% ancho) con gradiente naranja/ámbar/blanco-cálido vertical, `filter: blur(22–32px)`. Reacciona a: scroll con parallax distinto por línea (6–14% scrollY), velocidad de scroll (boost de brillo con decay), ratón (parallax horizontal suave). Flicker individual por línea (9–16s). Montado en `app/layout.tsx` antes del `ToastProvider`.
 - `components/FilaFichas.tsx` — fila horizontal scroll-snap (client). Recibe `titulo` y `lista: FichaArte[]`.
 - `components/GaleriaObras.tsx` — galería (client + Suspense interno). Filtros OR/AND con `useSearchParams` como fuente de verdad: URL `?tamano=grande&movimiento=muralismo` activa chips. `router.replace` sincroniza URL al toglear.
 - `components/DetalleObra.tsx` — detalle completo: banner, `VisorPerspectivas`, panel info, `EstadisticasValor`, "Arte similar".

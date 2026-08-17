@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import Link from "next/link";
 import type { FichaArte } from "@/data/fichas";
 import FichaObra from "@/components/FichaObra";
 
@@ -28,27 +29,35 @@ export default function FilaFichas({
         <h2 className="text-lg font-semibold tracking-wide text-white">
           {titulo}
         </h2>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => desplazar(-1)}
-            aria-label="Desplazar a la izquierda"
-            className="rounded-full bg-white/10 p-2 text-white transition hover:bg-white/25"
+        <div className="flex items-center gap-3">
+          <Link
+            href="/catalogo/fisicos"
+            className="rounded-full bg-amber-400/10 px-4 py-1.5 text-xs font-semibold text-amber-400 ring-1 ring-amber-400/20 transition hover:bg-amber-400 hover:text-zinc-900"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            onClick={() => desplazar(1)}
-            aria-label="Desplazar a la derecha"
-            className="rounded-full bg-white/10 p-2 text-white transition hover:bg-white/25"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+            Ver más
+          </Link>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => desplazar(-1)}
+              aria-label="Desplazar a la izquierda"
+              className="rounded-full bg-white/10 p-2 text-white transition hover:bg-white/25"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => desplazar(1)}
+              aria-label="Desplazar a la derecha"
+              className="rounded-full bg-white/10 p-2 text-white transition hover:bg-white/25"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
