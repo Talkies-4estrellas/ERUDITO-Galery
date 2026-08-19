@@ -8,11 +8,11 @@ import BotonTema from "@/components/BotonTema";
 import BotonAuth from "@/components/BotonAuth";
 import { useFavoritos } from "@/hooks/useFavoritos";
 
-/* ─── Separar menús en dos mitades (excluyendo "Inicio" que va en el logo) ─── */
-const todosMenus = menus.filter((m) => m.etiqueta !== "Inicio");
-const MITAD = Math.ceil(todosMenus.length / 2);
-const menusIzq = todosMenus.slice(0, MITAD);
-const menusDer = todosMenus.slice(MITAD);
+/* ─── Grupos de menú explícitos ─── */
+const PRIMARIOS  = ["Obras", "Artistas", "Catálogo", "Servicios", "Eventos"];
+const SECUNDARIOS = ["Cocina y Alimento", "Blog", "Privado", "Contacto"];
+const menusIzq = menus.filter((m) => PRIMARIOS.includes(m.etiqueta));
+const menusDer = menus.filter((m) => SECUNDARIOS.includes(m.etiqueta));
 
 function Flecha({ abierta }: { abierta: boolean }) {
   return (
@@ -224,35 +224,39 @@ export default function Navbar() {
             className="relative"
             onMouseLeave={() => setMenuAbierto(null)}
           >
-            {/* ── Barra principal: grid de 3 columnas ── */}
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-2xl bg-zinc-900/90 px-5 py-3.5 ring-1 ring-white/10 backdrop-blur">
+            {/* ── Barra principal ── */}
+            <div className="relative flex items-center rounded-2xl bg-zinc-900/90 px-5 py-3 ring-1 ring-white/10 backdrop-blur">
 
-              {/* ── Columna izquierda: menús ── */}
-              <ul className="hidden items-center gap-0.5 lg:flex">
-                {menusIzq.map((menu) => (
-                  <li key={menu.etiqueta}>
-                    <ItemMenu
-                      menu={menu}
-                      menuAbierto={menuAbierto}
-                      setMenuAbierto={setMenuAbierto}
-                      alineacion="izquierda"
-                    />
-                  </li>
-                ))}
-              </ul>
+              {/* ── Izquierda (flex-1): menús primarios alineados a la izquierda ── */}
+              <div className="flex flex-1 items-center">
+                <ul className="hidden items-center gap-0.5 lg:flex">
+                  {menusIzq.map((menu) => (
+                    <li key={menu.etiqueta}>
+                      <ItemMenu
+                        menu={menu}
+                        menuAbierto={menuAbierto}
+                        setMenuAbierto={setMenuAbierto}
+                        alineacion="izquierda"
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-              {/* ── Columna central: logo ── */}
+              {/* ── Centro: logo absolutamente centrado ── */}
               <Link
                 href="/"
-                className="select-none text-center text-base font-bold tracking-[0.2em] text-white transition hover:opacity-80"
+                className="absolute left-1/2 -translate-x-1/2 select-none text-center text-base font-bold tracking-[0.2em] text-white transition hover:opacity-80"
                 onMouseEnter={() => setMenuAbierto(null)}
               >
                 ERUDITO<br />
                 <span className="text-amber-400 tracking-[0.3em]">GALERY</span>
               </Link>
 
-              {/* ── Columna derecha: menús + acciones ── */}
-              <div className="flex items-center justify-end gap-0.5">
+              {/* ── Derecha (flex-1): menús secundarios + acciones alineados a la derecha ── */}
+              <div className="flex flex-1 items-center justify-end gap-2">
+
+                {/* Links secundarios */}
                 <ul className="hidden items-center gap-0.5 lg:flex">
                   {menusDer.map((menu) => (
                     <li key={menu.etiqueta}>
@@ -267,57 +271,54 @@ export default function Navbar() {
                 </ul>
 
                 {/* Separador */}
-                <div className="mx-2 hidden h-5 w-px bg-white/10 lg:block" />
+                <div className="hidden h-5 w-px bg-white/10 lg:block" />
 
-                {/* ── Acciones ── */}
-                <div className="flex items-center gap-1.5">
-                  {/* Búsqueda */}
-                  <button
-                    type="button"
-                    aria-label="Abrir buscador"
-                    onClick={() => { setBuscadorAbierto(true); setQueryBusqueda(""); }}
-                    className="flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1.5 text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-amber-400"
-                  >
-                    <svg className="size-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                    </svg>
-                    <kbd className="hidden text-[10px] font-medium text-zinc-500 sm:block">⌘K</kbd>
-                  </button>
+                {/* Búsqueda */}
+                <button
+                  type="button"
+                  aria-label="Abrir buscador"
+                  onClick={() => { setBuscadorAbierto(true); setQueryBusqueda(""); }}
+                  className="flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1.5 text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-amber-400"
+                >
+                  <svg className="size-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                  </svg>
+                  <kbd className="hidden text-[10px] font-medium text-zinc-500 sm:block">⌘K</kbd>
+                </button>
 
-                  {/* Favoritos */}
-                  <Link
-                    href="/favoritos"
-                    aria-label="Favoritos"
-                    className="relative flex items-center justify-center rounded-full bg-white/5 p-2 text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-amber-400"
-                  >
-                    <svg className="size-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                    </svg>
-                    {favoritosListos && favoritos.length > 0 && (
-                      <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-zinc-900">
-                        {favoritos.length}
-                      </span>
-                    )}
-                  </Link>
+                {/* Favoritos */}
+                <Link
+                  href="/favoritos"
+                  aria-label="Favoritos"
+                  className="relative hidden items-center justify-center rounded-full bg-white/5 p-2 text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-amber-400 sm:flex"
+                >
+                  <svg className="size-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                  </svg>
+                  {favoritosListos && favoritos.length > 0 && (
+                    <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-zinc-900">
+                      {favoritos.length}
+                    </span>
+                  )}
+                </Link>
 
-                  {/* Auth (muestra Entrar o avatar) */}
-                  <BotonAuth />
+                {/* Auth */}
+                <BotonAuth />
 
-                  {/* Tema */}
-                  <BotonTema />
+                {/* Tema */}
+                <BotonTema />
 
-                  {/* Hamburguesa móvil */}
-                  <button
-                    type="button"
-                    aria-label="Abrir menú"
-                    onClick={() => setMovilAbierto(!movilAbierto)}
-                    className="flex flex-col gap-1.5 lg:hidden"
-                  >
-                    <span className="h-0.5 w-5 bg-zinc-400" />
-                    <span className="h-0.5 w-5 bg-zinc-400" />
-                    <span className="h-0.5 w-5 bg-zinc-400" />
-                  </button>
-                </div>
+                {/* Hamburguesa móvil */}
+                <button
+                  type="button"
+                  aria-label="Abrir menú"
+                  onClick={() => setMovilAbierto(!movilAbierto)}
+                  className="flex flex-col gap-1.5 lg:hidden"
+                >
+                  <span className="h-0.5 w-5 bg-zinc-400" />
+                  <span className="h-0.5 w-5 bg-zinc-400" />
+                  <span className="h-0.5 w-5 bg-zinc-400" />
+                </button>
               </div>
             </div>
 

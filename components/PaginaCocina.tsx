@@ -4,7 +4,6 @@ import { useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/components/ToastProvider";
 import {
-  productosCocina,
   CATEGORIAS_COCINA,
   COLOR_COCINA,
   type ProductoCocina,
@@ -137,13 +136,13 @@ function ProductoDestacado({ producto }: { producto: ProductoCocina }) {
   );
 }
 
-export default function PaginaCocina() {
+export default function PaginaCocina({ productos }: { productos: ProductoCocina[] }) {
   const [categoriaActiva, setCategoriaActiva] = useState<CategoriaCocina | null>(null);
 
-  const destacados = productosCocina.filter((p) => p.destacado);
+  const destacados = productos.filter((p) => p.destacado);
   const filtrados = categoriaActiva
-    ? productosCocina.filter((p) => p.categoria === categoriaActiva)
-    : productosCocina;
+    ? productos.filter((p) => p.categoria === categoriaActiva)
+    : productos;
   const enGrid = categoriaActiva ? filtrados : filtrados.filter((p) => !p.destacado);
 
   return (

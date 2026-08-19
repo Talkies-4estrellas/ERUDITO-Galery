@@ -70,13 +70,14 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 ## Componentes
 
-- `components/Navbar.tsx` — barra (client). Layout 3 columnas (`grid-cols-[1fr_auto_1fr]`): menús izquierda / logo centrado / menús derecha + acciones. Dropdowns en escritorio (`lg`); hamburguesa en móvil. Incluye buscador (`Ctrl+K`), favoritos con badge, `BotonAuth` y `BotonTema`. **No pre-carga artistas/fichas** — la búsqueda es lazy server-side. **Todos los links usan `<Link>` de Next.js** (logo, dropdown, menú móvil) — sin hard reload.
+- `components/Navbar.tsx` — barra (client). Layout `relative flex` con logo `absolute left-1/2 -translate-x-1/2` (centrado matemáticamente) y dos lados `flex-1`. Grupos de menú explícitos: `PRIMARIOS` (Obras, Artistas, Catálogo, Servicios, Eventos) a la izquierda; `SECUNDARIOS` (Cocina, Blog, Privado, Contacto) + acciones a la derecha. Dropdowns en escritorio (`lg`); hamburguesa en móvil. Incluye buscador (`Ctrl+K`), favoritos con badge, `BotonAuth` y `BotonTema`. **Todos los links usan `<Link>` de Next.js** — sin hard reload.
 - `components/BuscadorModal.tsx` — modal de búsqueda (client). Props: `open`, `onClose`, `query`, `setQuery`. Debounce 300ms + AbortController — llama a `/api/buscar?q=X` solo al escribir ≥2 chars. Spinner en ícono mientras fetcha. Enter → primera obra/artista o `/obras?q=` si no hay resultados. Link "Ver todos en catálogo →" en pie cuando hay resultados. No recibe artistas/fichas como props.
 - `components/Footer.tsx` — footer (client): 4 columnas (Marca, Explorar, Servicios, Newsletter). El formulario de newsletter muestra confirmación amber al suscribirse. Todos los hrefs de Explorar/Servicios/Contacto apuntan a rutas reales (`/artistas`, `/catalogo`, `/favoritos`, `/cocina`, `/eventos`, `/blog`, `/contacto`, `/servicios#...`). Redes sociales y Privacidad/Términos aún en `"#"` (sin URLs reales).
 - `components/BotonFavorito.tsx` — botón corazón (client, prop `id`, `tamano: "sm" | "lg"`). Usa `useFavoritos`; `e.preventDefault()`/`stopPropagation()` para no disparar el `Link` padre.
 - `components/PaginaArtistas.tsx` — client component. Recibe `artistas` y `fichas` como props desde `app/artistas/page.tsx` (server). Barra de búsqueda (filtra por nombre/origen) + chips por `origen`. Muestra contador de resultados y estado vacío con "Limpiar filtros".
 - `components/PaginaCatalogoSeccion.tsx` — client component reutilizable para `/catalogo/fisicos` y `/catalogo/digitales`. Recibe `fichas` (pre-filtradas por tipo en el server), `titulo`, `descripcion`, `otroHref`/`otroLabel` (link al otro tipo), y `vacio`. Incluye buscador, filtros avanzados (movimiento, técnica, precio, orden) y grid de `FichaObra fluida`. Muestra botón "Ver Digitales/Físicos →" en el encabezado.
 - `components/PaginaCatalogo.tsx` — obsoleto; reemplazado por `PaginaCatalogoSeccion`. Mantener solo como referencia si se necesita la vista combinada en el futuro.
+- `components/PaginaCocina.tsx` — client component. Recibe `productos: ProductoCocina[]` como prop desde `app/cocina/page.tsx` (server, `revalidate=60`, lee tabla `productos_cocina`). Incluye filtros por categoría (chips), sección de destacados (`ProductoDestacado`) y grid de tarjetas (`TarjetaProducto`). Carrito local en `localStorage`.
 - `components/PaginaServicios.tsx` / `PaginaFavoritos.tsx` — contenido de esas páginas (ver arriba).
 - `components/SeccionEventos.tsx` — fila horizontal (client, scroll con JS) de `data/eventos.ts`: badge de fecha, tipo (Subasta/Exposición), modalidad, lugar, descripción. Botón **"Ver subastas"** (ámbar pill) → `/eventos`. Flechas de scroll izq/der.
 - `components/Carousel.tsx` — carrusel (client): auto-avance 6 s, pausa con hover, flechas, puntos. Recibe `obras: Obra[]` como prop (top 4 por `vistas` desde Supabase). Botón "Ver más" → `<Link href="/obra/[id]">`. Retorna `null` si el array está vacío (guard contra crash).
@@ -113,7 +114,8 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - Tabla `contactos` — mensajes del formulario de contacto.
 - Tabla `registros_eventos` — asistentes registrados a eventos (evento_id, nombre, email, telefono).
 - RPC SQL `incrementar_vistas(obra_id int)` — incremento atómico con `security definer`.
-- Bucket Storage `obras` — público, acepta INSERT/SELECT anon+authenticated.
+- Bucket Storage `obras` — público, acepta INSERT/SELECT anon+authenticated. Estructura: `obras/[id]/*.webp` (imágenes de obras), `obras/cocina/[id].webp` (productos gastronómicos). Todas las imágenes convertidas a WebP calidad 82 con `sharp` antes de subir.
+- Tabla `productos_cocina` — 17 productos gastronómicos. Cols: `id`, `nombre`, `productor`, `origen`, `descripcion`, `imagen` (URL Storage), `precio`, `unidad`, `categoria`, `destacado`, `activo`, `created_at`. RLS: select público con `activo=true`.
 - Confirmación de email **desactivada** (Authentication → Providers → Email).
 - `lib/db.ts` — mappers `mapArtista`, `mapObra`. Funciones: `getArtistas()`, `getFichas()`, `getCarousel()` (top 4 por vistas), `incrementarVistas(id)`.
 - `lib/supabase-server.ts` — `getServerSupabase()`: cliente con service role key. Solo para Route Handlers. **Nunca importar en componentes cliente.**
@@ -124,7 +126,8 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `data/eventos.ts` — 4 eventos de muestra.
 - `data/obras.ts` — **SOLO fuente de tipos** (`interface Obra`). El carousel ahora usa `getCarousel()` desde Supabase (top 4 por `vistas`). No usar para datos en runtime.
 - `data/artistas.ts` — **SOLO fuente de tipos** (`interface Artista`). No usar para datos en runtime.
-- `data/fichas.ts` — **SOLO fuente de tipos** (`interface FichaArte`, `PuntoGrafica`, etc.). No usar para datos en runtime.
+- `data/fichas.ts` — **SOLO fuente de tipos** (`interface FichaArte`, `PuntoGrafica`, etc.) y fuente de la ruta de migración `api/migrar-obras`. No usar para datos en runtime — las páginas leen de Supabase.
+- `data/cocina.ts` — **SOLO fuente de tipos** (`interface ProductoCocina`, `CategoriaCocina`, `COLOR_COCINA`) y fuente de `api/migrar-cocina`. No usar para datos en runtime — `/cocina` lee de tabla `productos_cocina` en Supabase.
 - **Moneda**: todos los precios y gráficas en MXN (pesos mexicanos). Formato `toLocaleString("es-MX")`.
 - `data/servicios.ts` — 6 servicios con slug, titulo, descripcion, detalle, beneficios, proceso (4 pasos), desde, icono, imagen, acento. Helper `getServicio(slug)`. Cada una tiene: `id`, `titulo`, `anio`, `descripcion`, `estrellas`, `imagen`, `artista`, `perspectivas` (4 vistas derivadas), `tamano`, `color`, `movimiento`, `tecnica`, `precio` (USD real), `tipo` ("Físico" | "JPG Certificado" | "Impresión Oficial"), `graficaValor` (12 puntos mensuales en USD reales), `graficaInteres` (7 puntos 0-100), `certificaciones` (lista única por obra). Helper `obrasDeArtista(id)`.
 
@@ -146,7 +149,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 - **Obras**: Categorías (Pinturas→`?tecnica=oleo`, Esculturas, Digital, Artesanías→`?tecnica=mixta`, …) · Por tamaño (Grande/Mediano/Pequeño con params) · Estilo (Muralismo, Modernismo, Realismo, Simbolismo, Abstracto, Retrato, Paisajismo, Fotografía).
 - **Artistas**: Artesanos · Artistas en línea · Artistas presenciales · Filtros.
-- **Catálogo**: En Línea · Historias · Físicos.
+- **Catálogo**: Físicos (`/catalogo/fisicos`) · Digitales (`/catalogo/digitales`). "Historias" eliminado; `/catalogo` redirige a Físicos.
 - **Servicios**: Registro de Obras · Grupo de Coleccionistas · Restauración de Arte · Museos, Asociaciones y Galerías · Manager de Ventas · Exposición.
 - **Eventos**: Subastas (en línea / presenciales) · Exposiciones · Museos, Asociaciones y Galerías · Manager de Ventas.
 - **Cocina y Alimento**: Productos — lema "La comida hoy en día también es un lujo".
@@ -172,6 +175,9 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `app/api/registros-eventos/route.ts` — POST `{ evento_id, nombre, email, telefono? }`. Inserta en `registros_eventos`. Usa service role.
 - `app/api/artista/obras/route.ts` — CRUD de obras para artistas de plataforma. GET `?email=X` / POST / PUT / DELETE (body JSON). Verifica que email exista en `usuarios`. Usa service role. Retorna `ObraPropia` mapeada desde `obras`.
 - `app/api/empresa/obras/route.ts` — CRUD de obras para galerías/empresas. Idéntico patrón que artista/obras. GET `?email=X` / POST / PUT / DELETE (body JSON). Verifica que email exista en `usuarios` con `rol = "empresa"`. Usa `empresa_email` y `nombre_artista` en tabla `obras`. Retorna `ObraEmpresa` mapeada.
+- `app/api/cocina/route.ts` — GET público, `revalidate=60`. Devuelve `{ productos }` desde tabla `productos_cocina` filtrado por `activo=true`. Usado por `app/cocina/page.tsx` (server component).
+- `app/api/migrar-cocina/route.ts` — POST one-shot. Lee productos de `data/cocina.ts`, convierte imágenes de `public/images/cocina/` a WebP con `sharp`, sube al bucket `obras/cocina/[id].webp` y hace upsert en `productos_cocina`. Idempotente (nombres fijos sin timestamp).
+- `app/api/migrar-obras/route.ts` — POST one-shot. Lee fichas de `data/fichas.ts`, convierte todas las imágenes de `public/obras/` a WebP con `sharp`, sube a `obras/[id]/[nombre].webp` y actualiza `imagen_principal` + `perspectivas` en la tabla `obras`. Idempotente.
 
 ## Lib
 
