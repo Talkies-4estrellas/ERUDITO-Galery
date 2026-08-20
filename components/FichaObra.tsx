@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { FichaArte } from "@/data/fichas";
@@ -28,8 +31,14 @@ function Estrellas({ n }: { n: number }) {
 }
 
 export default function FichaObra({ ficha, fluida = false, comparable = false }: Props) {
+  const [hovered, setHovered] = useState(false);
+
   return (
-    <article className={`group relative hover:z-30 ${fluida ? "w-full" : "w-60 shrink-0 snap-start sm:w-64"}`}>
+    <article
+      className={`relative ${hovered ? "z-30" : ""} ${fluida ? "w-full" : "w-60 shrink-0 snap-start sm:w-64"}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
 
       {/* ── IMAGEN ─────────────────────────────────────────── */}
       <Link
@@ -41,7 +50,7 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
           alt={ficha.titulo}
           fill
           sizes="256px"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          className={`object-cover transition-transform duration-500 ${hovered ? "scale-105" : ""}`}
         />
 
         {/* Badge tipo — siempre visible */}
@@ -61,8 +70,11 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
           </div>
         )}
 
-        {/* Overlay idle: gradiente + título — desaparece en hover */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 transition-opacity duration-300 group-hover:opacity-0">
+        {/* Overlay idle: blur + gradiente + título — desaparece en hover */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 transition-opacity duration-300"
+          style={{ opacity: hovered ? 0 : 1 }}
+        >
           <div
             className="absolute inset-x-0 bottom-0 h-[55%] backdrop-blur-xl"
             style={{
@@ -85,7 +97,10 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
         </div>
 
         {/* Botón "Ver obra" — solo en hover */}
-        <div className="absolute inset-x-4 bottom-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <div
+          className="absolute inset-x-4 bottom-4 transition-opacity duration-300"
+          style={{ opacity: hovered ? 1 : 0 }}
+        >
           <div className="w-full rounded-full bg-amber-300 py-2.5 text-center text-xs font-bold text-zinc-900">
             Ver obra
           </div>
@@ -96,12 +111,18 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
       <div className="relative mt-3 h-[52px]">
 
         {/* Idle: cápsula artista */}
-        <div className="absolute inset-0 transition-opacity duration-200 group-hover:opacity-0 group-hover:pointer-events-none">
+        <div
+          className="absolute inset-0 transition-opacity duration-200"
+          style={{ opacity: hovered ? 0 : 1, pointerEvents: hovered ? "none" : "auto" }}
+        >
           <CapsulaArtista artista={ficha.artista} />
         </div>
 
         {/* Hover: panel con toda la info */}
-        <div className="absolute left-0 right-0 top-0 z-20 pointer-events-none opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:pointer-events-auto">
+        <div
+          className="absolute left-0 right-0 top-0 z-20 transition-opacity duration-300"
+          style={{ opacity: hovered ? 1 : 0, pointerEvents: hovered ? "auto" : "none" }}
+        >
           <div className="rounded-2xl bg-zinc-900/95 p-4 shadow-2xl ring-1 ring-white/10 backdrop-blur-sm">
 
             {/* Título + año */}

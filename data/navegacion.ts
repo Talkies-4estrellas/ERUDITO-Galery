@@ -19,42 +19,12 @@ export interface MenuNav {
 export const menus: MenuNav[] = [
   { etiqueta: "Inicio", href: "/" },
   {
-    etiqueta: "Obras",
+    etiqueta: "Catálogo",
     secciones: [
       {
-        titulo: "Categorías",
         items: [
-          { etiqueta: "Pinturas",              href: "/catalogo/fisicos"   },
-          { etiqueta: "Esculturas",            href: "/catalogo/fisicos"   },
-          { etiqueta: "Digital",               href: "/catalogo/digitales" },
-          { etiqueta: "Artesanías",            href: "/catalogo/fisicos"   },
-          { etiqueta: "Colecciones",           href: "/catalogo"           },
-          { etiqueta: "Artículos Coleccionables", href: "/catalogo/fisicos" },
-          { etiqueta: "Impresiones Oficiales", href: "/catalogo/digitales" },
-          { etiqueta: "Merch",                 href: "/catalogo"           },
-          { etiqueta: "Réplicas Decorativas",  href: "/catalogo/fisicos"   },
-          { etiqueta: "Drops",                 href: "/catalogo"           },
-        ],
-      },
-      {
-        titulo: "Por tamaño",
-        items: [
-          { etiqueta: "Grande",  href: "/catalogo/fisicos" },
-          { etiqueta: "Mediano", href: "/catalogo/fisicos" },
-          { etiqueta: "Pequeño", href: "/catalogo/fisicos" },
-        ],
-      },
-      {
-        titulo: "Estilo",
-        items: [
-          { etiqueta: "Muralismo",  href: "/catalogo/fisicos"   },
-          { etiqueta: "Modernismo", href: "/catalogo/fisicos"   },
-          { etiqueta: "Realismo",   href: "/catalogo/fisicos"   },
-          { etiqueta: "Simbolismo", href: "/catalogo/fisicos"   },
-          { etiqueta: "Abstracto",  href: "/catalogo/fisicos"   },
-          { etiqueta: "Retrato",    href: "/catalogo/fisicos"   },
-          { etiqueta: "Paisajismo", href: "/catalogo/fisicos"   },
-          { etiqueta: "Fotografía", href: "/catalogo/digitales" },
+          { etiqueta: "Físicos",   href: "/catalogo/fisicos"   },
+          { etiqueta: "Digitales", href: "/catalogo/digitales" },
         ],
       },
     ],
@@ -84,17 +54,6 @@ export const menus: MenuNav[] = [
             href: "/artistas",
             descripcion: "Catálogo completo de artistas de la galería",
           },
-        ],
-      },
-    ],
-  },
-  {
-    etiqueta: "Catálogo",
-    secciones: [
-      {
-        items: [
-          { etiqueta: "Físicos",   href: "/catalogo/fisicos"   },
-          { etiqueta: "Digitales", href: "/catalogo/digitales" },
         ],
       },
     ],

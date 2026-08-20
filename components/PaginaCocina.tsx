@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useToast } from "@/components/ToastProvider";
 import {
   CATEGORIAS_COCINA,
@@ -13,6 +14,7 @@ import {
 function TarjetaProducto({ producto }: { producto: ProductoCocina }) {
   const { toast } = useToast();
   const color = COLOR_COCINA[producto.categoria];
+  const [hovered, setHovered] = useState(false);
 
   function agregar() {
     const carrito = JSON.parse(localStorage.getItem("erudito-carrito-cocina") || "[]");
@@ -24,37 +26,46 @@ function TarjetaProducto({ producto }: { producto: ProductoCocina }) {
   }
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl bg-zinc-900 ring-1 ring-white/10 transition hover:ring-amber-400/20">
-      <div className="relative aspect-[3/4] overflow-hidden bg-zinc-800">
+    <article
+      className="flex flex-col overflow-hidden rounded-2xl bg-zinc-900 ring-1 ring-white/10 transition hover:ring-amber-400/20"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <Link href={`/cocina/${producto.id}`} className="relative block aspect-[3/4] overflow-hidden bg-zinc-800">
         <Image
           src={producto.imagen}
           alt={producto.nombre}
           fill
           sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          className={`object-cover transition-transform duration-500 ${hovered ? "scale-105" : ""}`}
         />
         {producto.destacado && (
           <div className="absolute left-3 top-3 rounded-full bg-amber-400 px-2.5 py-0.5 text-[10px] font-bold text-zinc-900">
             Destacado
           </div>
         )}
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%] backdrop-blur-md"
-          style={{
-            WebkitMaskImage: "linear-gradient(to top, black 35%, transparent 90%)",
-            maskImage: "linear-gradient(to top, black 35%, transparent 90%)",
-          }}
-        />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-zinc-950/80 to-transparent" />
 
-        {/* Precio superpuesto */}
-        <div className="absolute bottom-3 right-3 rounded-full bg-black/50 px-3 py-1 text-xs font-bold text-white backdrop-blur-sm">
-          ${producto.precio.toLocaleString("es-MX")} MXN
+        {/* Blur + gradiente — desaparecen en hover */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 transition-opacity duration-300"
+          style={{ opacity: hovered ? 0 : 1 }}
+        >
+          <div
+            className="absolute inset-x-0 bottom-0 h-[55%] backdrop-blur-md"
+            style={{
+              WebkitMaskImage: "linear-gradient(to top, black 35%, transparent 90%)",
+              maskImage: "linear-gradient(to top, black 35%, transparent 90%)",
+            }}
+          />
+          <div className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-zinc-950/80 to-transparent" />
+          <div className="absolute bottom-3 right-3 rounded-full bg-black/50 px-3 py-1 text-xs font-bold text-white backdrop-blur-sm">
+            ${producto.precio.toLocaleString("es-MX")} MXN
+          </div>
+          <span className={`absolute bottom-3 left-3 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest ring-1 ${color}`}>
+            {producto.categoria}
+          </span>
         </div>
-        <span className={`absolute bottom-3 left-3 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest ring-1 ${color}`}>
-          {producto.categoria}
-        </span>
-      </div>
+      </Link>
 
       <div className="flex flex-1 flex-col p-4">
         <h3 className="text-sm font-bold text-white leading-snug">{producto.nombre}</h3>
