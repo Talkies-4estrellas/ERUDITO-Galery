@@ -24,6 +24,14 @@ const ROLES: {
   ring: string;
 }[] = [
   {
+    id: "comprador",
+    titulo: "Soy Coleccionista",
+    desc: "Descubre obras únicas, guárdalas y compáralas antes de adquirirlas.",
+    icono: "♥",
+    color: "hover:bg-cyan-400/10 hover:ring-cyan-400/40",
+    ring: "bg-cyan-400/10 ring-cyan-400/20 text-cyan-400",
+  },
+  {
     id: "artista",
     titulo: "Soy Artista",
     desc: "Exhibe tu obra, gestiona tu portfolio y conecta con coleccionistas.",
@@ -31,14 +39,6 @@ const ROLES: {
     icono: "🎨",
     color: "hover:bg-amber-400/10 hover:ring-amber-400/40",
     ring: "bg-amber-400/10 ring-amber-400/20 text-amber-400",
-  },
-  {
-    id: "comprador",
-    titulo: "Soy Coleccionista",
-    desc: "Descubre obras únicas, guárdalas y compáralas antes de adquirirlas.",
-    icono: "♥",
-    color: "hover:bg-cyan-400/10 hover:ring-cyan-400/40",
-    ring: "bg-cyan-400/10 ring-cyan-400/20 text-cyan-400",
   },
   {
     id: "empresa",

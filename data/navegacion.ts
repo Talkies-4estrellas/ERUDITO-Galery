@@ -81,7 +81,7 @@ export const menus: MenuNav[] = [
     ],
   },
   {
-    etiqueta: "Cocina y Alimento",
+    etiqueta: "Cocina",
     secciones: [
       {
         items: [
@@ -95,6 +95,5 @@ export const menus: MenuNav[] = [
     ],
   },
   { etiqueta: "Blog", href: "/blog" },
-  { etiqueta: "Newsletter", href: "/#newsletter" },
   { etiqueta: "Contacto", href: "/contacto" },
 ];

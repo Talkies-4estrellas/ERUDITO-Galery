@@ -9,8 +9,8 @@ import BotonAuth from "@/components/BotonAuth";
 import { useFavoritos } from "@/hooks/useFavoritos";
 
 /* ─── Grupos de menú explícitos ─── */
-const PRIMARIOS   = ["Catálogo", "Artistas", "Servicios", "Eventos"];
-const SECUNDARIOS = ["Cocina y Alimento", "Blog", "Newsletter", "Contacto"];
+const PRIMARIOS   = ["Catálogo", "Artistas", "Cocina", "Eventos"];
+const SECUNDARIOS = ["Servicios", "Blog", "Contacto"];
 const menusIzq = menus.filter((m) => PRIMARIOS.includes(m.etiqueta));
 const menusDer = menus.filter((m) => SECUNDARIOS.includes(m.etiqueta));
 
@@ -94,12 +94,17 @@ function ItemMenu({
 }) {
   const activo = menuAbierto === menu.etiqueta;
 
+  const esSecundario = !PRIMARIOS.includes(menu.etiqueta);
+  const estiloBase = esSecundario
+    ? "text-[12px] text-zinc-500 hover:text-zinc-200"
+    : "text-[13px] text-zinc-200 hover:text-white";
+
   if (!menu.secciones) {
     return (
       <Link
         href={menu.href ?? "/"}
         onMouseEnter={() => setMenuAbierto(null)}
-        className="rounded-full px-2.5 py-1.5 text-[13px] text-zinc-400 transition-colors hover:text-white whitespace-nowrap"
+        className={`rounded-full px-2.5 py-1.5 transition-colors whitespace-nowrap ${estiloBase}`}
       >
         {menu.etiqueta}
       </Link>
@@ -115,8 +120,8 @@ function ItemMenu({
         onMouseEnter={() => setMenuAbierto(menu.etiqueta)}
         onClick={() => setMenuAbierto(activo ? null : menu.etiqueta)}
         aria-expanded={activo}
-        className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[13px] transition-colors whitespace-nowrap ${
-          activo ? "bg-white/10 text-amber-400" : "text-zinc-400 hover:text-white"
+        className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 transition-colors whitespace-nowrap ${
+          activo ? "bg-white/10 text-amber-400" : estiloBase
         }`}
       >
         {menu.etiqueta}
@@ -270,20 +275,19 @@ export default function Navbar() {
                   ))}
                 </ul>
 
-                {/* Separador */}
-                <div className="hidden h-5 w-px bg-white/10 lg:block" />
+                {/* Separadores */}
+                <div className="hidden h-4 w-px bg-white/10 lg:block" />
 
                 {/* Búsqueda */}
                 <button
                   type="button"
                   aria-label="Abrir buscador"
                   onClick={() => { setBuscadorAbierto(true); setQueryBusqueda(""); }}
-                  className="flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1.5 text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-amber-400"
+                  className="flex items-center justify-center rounded-full bg-white/5 p-2 text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-amber-400"
                 >
                   <svg className="size-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                   </svg>
-                  <kbd className="hidden text-[10px] font-medium text-zinc-500 sm:block">⌘K</kbd>
                 </button>
 
                 {/* Favoritos */}

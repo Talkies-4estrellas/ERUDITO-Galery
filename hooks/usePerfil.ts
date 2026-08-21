@@ -17,6 +17,7 @@ export interface DatosPerfil {
   email?: string;
   slug?: string;
   avatar_url?: string;
+  banner_url?: string;
 }
 
 export function generarSlug(nombre: string): string {
@@ -73,6 +74,7 @@ export function usePerfil() {
             email: user.email ?? undefined,
             slug: data.slug ?? undefined,
             avatar_url: data.avatar_url ?? "",
+            banner_url: data.banner_url ?? "",
           });
         } else {
           setPerfil(null);
@@ -129,6 +131,7 @@ export function usePerfil() {
           pais: final.pais,
           slug: final.slug ?? null,
           avatar_url: final.avatar_url ?? "",
+          banner_url: final.banner_url ?? "",
         });
       } else {
         localStorage.setItem(CLAVE_LOCAL, JSON.stringify(final));
