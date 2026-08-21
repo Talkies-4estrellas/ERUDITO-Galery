@@ -9,8 +9,8 @@ import BotonAuth from "@/components/BotonAuth";
 import { useFavoritos } from "@/hooks/useFavoritos";
 
 /* ─── Grupos de menú explícitos ─── */
-const PRIMARIOS  = ["Catálogo", "Artistas", "Servicios", "Eventos"];
-const SECUNDARIOS = ["Cocina y Alimento", "Blog", "Privado", "Contacto"];
+const PRIMARIOS   = ["Catálogo", "Artistas", "Servicios", "Eventos"];
+const SECUNDARIOS = ["Cocina y Alimento", "Blog", "Newsletter", "Contacto"];
 const menusIzq = menus.filter((m) => PRIMARIOS.includes(m.etiqueta));
 const menusDer = menus.filter((m) => SECUNDARIOS.includes(m.etiqueta));
 

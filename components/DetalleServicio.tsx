@@ -104,17 +104,17 @@ export default function DetalleServicio({ s }: { s: Servicio }) {
       </section>
 
       {/* CTA final */}
-      <div className="mt-12 rounded-3xl bg-zinc-900 p-8 text-center ring-1 ring-white/10">
-        <p className="text-base font-semibold text-white">¿Listo para comenzar?</p>
+      <div className="mt-12 rounded-3xl bg-gradient-to-br from-zinc-900 to-zinc-800 p-8 text-center ring-1 ring-white/10">
+        <p className="text-lg font-bold text-white">¿No sabes cuál necesitas?</p>
         <p className="mt-2 text-sm text-zinc-400">
-          Contáctanos y un asesor responderá en menos de 24 horas.
+          Cuéntanos tu proyecto y te orientamos sin compromiso.
         </p>
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link
             href="/contacto"
-            className={`rounded-full px-8 py-2.5 text-sm font-semibold transition ${BTN[a]}`}
+            className="rounded-full bg-amber-400 px-8 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-amber-300"
           >
-            Contactar ahora
+            Hablar con un asesor
           </Link>
           <Link
             href="/servicios"

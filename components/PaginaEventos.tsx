@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import type { Evento } from "@/data/eventos";
 
@@ -186,10 +187,28 @@ function TarjetaEvento({ evento, onRegistrar }: { evento: Evento; onRegistrar: (
 }
 
 /* ── Página principal ────────────────────────────────────────── */
-export default function PaginaEventos({ eventos }: { eventos: Evento[] }) {
-  const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>("Todos");
+export default function PaginaEventos({
+  eventos,
+  titulo = "Eventos",
+  descripcion = "Subastas y exposiciones de arte, en línea y presenciales. Registra tu asistencia con un clic.",
+  ocultarFiltroTipo = false,
+}: {
+  eventos: Evento[];
+  titulo?: string;
+  descripcion?: string;
+  ocultarFiltroTipo?: boolean;
+}) {
+  const searchParams = useSearchParams();
+  const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>(
+    (searchParams.get("tipo") as FiltroTipo) ?? "Todos"
+  );
   const [filtroModal, setFiltroModal] = useState<FiltroModal>("Todos");
   const [eventoActivo, setEventoActivo] = useState<Evento | null>(null);
+
+  useEffect(() => {
+    const tipo = searchParams.get("tipo") as FiltroTipo | null;
+    setFiltroTipo(tipo ?? "Todos");
+  }, [searchParams]);
 
   const filtrados = eventos.filter((e) => {
     const okTipo = filtroTipo === "Todos" || e.tipo === filtroTipo;
@@ -205,25 +224,25 @@ export default function PaginaEventos({ eventos }: { eventos: Evento[] }) {
       {/* Encabezado */}
       <div className="mb-10">
         <p className="text-xs font-semibold uppercase tracking-widest text-amber-400">Agenda</p>
-        <h1 className="mt-1 text-3xl font-bold text-white sm:text-4xl">Eventos</h1>
-        <p className="mt-2 max-w-lg text-sm text-zinc-400">
-          Subastas y exposiciones de arte, en línea y presenciales. Registra tu asistencia con un clic.
-        </p>
+        <h1 className="mt-1 text-3xl font-bold text-white sm:text-4xl">{titulo}</h1>
+        <p className="mt-2 max-w-lg text-sm text-zinc-400">{descripcion}</p>
       </div>
 
       {/* Filtros */}
       <div className="mb-8 flex flex-wrap gap-3">
-        {/* Tipo */}
-        <div className="flex gap-1.5 rounded-full bg-zinc-900 p-1 ring-1 ring-white/10">
-          {(["Todos", "Subasta", "Exposición"] as FiltroTipo[]).map((f) => (
-            <button key={f} type="button" onClick={() => setFiltroTipo(f)}
-              className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
-                filtroTipo === f ? "bg-amber-400 text-zinc-900" : "text-zinc-400 hover:text-white"
-              }`}>
-              {f}
-            </button>
-          ))}
-        </div>
+        {/* Tipo — oculto cuando la página ya está pre-filtrada */}
+        {!ocultarFiltroTipo && (
+          <div className="flex gap-1.5 rounded-full bg-zinc-900 p-1 ring-1 ring-white/10">
+            {(["Todos", "Subasta", "Exposición"] as FiltroTipo[]).map((f) => (
+              <button key={f} type="button" onClick={() => setFiltroTipo(f)}
+                className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
+                  filtroTipo === f ? "bg-amber-400 text-zinc-900" : "text-zinc-400 hover:text-white"
+                }`}>
+                {f}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Modalidad */}
         <div className="flex gap-1.5 rounded-full bg-zinc-900 p-1 ring-1 ring-white/10">

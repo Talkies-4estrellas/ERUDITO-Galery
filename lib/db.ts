@@ -13,6 +13,7 @@ function mapArtista(row: any): Artista {
     nombre: row.nombre,
     vida: row.vida ?? "",
     origen: row.origen ?? "",
+    pais: row.pais ?? undefined,
     foto:
       row.foto_perfil ??
       `https://picsum.photos/seed/artista-${row.id_artista}/400/400`,

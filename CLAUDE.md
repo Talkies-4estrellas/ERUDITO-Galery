@@ -31,7 +31,11 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `app/obras/page.tsx` — redirect a `/catalogo` (eliminada la galería con filtros, consolidada en catálogo).
 - `app/artista/[id]/page.tsx` — perfil de artista (SSG): compone `PerfilArtista`. Misma regla.
 - `app/layout.tsx` — raíz: importa `Footer` y `AuroraFondo` (fondo global de aurora naranja).
-- `app/artistas/page.tsx` — compone `PaginaArtistas` (server, sin filtros aún).
+- `app/artistas/page.tsx` — server; fetcha `getArtistas()` + `getFichas()`, pasa a `PaginaArtistas`.
+- `app/artistas/artesanos/page.tsx` — server; filtra artistas donde `origen` no incluye "digital", filtra fichas por esos ids.
+- `app/artistas/digitales/page.tsx` — server; filtra artistas donde `origen` incluye "digital", filtra fichas por esos ids.
+- `app/eventos/subastas/page.tsx` — server; filtra eventos `tipo="Subasta"`, pasa a `PaginaEventos` con `ocultarFiltroTipo`.
+- `app/eventos/exposiciones/page.tsx` — server; filtra eventos `tipo="Exposición"`, pasa a `PaginaEventos` con `ocultarFiltroTipo`.
 - `app/catalogo/page.tsx` — redirect a `/catalogo/fisicos`.
 - `app/catalogo/fisicos/page.tsx` — async server; fetcha `getFichas()`, filtra `tipo="Físico"`, pasa a `PaginaCatalogoSeccion`.
 - `app/catalogo/digitales/page.tsx` — async server; fetcha `getFichas()`, filtra digitales (`JPG Certificado` + `Impresión Oficial`), pasa a `PaginaCatalogoSeccion`.
@@ -70,16 +74,17 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 ## Componentes
 
-- `components/Navbar.tsx` — barra (client). Layout `relative flex` con logo `absolute left-1/2 -translate-x-1/2` (centrado matemáticamente) y dos lados `flex-1`. Grupos de menú explícitos: `PRIMARIOS` (Obras, Artistas, Catálogo, Servicios, Eventos) a la izquierda; `SECUNDARIOS` (Cocina, Blog, Privado, Contacto) + acciones a la derecha. Dropdowns en escritorio (`lg`); hamburguesa en móvil. Incluye buscador (`Ctrl+K`), favoritos con badge, `BotonAuth` y `BotonTema`. **Todos los links usan `<Link>` de Next.js** — sin hard reload.
+- `components/Navbar.tsx` — barra (client). Layout `relative flex` con logo `absolute left-1/2 -translate-x-1/2` (centrado matemáticamente) y dos lados `flex-1`. Grupos de menú explícitos: `PRIMARIOS` = `["Catálogo", "Artistas", "Servicios", "Eventos"]` a la izquierda; `SECUNDARIOS` = `["Cocina y Alimento", "Blog", "Newsletter", "Contacto"]` + acciones a la derecha. "Privado" eliminado del navbar — acceso solo desde `BotonAuth`. Dropdowns en escritorio (`lg`); hamburguesa en móvil. Incluye buscador (`Ctrl+K`), favoritos con badge, `BotonAuth` y `BotonTema`. **Todos los links usan `<Link>` de Next.js** — sin hard reload.
 - `components/BuscadorModal.tsx` — modal de búsqueda (client). Props: `open`, `onClose`, `query`, `setQuery`. Debounce 300ms + AbortController — llama a `/api/buscar?q=X` solo al escribir ≥2 chars. Spinner en ícono mientras fetcha. Enter → primera obra/artista o `/obras?q=` si no hay resultados. Link "Ver todos en catálogo →" en pie cuando hay resultados. No recibe artistas/fichas como props.
 - `components/Footer.tsx` — footer (client): 4 columnas (Marca, Explorar, Servicios, Newsletter). El formulario de newsletter muestra confirmación amber al suscribirse. Todos los hrefs de Explorar/Servicios/Contacto apuntan a rutas reales (`/artistas`, `/catalogo`, `/favoritos`, `/cocina`, `/eventos`, `/blog`, `/contacto`, `/servicios#...`). Redes sociales y Privacidad/Términos aún en `"#"` (sin URLs reales).
 - `components/BotonFavorito.tsx` — botón corazón (client, prop `id`, `tamano: "sm" | "lg"`). Usa `useFavoritos`; `e.preventDefault()`/`stopPropagation()` para no disparar el `Link` padre.
-- `components/PaginaArtistas.tsx` — client component. Recibe `artistas` y `fichas` como props desde `app/artistas/page.tsx` (server). Barra de búsqueda (filtra por nombre/origen) + chips por `origen`. Muestra contador de resultados y estado vacío con "Limpiar filtros".
+- `components/PaginaArtistas.tsx` — client component. Recibe `artistas`, `fichas`, `titulo` y `descripcion` como props. Barra de búsqueda + botón "Filtros avanzados" colapsable (chips: De dónde es / Técnica de arte / Corriente artística). Badge ámbar "activos" cuando hay filtros. `GrupoChips` definido fuera del componente para evitar remount. Usado por `/artistas`, `/artistas/artesanos` y `/artistas/digitales` — cada sub-página pre-filtra `artistas` y `fichas` server-side antes de pasar como props.
 - `components/PaginaCatalogoSeccion.tsx` — client component reutilizable para `/catalogo/fisicos` y `/catalogo/digitales`. Recibe `fichas` (pre-filtradas por tipo en el server), `titulo`, `descripcion`, `otroHref`/`otroLabel` (link al otro tipo), y `vacio`. Incluye buscador, filtros avanzados (movimiento, técnica, precio, orden) y grid de `FichaObra fluida`. Muestra botón "Ver Digitales/Físicos →" en el encabezado.
 - `components/PaginaCatalogo.tsx` — obsoleto; reemplazado por `PaginaCatalogoSeccion`. Mantener solo como referencia si se necesita la vista combinada en el futuro.
-- `components/PaginaCocina.tsx` — client component. Recibe `productos: ProductoCocina[]` como prop desde `app/cocina/page.tsx` (server, `revalidate=60`, lee tabla `productos_cocina`). Incluye filtros por categoría (chips), sección de destacados (`ProductoDestacado`) y grid de tarjetas (`TarjetaProducto`). Carrito local en `localStorage`.
+- `components/PaginaCocina.tsx` — client component. Recibe `productos: ProductoCocina[]` como prop desde `app/cocina/page.tsx` (server, `revalidate=60`). Buscador (nombre/productor/origen) + botón "Filtros avanzados" colapsable (chips de categoría + slider precio máximo + select orden). Destacados en formato hero solo sin filtros activos; con filtros van al grid normal. Carrito local en `localStorage`.
 - `components/PaginaServicios.tsx` / `PaginaFavoritos.tsx` — contenido de esas páginas (ver arriba).
 - `components/SeccionEventos.tsx` — fila horizontal (client, scroll con JS) de `data/eventos.ts`: badge de fecha, tipo (Subasta/Exposición), modalidad, lugar, descripción. Botón **"Ver subastas"** (ámbar pill) → `/eventos`. Flechas de scroll izq/der.
+- `components/PaginaEventos.tsx` — client component. Props: `eventos`, `titulo?` (default "Eventos"), `descripcion?`, `ocultarFiltroTipo?` (oculta chip tipo cuando la página ya filtra server-side). Usa `useSearchParams` para pre-activar filtro de tipo desde `?tipo=Subasta|Exposición`. Separa en secciones "Próximos" y "Anteriores". Modal de registro con POST a `/api/registros-eventos`.
 - `components/Carousel.tsx` — carrusel (client): auto-avance 6 s, pausa con hover, flechas, puntos. Recibe `obras: Obra[]` como prop (top 4 por `vistas` desde Supabase). Botón "Ver más" → `<Link href="/obra/[id]">`. Retorna `null` si el array está vacío (guard contra crash).
 - `components/RegistrarVisita.tsx` — client component invisible. Dispara `incrementarVistas(id)` en `useEffect` al entrar a `/obra/[id]`. No renderiza nada.
 - `components/SeccionResenas.tsx` — sección de comentarios/estrellas bajo cada obra. `agregar()` es async (POST a `/api/resenas`). Muestra "Publicando…" y bloquea el botón durante el envío. Muestra error de la API (ej. reseña duplicada por email).
@@ -148,12 +153,12 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 ## Navegación (definida por el dueño en mapas mentales)
 
 - **Obras**: Categorías (Pinturas→`?tecnica=oleo`, Esculturas, Digital, Artesanías→`?tecnica=mixta`, …) · Por tamaño (Grande/Mediano/Pequeño con params) · Estilo (Muralismo, Modernismo, Realismo, Simbolismo, Abstracto, Retrato, Paisajismo, Fotografía).
-- **Artistas**: Artesanos · Artistas en línea · Artistas presenciales · Filtros.
-- **Catálogo**: Físicos (`/catalogo/fisicos`) · Digitales (`/catalogo/digitales`). "Historias" eliminado; `/catalogo` redirige a Físicos.
-- **Servicios**: Registro de Obras · Grupo de Coleccionistas · Restauración de Arte · Museos, Asociaciones y Galerías · Manager de Ventas · Exposición.
-- **Eventos**: Subastas (en línea / presenciales) · Exposiciones · Museos, Asociaciones y Galerías · Manager de Ventas.
-- **Cocina y Alimento**: Productos — lema "La comida hoy en día también es un lujo".
-- **Blog**, **Newsletter**, **Privado** (sección premium), **Contacto**: enlaces directos.
+- **Artistas**: Artesanos (`/artistas/artesanos`) · Artistas (`/artistas`) · Artistas Digitales (`/artistas/digitales`). Cada sub-página filtra artistas y fichas server-side antes de pasar a `PaginaArtistas`.
+- **Catálogo**: Físicos (`/catalogo/fisicos`) · Digitales (`/catalogo/digitales`). `/catalogo` redirige a Físicos.
+- **Servicios**: 6 ítems → cada uno apunta a `/servicios/[slug]` directo (no `#anchor`). CTA "¿No sabes cuál necesitas?" en página principal Y en cada detalle.
+- **Eventos**: Eventos (`/eventos`) · Subastas (`/eventos/subastas`) · Exposiciones (`/eventos/exposiciones`). Subastas y Exposiciones tienen página propia con `ocultarFiltroTipo=true`. Página general acepta `?tipo=` para pre-filtrar.
+- **Cocina y Alimento**: Productos (`/cocina`) — lema "La comida hoy en día también es un lujo".
+- **Blog**, **Newsletter** (`/#newsletter`, pendiente), **Contacto**: enlaces directos. **Privado** eliminado del navbar — acceso por botón "Entrar".
 
 ## Despliegue en Vercel
 

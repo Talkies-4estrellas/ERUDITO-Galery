@@ -36,23 +36,18 @@ export const menus: MenuNav[] = [
         items: [
           {
             etiqueta: "Artesanos",
-            href: "/artistas",
+            href: "/artistas/artesanos",
             descripcion: "Creadores de arte tradicional y artesanal",
           },
           {
-            etiqueta: "Artistas en línea",
-            href: "/artistas",
-            descripcion: "Extranjeros y famosos del mundo digital",
-          },
-          {
-            etiqueta: "Artistas presenciales",
-            href: "/artistas",
-            descripcion: "Arte físico (off-line)",
-          },
-          {
-            etiqueta: "Ver todos",
+            etiqueta: "Artistas",
             href: "/artistas",
             descripcion: "Catálogo completo de artistas de la galería",
+          },
+          {
+            etiqueta: "Artistas Digitales",
+            href: "/artistas/digitales",
+            descripcion: "Arte digital, prints y colecciones virtuales",
           },
         ],
       },
@@ -63,12 +58,12 @@ export const menus: MenuNav[] = [
     secciones: [
       {
         items: [
-          { etiqueta: "Registro de Obras", href: "/servicios#registro-de-obras" },
-          { etiqueta: "Grupo de Coleccionistas", href: "/servicios#grupo-de-coleccionistas" },
-          { etiqueta: "Restauración de Arte", href: "/servicios#restauracion-de-arte" },
-          { etiqueta: "Museos, Asociaciones y Galerías", href: "/servicios#museos-asociaciones-y-galerias" },
-          { etiqueta: "Manager de Ventas", href: "/servicios#manager-de-ventas" },
-          { etiqueta: "Exposición", href: "/servicios#exposicion" },
+          { etiqueta: "Registro de Obras", href: "/servicios/registro-de-obras" },
+          { etiqueta: "Grupo de Coleccionistas", href: "/servicios/grupo-de-coleccionistas" },
+          { etiqueta: "Restauración de Arte", href: "/servicios/restauracion-de-arte" },
+          { etiqueta: "Museos, Asociaciones y Galerías", href: "/servicios/museos-asociaciones-y-galerias" },
+          { etiqueta: "Manager de Ventas", href: "/servicios/manager-de-ventas" },
+          { etiqueta: "Exposición", href: "/servicios/exposicion" },
         ],
       },
     ],
@@ -78,17 +73,9 @@ export const menus: MenuNav[] = [
     secciones: [
       {
         items: [
-          {
-            etiqueta: "Subastas",
-            href: "/eventos",
-            hijos: [
-              { etiqueta: "Subastas en línea", href: "/eventos" },
-              { etiqueta: "Subastas presenciales", href: "/eventos" },
-            ],
-          },
-          { etiqueta: "Exposiciones", href: "/eventos" },
-          { etiqueta: "Museos, Asociaciones y Galerías", href: "/servicios#museos-asociaciones-y-galerias" },
-          { etiqueta: "Manager de Ventas", href: "/servicios#manager-de-ventas" },
+          { etiqueta: "Eventos", href: "/eventos", descripcion: "Toda la agenda de la galería" },
+          { etiqueta: "Subastas", href: "/eventos/subastas", descripcion: "Obras en subasta, en línea y presenciales" },
+          { etiqueta: "Exposiciones", href: "/eventos/exposiciones", descripcion: "Muestras y exhibiciones de la galería" },
         ],
       },
     ],
@@ -109,6 +96,5 @@ export const menus: MenuNav[] = [
   },
   { etiqueta: "Blog", href: "/blog" },
   { etiqueta: "Newsletter", href: "/#newsletter" },
-  { etiqueta: "Privado", href: "/privado" },
   { etiqueta: "Contacto", href: "/contacto" },
 ];

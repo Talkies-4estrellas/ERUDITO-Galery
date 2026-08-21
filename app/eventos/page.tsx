@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import PaginaEventos from "@/components/PaginaEventos";
 import { getEventos } from "@/lib/db";
@@ -15,7 +16,9 @@ export default async function EventosPage() {
     <div className="flex min-h-screen flex-col bg-zinc-950">
       <Navbar />
       <main className="flex-1">
-        <PaginaEventos eventos={eventos} />
+        <Suspense>
+          <PaginaEventos eventos={eventos} />
+        </Suspense>
       </main>
     </div>
   );
