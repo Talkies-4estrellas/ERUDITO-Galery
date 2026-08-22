@@ -1,12 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
+import NextImage from "next/image";
 import Link from "next/link";
 import { usePerfil, generarSlug, type DatosPerfil } from "@/hooks/usePerfil";
+import { useAuth } from "@/hooks/useAuth";
 import { useObrasEmpresa, type ObraEmpresa } from "@/hooks/useObrasEmpresa";
 import FormObraEmpresa from "@/components/FormObraEmpresa";
-import { uploadWebp } from "@/lib/uploadWebp";
+import { supabase } from "@/lib/supabase";
+
+type Vista = "obras" | "ajustes";
 
 function iniciales(nombre: string): string {
   const partes = nombre.trim().split(/\s+/);
@@ -17,6 +20,45 @@ function iniciales(nombre: string): string {
 
 const INPUT =
   "w-full rounded-xl bg-zinc-800 px-3 py-2 text-sm text-zinc-200 placeholder-zinc-500 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-violet-400/50";
+
+function IconoCamera() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+    </svg>
+  );
+}
+
+async function aWebP(file: File): Promise<Blob> {
+  const img = new window.Image();
+  const blobUrl = URL.createObjectURL(file);
+  return new Promise((resolve, reject) => {
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext("2d")!.drawImage(img, 0, 0);
+      canvas.toBlob(
+        blob => { URL.revokeObjectURL(blobUrl); blob ? resolve(blob) : reject(new Error("webp")); },
+        "image/webp", 0.85
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(blobUrl); reject(new Error("load")); };
+    img.src = blobUrl;
+  });
+}
+
+async function subirImagen(file: File, tipo: "avatar" | "banner", userId: string): Promise<string> {
+  const webp = await aWebP(file);
+  const path = `${userId}/${tipo}.webp`;
+  const { error } = await supabase.storage
+    .from("perfiles")
+    .upload(path, webp, { upsert: true, contentType: "image/webp" });
+  if (error) throw error;
+  const { data } = supabase.storage.from("perfiles").getPublicUrl(path);
+  return `${data.publicUrl}?t=${Date.now()}`;
+}
 
 /* Tarjeta de obra publicada por la empresa */
 function TarjetaObraEmpresa({
@@ -32,7 +74,7 @@ function TarjetaObraEmpresa({
     <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-zinc-900 ring-1 ring-white/10">
       <div className="relative aspect-[3/4] bg-zinc-800">
         {obra.imagen ? (
-          <Image src={obra.imagen} alt={obra.titulo} fill sizes="220px" className="object-cover" />
+          <NextImage src={obra.imagen} alt={obra.titulo} fill sizes="220px" className="object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-10 text-zinc-600">
@@ -40,8 +82,6 @@ function TarjetaObraEmpresa({
             </svg>
           </div>
         )}
-
-        {/* Hover actions */}
         <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
           <button type="button" onClick={onEditar}
             className="flex items-center gap-1 rounded-full bg-violet-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-400">
@@ -59,9 +99,7 @@ function TarjetaObraEmpresa({
           </button>
         </div>
       </div>
-
       <div className="p-3">
-        {/* Artista — dato principal en tarjeta de empresa */}
         <div className="mb-1 flex items-center gap-1.5">
           <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-violet-400/15 text-[9px] font-bold text-violet-400">
             {obra.nombreArtista.slice(0, 1).toUpperCase()}
@@ -86,37 +124,42 @@ function TarjetaObraEmpresa({
 }
 
 export default function MiPerfilEmpresa() {
+  const { user } = useAuth();
   const { perfil, guardar, cerrarSesion } = usePerfil();
   const { obras, listo: obrasListas, agregar, actualizar, eliminar } = useObrasEmpresa();
 
-  const [editandoPerfil, setEditandoPerfil] = useState(false);
-  const [formPerfil, setFormPerfil] = useState<DatosPerfil | null>(null);
-  const [modalObra, setModalObra] = useState<null | "nueva" | string>(null);
+  const [vista, setVista] = useState<Vista>("obras");
+  const [formAjustes, setFormAjustes] = useState<DatosPerfil | null>(null);
   const [subiendoAvatar, setSubiendoAvatar] = useState(false);
-  const avatarRef = useRef<HTMLInputElement>(null);
+  const [subiendoBanner, setSubiendoBanner] = useState(false);
+  const [modalObra, setModalObra] = useState<null | "nueva" | string>(null);
 
-  async function onAvatarFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !perfil) return;
-    e.target.value = "";
-    setSubiendoAvatar(true);
-    try {
-      const url = await uploadWebp(file, "/api/upload?carpeta=avatars");
-      await guardar({ ...perfil, avatar_url: url });
-    } catch { /* silencioso */ }
-    finally { setSubiendoAvatar(false); }
-  }
+  const avatarRef = useRef<HTMLInputElement>(null);
+  const bannerRef = useRef<HTMLInputElement>(null);
 
   if (!perfil) return null;
 
-  function iniciarEdicion() { setFormPerfil({ ...perfil! }); setEditandoPerfil(true); }
-  function cancelar() { setFormPerfil(null); setEditandoPerfil(false); }
-  function submitPerfil(e: React.FormEvent) {
+  const slug = perfil.slug || generarSlug(perfil.nombre);
+
+  function abrirAjustes() { setFormAjustes({ ...perfil! }); setVista("ajustes"); }
+  function cerrarAjustes() { setFormAjustes(null); setVista("obras"); }
+  function submitAjustes(e: React.FormEvent) {
     e.preventDefault();
-    if (!formPerfil) return;
-    guardar(formPerfil);
-    setEditandoPerfil(false);
-    setFormPerfil(null);
+    if (!formAjustes) return;
+    guardar(formAjustes);
+    cerrarAjustes();
+  }
+
+  async function manejarImagen(e: React.ChangeEvent<HTMLInputElement>, tipo: "avatar" | "banner") {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    const setSub = tipo === "avatar" ? setSubiendoAvatar : setSubiendoBanner;
+    setSub(true);
+    try {
+      const url = await subirImagen(file, tipo, user.id);
+      setFormAjustes(prev => prev ? { ...prev, [`${tipo}_url`]: url } : prev);
+    } catch { /* el usuario puede reintentar */ }
+    finally { setSub(false); e.target.value = ""; }
   }
 
   function guardarObra(datos: Omit<ObraEmpresa, "id">) {
@@ -130,7 +173,6 @@ export default function MiPerfilEmpresa() {
       : undefined;
 
   const nombreMostrar = perfil.nombre || "Tu galería";
-  const slug = perfil.slug || generarSlug(perfil.nombre);
   const obrasConPrecio = obras.filter((o) => o.precio > 0);
   const totalValor = obrasConPrecio.reduce((s, o) => s + o.precio, 0);
   const artistasRepresentados = [...new Set(obras.map((o) => o.nombreArtista).filter(Boolean))];
@@ -141,103 +183,59 @@ export default function MiPerfilEmpresa() {
 
         {/* ── Portada + cabecera ─────────────────────────────── */}
         <div className="relative">
-          {/* Cover — tonos violeta/púrpura */}
-          <div className="h-44 w-full bg-gradient-to-br from-zinc-800 via-violet-950/40 to-zinc-900 sm:h-56" />
+          {perfil.banner_url ? (
+            <div className="h-44 w-full overflow-hidden sm:h-56">
+              <img src={perfil.banner_url} alt="" className="h-full w-full object-cover" />
+            </div>
+          ) : (
+            <div className="h-44 w-full bg-gradient-to-br from-zinc-800 via-violet-950/40 to-zinc-900 sm:h-56" />
+          )}
 
           <div className="mx-auto max-w-6xl px-4 sm:px-8">
             <div className="relative flex flex-col gap-4 pb-4 sm:flex-row sm:items-end sm:gap-6">
 
-              {/* Avatar empresa con upload */}
-              <div className="absolute -top-14 left-0 sm:-top-16">
-                <button
-                  type="button"
-                  onClick={() => avatarRef.current?.click()}
-                  disabled={subiendoAvatar}
-                  className="group relative flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-violet-500 text-4xl font-bold text-white ring-4 ring-zinc-950 sm:size-36 sm:text-5xl"
-                >
-                  {perfil?.avatar_url ? (
-                    <Image src={perfil.avatar_url} alt={nombreMostrar} fill sizes="144px" className="object-cover" />
-                  ) : (
-                    iniciales(nombreMostrar)
-                  )}
-                  <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/50 opacity-0 transition group-hover:opacity-100">
-                    {subiendoAvatar ? (
-                      <svg className="size-6 animate-spin text-white" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3"/>
-                        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-                      </svg>
-                    ) : (
-                      <>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-6 text-white">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
-                        </svg>
-                        <span className="text-[10px] font-semibold text-white">Logo</span>
-                      </>
-                    )}
-                  </span>
-                </button>
-                <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={onAvatarFile} />
-              </div>
-
-              {/* Nombre / formulario */}
-              <div className="ml-32 mt-2 flex flex-1 flex-col gap-1 sm:ml-44 sm:mt-0">
-                {editandoPerfil && formPerfil ? (
-                  <form onSubmit={submitPerfil} className="flex flex-wrap gap-2 py-2">
-                    <input value={formPerfil.nombre}
-                      onChange={e => setFormPerfil({...formPerfil, nombre: e.target.value})}
-                      placeholder="Nombre de la galería / empresa" className={INPUT + " max-w-xs"} />
-                    <input value={formPerfil.especialidad}
-                      onChange={e => setFormPerfil({...formPerfil, especialidad: e.target.value})}
-                      placeholder="Tipo (ej. Galería de arte contemporáneo)" className={INPUT + " max-w-xs"} />
-                    <input value={formPerfil.pais}
-                      onChange={e => setFormPerfil({...formPerfil, pais: e.target.value})}
-                      placeholder="País" className={INPUT + " w-32"} />
-                    <div className="flex gap-2">
-                      <button type="submit"
-                        className="rounded-full bg-violet-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-violet-400">
-                        Guardar
-                      </button>
-                      <button type="button" onClick={cancelar}
-                        className="rounded-full bg-white/5 px-4 py-1.5 text-xs text-zinc-400 ring-1 ring-white/10 hover:bg-white/10">
-                        Cancelar
-                      </button>
-                    </div>
-                  </form>
+              {/* Avatar empresa */}
+              <div className="absolute -top-14 left-0 size-28 overflow-hidden rounded-2xl ring-4 ring-zinc-950 sm:-top-16 sm:size-36">
+                {perfil.avatar_url ? (
+                  <NextImage src={perfil.avatar_url} alt={nombreMostrar} fill sizes="144px" className="object-cover" />
                 ) : (
-                  <div className="flex items-start justify-between gap-4 pt-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h1 className="text-xl font-bold text-white sm:text-2xl">{nombreMostrar}</h1>
-                        {/* Badge empresa */}
-                        <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-violet-400 ring-1 ring-violet-400/30">
-                          Galería
-                        </span>
-                      </div>
-                      <p className="mt-0.5 text-sm text-zinc-400">
-                        {perfil.especialidad || "Galería / empresa de arte"}
-                        {perfil.pais && <> · <span className="text-zinc-500">{perfil.pais}</span></>}
-                      </p>
-                    </div>
-                    <Link href={`/empresa/${slug}`}
-                      className="flex items-center gap-1.5 rounded-full bg-violet-500/10 px-4 py-1.5 text-xs text-violet-400 ring-1 ring-violet-400/30 transition hover:bg-violet-500/20">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-3.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                      </svg>
-                      Ver pública
-                    </Link>
+                  <div className="flex size-full items-center justify-center bg-violet-500 text-4xl font-bold text-white sm:text-5xl">
+                    {iniciales(nombreMostrar)}
                   </div>
                 )}
+              </div>
+
+              {/* Nombre + Ver pública */}
+              <div className="ml-32 mt-2 flex items-end justify-between gap-4 pt-2 sm:ml-44 sm:mt-0">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-xl font-bold text-white sm:text-2xl">{nombreMostrar}</h1>
+                    <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-violet-400 ring-1 ring-violet-400/30">
+                      Galería
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-sm text-zinc-400">
+                    {perfil.especialidad || "Galería / empresa de arte"}
+                    {perfil.pais && <> · <span className="text-zinc-500">{perfil.pais}</span></>}
+                  </p>
+                </div>
+                <Link href={`/empresa/${slug}`}
+                  className="flex shrink-0 items-center gap-1.5 rounded-full bg-violet-500/10 px-4 py-1.5 text-xs text-violet-400 ring-1 ring-violet-400/30 transition hover:bg-violet-500/20">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-3.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                  </svg>
+                  Ver pública
+                </Link>
               </div>
             </div>
 
             {/* Stats bar */}
             <div className="mt-12 flex gap-6 border-t border-white/10 pt-3 sm:mt-2">
               {[
-                { valor: obras.length,             etiqueta: "Obras publicadas"      },
+                { valor: obras.length,                 etiqueta: "Obras publicadas"      },
                 { valor: artistasRepresentados.length, etiqueta: "Artistas representados" },
-                { valor: totalValor > 0
-                    ? `$${(totalValor / 1000).toFixed(0)}k`
-                    : "—",                         etiqueta: "Valor en catálogo MXN" },
+                { valor: totalValor > 0 ? `$${(totalValor / 1000).toFixed(0)}k` : "—",
+                                                       etiqueta: "Valor en catálogo MXN" },
               ].map(({ valor, etiqueta }) => (
                 <div key={etiqueta} className="text-center">
                   <p className="text-lg font-bold text-white">{valor}</p>
@@ -255,30 +253,16 @@ export default function MiPerfilEmpresa() {
             {/* ── Sidebar izquierdo ─────────────────────────── */}
             <aside className="space-y-4">
 
-              {/* Sobre la empresa */}
+              {/* Acerca de */}
               <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
                 <h2 className="mb-3 text-sm font-semibold text-white">Acerca de</h2>
-                {editandoPerfil && formPerfil ? (
-                  <textarea
-                    value={formPerfil.bio}
-                    onChange={e => setFormPerfil({...formPerfil, bio: e.target.value})}
-                    placeholder="Historia de la galería, misión y tipo de arte que representa..."
-                    rows={4}
-                    className={INPUT + " resize-none"}
-                  />
-                ) : (
-                  <>
-                    <p className={`text-xs leading-relaxed ${perfil.bio ? "text-zinc-300" : "italic text-zinc-600"}`}>
-                      {perfil.bio || "Añade una descripción de tu galería o empresa."}
-                    </p>
-                    {!editandoPerfil && (
-                      <button type="button" onClick={iniciarEdicion}
-                        className="mt-3 text-xs text-violet-400 underline-offset-2 hover:underline">
-                        Editar descripción
-                      </button>
-                    )}
-                  </>
-                )}
+                <p className={`text-xs leading-relaxed ${perfil.bio ? "text-zinc-300" : "italic text-zinc-600"}`}>
+                  {perfil.bio || "Añade una descripción de tu galería o empresa."}
+                </p>
+                <button type="button" onClick={abrirAjustes}
+                  className="mt-3 text-xs text-violet-400 underline-offset-2 hover:underline">
+                  Editar descripción
+                </button>
               </div>
 
               {/* Artistas representados */}
@@ -305,73 +289,220 @@ export default function MiPerfilEmpresa() {
 
               {/* Navegación */}
               <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
-                <h2 className="mb-3 text-sm font-semibold text-white">Explorar</h2>
+                <h2 className="mb-3 text-sm font-semibold text-white">Mi espacio</h2>
                 <nav className="space-y-1">
-                  {[
-                    { href: "/obras",     label: "Galería pública" },
-                    { href: "/artistas",  label: "Artistas"        },
-                    { href: "/catalogo",  label: "Catálogo"        },
-                    { href: "/servicios", label: "Servicios"       },
-                    { href: "/eventos",   label: "Eventos"         },
-                  ].map(({ href, label }) => (
-                    <Link key={href} href={href}
-                      className="flex items-center justify-between rounded-xl px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white">
-                      {label}
-                    </Link>
-                  ))}
+                  <button type="button" onClick={() => setVista("obras")}
+                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition ${
+                      vista === "obras"
+                        ? "bg-white/10 text-white"
+                        : "text-zinc-300 hover:bg-white/5 hover:text-white"
+                    }`}>
+                    <span>Obras publicadas</span>
+                    {obras.length > 0 && (
+                      <span className="text-xs font-semibold text-violet-400">{obras.length}</span>
+                    )}
+                  </button>
                 </nav>
+                <div className="mt-3 border-t border-white/5 pt-3">
+                  <button type="button" onClick={abrirAjustes}
+                    className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+                      vista === "ajustes"
+                        ? "bg-white/10 text-white"
+                        : "text-zinc-400 hover:bg-white/5 hover:text-white"
+                    }`}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-4 shrink-0">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    </svg>
+                    Ajustes
+                  </button>
+                </div>
               </div>
             </aside>
 
-            {/* ── Centro: Obras publicadas ───────────────────── */}
+            {/* ── Centro ────────────────────────────────────── */}
             <main className="min-w-0">
-              <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Obras publicadas</h2>
-                  <p className="mt-0.5 text-xs text-zinc-500">
-                    {!obrasListas
-                      ? "Cargando..."
-                      : obras.length === 0
-                      ? "Aún no has publicado ninguna obra"
-                      : `${obras.length} ${obras.length === 1 ? "obra disponible" : "obras disponibles"}`}
-                  </p>
-                </div>
-                <button type="button" onClick={() => setModalObra("nueva")}
-                  className="flex items-center gap-2 rounded-full bg-violet-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-violet-400">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="size-3.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
-                  Publicar obra
-                </button>
-              </div>
 
-              {obrasListas && obras.length === 0 ? (
-                <button type="button" onClick={() => setModalObra("nueva")}
-                  className="flex w-full flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-white/10 py-16 text-center transition hover:border-violet-400/30 hover:bg-violet-400/5">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-10 text-zinc-600">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                  </svg>
-                  <p className="text-sm font-medium text-zinc-500">Publica la primera obra de tu galería</p>
-                  <p className="text-xs text-zinc-600">Asigna el artista, imagen, técnica y precio</p>
-                </button>
-              ) : (
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-                  {obras.map((obra) => (
-                    <TarjetaObraEmpresa
-                      key={obra.id}
-                      obra={obra}
-                      onEditar={() => setModalObra(obra.id)}
-                      onEliminar={() => eliminar(obra.id)}
-                    />
-                  ))}
+              {/* ── Obras publicadas ── */}
+              {vista === "obras" && (
+                <div>
+                  <div className="mb-5 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white">Obras publicadas</h2>
+                      <p className="mt-0.5 text-xs text-zinc-500">
+                        {!obrasListas
+                          ? "Cargando..."
+                          : obras.length === 0
+                          ? "Aún no has publicado ninguna obra"
+                          : `${obras.length} ${obras.length === 1 ? "obra disponible" : "obras disponibles"}`}
+                      </p>
+                    </div>
+                    <button type="button" onClick={() => setModalObra("nueva")}
+                      className="flex items-center gap-2 rounded-full bg-violet-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-violet-400">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="size-3.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
+                      Publicar obra
+                    </button>
+                  </div>
+
+                  {obrasListas && obras.length === 0 ? (
+                    <button type="button" onClick={() => setModalObra("nueva")}
+                      className="flex w-full flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-white/10 py-16 text-center transition hover:border-violet-400/30 hover:bg-violet-400/5">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-10 text-zinc-600">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                      </svg>
+                      <p className="text-sm font-medium text-zinc-500">Publica la primera obra de tu galería</p>
+                      <p className="text-xs text-zinc-600">Asigna el artista, imagen, técnica y precio</p>
+                    </button>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                      {obras.map((obra) => (
+                        <TarjetaObraEmpresa
+                          key={obra.id}
+                          obra={obra}
+                          onEditar={() => setModalObra(obra.id)}
+                          onEliminar={() => eliminar(obra.id)}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* ── Ajustes ── */}
+              {vista === "ajustes" && formAjustes && (
+                <div>
+                  <div className="mb-5 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white">Ajustes</h2>
+                      <p className="mt-0.5 text-xs text-zinc-500">Personaliza el perfil de tu galería</p>
+                    </div>
+                    <button type="button" onClick={cerrarAjustes}
+                      className="rounded-full bg-white/5 px-4 py-1.5 text-xs text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white">
+                      ← Volver
+                    </button>
+                  </div>
+
+                  <form onSubmit={submitAjustes} className="space-y-5 rounded-2xl bg-zinc-900/70 p-6 ring-1 ring-white/10">
+
+                    {/* ── Imágenes ── */}
+                    {user ? (
+                      <div>
+                        <div className="relative overflow-hidden rounded-2xl">
+                          <button type="button" onClick={() => bannerRef.current?.click()}
+                            className="group relative block h-28 w-full overflow-hidden rounded-2xl">
+                            {formAjustes.banner_url ? (
+                              <img src={formAjustes.banner_url} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="h-full w-full bg-gradient-to-br from-zinc-800 via-violet-950/40 to-zinc-900" />
+                            )}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/50 opacity-0 transition group-hover:opacity-100">
+                              {subiendoBanner ? (
+                                <span className="text-xs text-white">Subiendo…</span>
+                              ) : (
+                                <>
+                                  <IconoCamera />
+                                  <span className="text-xs text-white">Cambiar portada</span>
+                                </>
+                              )}
+                            </div>
+                          </button>
+                          <input ref={bannerRef} type="file" accept="image/*" className="hidden"
+                            onChange={e => manejarImagen(e, "banner")} />
+
+                          {/* Logo sobre el banner */}
+                          <div className="absolute bottom-[-20px] left-4">
+                            <button type="button" onClick={() => avatarRef.current?.click()}
+                              className="group relative block size-16 overflow-hidden rounded-xl ring-4 ring-zinc-900">
+                              {formAjustes.avatar_url ? (
+                                <img src={formAjustes.avatar_url} alt="" className="size-full object-cover" />
+                              ) : (
+                                <div className="flex size-full items-center justify-center bg-violet-500 text-lg font-bold text-white">
+                                  {iniciales(nombreMostrar)}
+                                </div>
+                              )}
+                              <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60 opacity-0 transition group-hover:opacity-100">
+                                {subiendoAvatar
+                                  ? <span className="text-[9px] text-white">…</span>
+                                  : <IconoCamera />
+                                }
+                              </div>
+                            </button>
+                            <input ref={avatarRef} type="file" accept="image/*" className="hidden"
+                              onChange={e => manejarImagen(e, "avatar")} />
+                          </div>
+                        </div>
+                        <p className="mt-8 text-[11px] text-zinc-600">
+                          Las imágenes se convierten a .webp automáticamente · logo 400×400 · portada 1200×400
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="rounded-xl bg-white/5 px-4 py-3 text-xs text-zinc-500">
+                        Inicia sesión con cuenta verificada para subir logo y portada.
+                      </p>
+                    )}
+
+                    {/* ── Datos ── */}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1.5 block text-xs font-medium text-zinc-400">Nombre de la galería</label>
+                        <input value={formAjustes.nombre}
+                          onChange={e => setFormAjustes({ ...formAjustes, nombre: e.target.value })}
+                          placeholder="Galería Norte Arte" className={INPUT} />
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-xs font-medium text-zinc-400">País</label>
+                        <input value={formAjustes.pais}
+                          onChange={e => setFormAjustes({ ...formAjustes, pais: e.target.value })}
+                          placeholder="México" className={INPUT} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium text-zinc-400">Tipo / especialidad</label>
+                      <input value={formAjustes.especialidad}
+                        onChange={e => setFormAjustes({ ...formAjustes, especialidad: e.target.value })}
+                        placeholder="Arte contemporáneo, esculturas, fotografía…" className={INPUT} />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium text-zinc-400">Descripción</label>
+                      <textarea value={formAjustes.bio}
+                        onChange={e => setFormAjustes({ ...formAjustes, bio: e.target.value })}
+                        placeholder="Historia de la galería, misión y tipo de arte que representa…"
+                        rows={4} className={INPUT + " resize-none"} />
+                    </div>
+
+                    {/* URL pública */}
+                    <div className="rounded-xl bg-violet-400/5 px-4 py-3 ring-1 ring-violet-400/20">
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-violet-400">URL pública</p>
+                      <p className="font-mono text-xs text-violet-300">/empresa/{slug}</p>
+                    </div>
+
+                    <div className="flex gap-3 pt-1">
+                      <button type="submit"
+                        className="flex-1 rounded-full bg-violet-500 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-400">
+                        Guardar cambios
+                      </button>
+                      <button type="button" onClick={cerrarAjustes}
+                        className="rounded-full bg-white/5 px-6 py-2.5 text-sm text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10">
+                        Cancelar
+                      </button>
+                    </div>
+
+                    <div className="border-t border-white/5 pt-4">
+                      <button type="button" onClick={cerrarSesion}
+                        className="w-full rounded-full py-2 text-xs text-red-400 transition hover:bg-red-500/10">
+                        Cerrar sesión
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
             </main>
 
             {/* ── Sidebar derecho ───────────────────────────── */}
             <aside className="space-y-4">
-
-              {/* Estadísticas */}
               <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
                 <h2 className="mb-3 text-sm font-semibold text-white">Estadísticas</h2>
                 <div className="space-y-3">
@@ -390,21 +521,6 @@ export default function MiPerfilEmpresa() {
                 </div>
               </div>
 
-              {/* URL pública + nota */}
-              <div className="rounded-2xl bg-violet-400/5 p-4 ring-1 ring-violet-400/20 space-y-3">
-                <div>
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-violet-400">URL pública</p>
-                  <Link href={`/empresa/${slug}`}
-                    className="block truncate rounded-lg bg-violet-500/10 px-3 py-1.5 text-[11px] font-mono text-violet-300 hover:text-violet-200">
-                    /empresa/{slug}
-                  </Link>
-                </div>
-                <p className="text-[11px] leading-relaxed text-zinc-500">
-                  Los visitantes que busquen a tus artistas son dirigidos a esta página, no a perfiles individuales.
-                </p>
-              </div>
-
-              {/* Técnicas */}
               {obras.length > 0 && (
                 <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
                   <h2 className="mb-3 text-sm font-semibold text-white">Técnicas en catálogo</h2>
