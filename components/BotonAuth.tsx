@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
+import { usePerfil } from "@/hooks/usePerfil";
 import { useToast } from "@/components/ToastProvider";
 
 export default function BotonAuth() {
-  const { user, cargando, salir } = useAuth();
+  const { perfil, listo, cerrarSesion } = usePerfil();
   const { toast } = useToast();
   const [abierto, setAbierto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -20,14 +20,14 @@ export default function BotonAuth() {
   }, []);
 
   async function cerrar() {
-    await salir();
+    await cerrarSesion();
     toast("Sesión cerrada", { icono: "👋" });
     setAbierto(false);
   }
 
-  if (cargando) return null;
+  if (!listo) return null;
 
-  if (!user) {
+  if (!perfil) {
     return (
       <Link
         href="/login"
@@ -42,21 +42,27 @@ export default function BotonAuth() {
     );
   }
 
+  const inicial = (perfil.nombre || perfil.email || "?")[0].toUpperCase();
+
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => setAbierto((v) => !v)}
         aria-label="Cuenta"
-        className="flex size-8 items-center justify-center rounded-full bg-amber-400/20 text-amber-400 ring-1 ring-amber-400/30 transition hover:bg-amber-400/30"
+        className="flex size-8 items-center justify-center rounded-full bg-amber-400/20 text-amber-400 ring-1 ring-amber-400/30 transition hover:bg-amber-400/30 overflow-hidden"
       >
-        <svg className="size-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-        </svg>
+        {perfil.avatar_url ? (
+          <img src={perfil.avatar_url} alt={perfil.nombre} className="size-8 object-cover" />
+        ) : (
+          <span className="text-xs font-bold">{inicial}</span>
+        )}
       </button>
 
       {abierto && (
         <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-2xl bg-zinc-900 p-2 shadow-xl ring-1 ring-white/10">
-          <p className="truncate px-3 py-2 text-[11px] text-zinc-500">{user.email}</p>
+          <p className="truncate px-3 py-2 text-[11px] text-zinc-500">
+            {perfil.nombre || perfil.email || "Mi cuenta"}
+          </p>
           <div className="border-t border-white/5 pt-1">
             <Link href="/perfil" onClick={() => setAbierto(false)}
               className="block rounded-xl px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white">
@@ -66,10 +72,12 @@ export default function BotonAuth() {
               className="block rounded-xl px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white">
               🔒 Área privada
             </Link>
-            <Link href="/admin" onClick={() => setAbierto(false)}
-              className="block rounded-xl px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white">
-              ⚙️ Administración
-            </Link>
+            {perfil.rol === "admin" && (
+              <Link href="/admin" onClick={() => setAbierto(false)}
+                className="block rounded-xl px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white">
+                ⚙️ Administración
+              </Link>
+            )}
             <div className="border-t border-white/5 pt-1">
               <button onClick={cerrar}
                 className="w-full rounded-xl px-3 py-2 text-left text-sm text-rose-400 transition hover:bg-rose-500/10">

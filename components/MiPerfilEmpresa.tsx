@@ -218,26 +218,13 @@ export default function MiPerfilEmpresa() {
                         {perfil.pais && <> · <span className="text-zinc-500">{perfil.pais}</span></>}
                       </p>
                     </div>
-                    <div className="flex shrink-0 flex-wrap gap-2">
-                      <Link href={`/empresa/${slug}`}
-                        className="flex items-center gap-1.5 rounded-full bg-violet-500/10 px-4 py-1.5 text-xs text-violet-400 ring-1 ring-violet-400/30 transition hover:bg-violet-500/20">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-3.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                        </svg>
-                        Ver pública
-                      </Link>
-                      <button type="button" onClick={iniciarEdicion}
-                        className="flex items-center gap-1.5 rounded-full bg-white/5 px-4 py-1.5 text-xs text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-violet-400">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-3.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
-                        </svg>
-                        Editar
-                      </button>
-                      <button type="button" onClick={cerrarSesion}
-                        className="rounded-full bg-white/5 px-4 py-1.5 text-xs text-zinc-500 ring-1 ring-white/10 transition hover:text-red-400">
-                        Salir
-                      </button>
-                    </div>
+                    <Link href={`/empresa/${slug}`}
+                      className="flex items-center gap-1.5 rounded-full bg-violet-500/10 px-4 py-1.5 text-xs text-violet-400 ring-1 ring-violet-400/30 transition hover:bg-violet-500/20">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-3.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                      </svg>
+                      Ver pública
+                    </Link>
                   </div>
                 )}
               </div>
