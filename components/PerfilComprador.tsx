@@ -84,14 +84,14 @@ export default function PerfilComprador() {
   if (!perfil) return null;
 
   // Sin sistema de compras todavía
-  const compras: string[] = [];
+  const compras: number[] = [];
 
   const nombreMostrar    = perfil.nombre || "Coleccionista";
   const obrasFavoritas   = fichas.filter(f => favoritos.includes(f.id));
   const obrasAdquiridas  = fichas.filter(f => compras.includes(f.id));
   const obrasComparando  = fichas.filter(f => comparando.includes(f.id));
 
-  const artistasMapa = new Map<string, { artista: FichaArte["artista"]; obras: number }>();
+  const artistasMapa = new Map<number, { artista: FichaArte["artista"]; obras: number }>();
   [...obrasFavoritas, ...obrasAdquiridas].forEach(f => {
     const prev = artistasMapa.get(f.artista.id);
     artistasMapa.set(f.artista.id, { artista: f.artista, obras: (prev?.obras ?? 0) + 1 });
