@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
         hostname: "picsum.photos",
       },
       {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
         // Supabase Storage — bucket "obras" y avatares de perfiles
         protocol: "https",
         hostname: "dtqijxpdavazfovpzjmw.supabase.co",

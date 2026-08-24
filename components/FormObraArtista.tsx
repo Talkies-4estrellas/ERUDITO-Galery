@@ -153,6 +153,7 @@ export default function FormObraArtista({ inicial, onGuardar, onCerrar }: Props)
                   <option value="Pequeño">Pequeño</option>
                   <option value="Mediano">Mediano</option>
                   <option value="Grande">Grande</option>
+                  <option value="Extra grande">Extra grande</option>
                 </select>
               </div>
               <div>
@@ -165,6 +166,7 @@ export default function FormObraArtista({ inicial, onGuardar, onCerrar }: Props)
                   <option value="Cálido">Cálido</option>
                   <option value="Frío">Frío</option>
                   <option value="Neutro">Neutro</option>
+                  <option value="Multicolor">Multicolor</option>
                 </select>
               </div>
             </div>
@@ -191,7 +193,7 @@ export default function FormObraArtista({ inicial, onGuardar, onCerrar }: Props)
                 >
                   <option value="Físico">Físico</option>
                   <option value="JPG Certificado">JPG Certificado</option>
-                  <option value="Impresión Oficial">Impresión Oficial</option>
+                  <option value="Edición limitada">Edición limitada</option>
                 </select>
               </div>
             </div>

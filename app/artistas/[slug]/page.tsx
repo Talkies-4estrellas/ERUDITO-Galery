@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
 import Navbar from "@/components/Navbar";
-import PerfilPublicoEmpresa from "@/components/PerfilPublicoEmpresa";
+import PerfilPublicoArtista from "@/components/PerfilPublicoArtista";
 
 const supabaseServer = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,16 +18,16 @@ export async function generateMetadata({
     .from("usuarios")
     .select("nombre, bio")
     .eq("slug", slug)
-    .eq("rol", "empresa")
+    .eq("rol", "artista")
     .single();
-  const nombre = data?.nombre || "Galería";
+  const nombre = data?.nombre || "Artista";
   return {
     title: `${nombre} — ERUDITO Galery`,
-    description: data?.bio || `Perfil público de ${nombre} en ERUDITO Galery`,
+    description: data?.bio || `Obras y perfil de ${nombre} en ERUDITO Galery`,
   };
 }
 
-export default async function PaginaEmpresa({
+export default async function PaginaArtista({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -38,7 +38,7 @@ export default async function PaginaEmpresa({
     <div className="flex min-h-screen flex-col bg-zinc-950">
       <Navbar />
       <main className="flex flex-1 flex-col">
-        <PerfilPublicoEmpresa slug={slug} />
+        <PerfilPublicoArtista slug={slug} />
       </main>
     </div>
   );

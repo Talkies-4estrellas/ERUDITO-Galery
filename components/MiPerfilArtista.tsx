@@ -1,12 +1,19 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import NextImage from "next/image";
+import Link from "next/link";
 import { usePerfil, type DatosPerfil } from "@/hooks/usePerfil";
 import { useObrasArtista, type ObraPropia } from "@/hooks/useObrasArtista";
+import { useFavoritos } from "@/hooks/useFavoritos";
+import { useComparacion } from "@/hooks/useComparacion";
+import { getFichas } from "@/lib/db";
+import type { FichaArte } from "@/data/fichas";
+import FichaObra from "@/components/FichaObra";
 import FormObraArtista from "@/components/FormObraArtista";
+import { useToast } from "@/components/ToastProvider";
 
-type Vista = "obras" | "ajustes";
+type Vista = "obras" | "favoritos" | "adquiridas" | "analisis" | "ajustes";
 
 function iniciales(nombre: string): string {
   const partes = nombre.trim().split(/\s+/);
@@ -58,12 +65,8 @@ async function subirImagen(file: File, tipo: "avatar" | "banner", clave: string)
   return url;
 }
 
-/* Tarjeta de obra propia */
-function TarjetaObra({
-  obra,
-  onEditar,
-  onEliminar,
-}: {
+/* ── Tarjeta de obra propia ───────────────────────────────────── */
+function TarjetaObra({ obra, onEditar, onEliminar }: {
   obra: ObraPropia;
   onEditar: () => void;
   onEliminar: () => void;
@@ -124,9 +127,169 @@ function TarjetaObra({
   );
 }
 
+/* ── Barra horizontal para análisis ─────────────────────────── */
+function BarraAnalisis({ label, valor, total, color = "bg-amber-400" }: {
+  label: string; valor: number; total: number; color?: string;
+}) {
+  const pct = total > 0 ? Math.round((valor / total) * 100) : 0;
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between">
+        <span className="text-xs text-zinc-400">{label}</span>
+        <span className="text-xs font-semibold text-white">{valor}</span>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+        <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+/* ── Sección de análisis ─────────────────────────────────────── */
+function SeccionAnalisis({ obras }: { obras: ObraPropia[] }) {
+  if (obras.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-white/10 py-20 text-center">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-12 text-zinc-700">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+        </svg>
+        <p className="text-sm text-zinc-500">Sube obras para ver tu análisis</p>
+      </div>
+    );
+  }
+
+  const total = obras.length;
+  const aprobadas  = obras.filter(o => o.estado === "aprobada").length;
+  const pendientes = obras.filter(o => o.estado === "pendiente").length;
+  const rechazadas = obras.filter(o => o.estado === "rechazada").length;
+
+  const conPrecio = obras.filter(o => o.precio > 0);
+  const precios   = conPrecio.map(o => o.precio);
+  const precioMin = precios.length ? Math.min(...precios) : 0;
+  const precioMax = precios.length ? Math.max(...precios) : 0;
+  const precioAvg = precios.length ? Math.round(precios.reduce((s, p) => s + p, 0) / precios.length) : 0;
+
+  function contarPor(key: keyof ObraPropia) {
+    const mapa = new Map<string, number>();
+    obras.forEach(o => {
+      const v = (o[key] as string) || "Sin definir";
+      mapa.set(v, (mapa.get(v) ?? 0) + 1);
+    });
+    return [...mapa.entries()].sort((a, b) => b[1] - a[1]);
+  }
+
+  const porTecnica   = contarPor("tecnica");
+  const porTipo      = contarPor("tipo");
+  const porMovimiento = contarPor("movimiento");
+  const porTamano    = contarPor("tamano");
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-lg font-semibold text-white">Análisis de mis obras</h2>
+        <p className="mt-0.5 text-xs text-zinc-500">{total} {total === 1 ? "obra registrada" : "obras registradas"}</p>
+      </div>
+
+      {/* Estado */}
+      <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
+        <h3 className="mb-4 text-sm font-semibold text-white">Estado de publicación</h3>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Aprobadas",  count: aprobadas,  color: "text-emerald-400", bg: "bg-emerald-400/10 ring-emerald-400/20" },
+            { label: "En revisión", count: pendientes, color: "text-amber-400",   bg: "bg-amber-400/10 ring-amber-400/20"   },
+            { label: "Rechazadas", count: rechazadas, color: "text-red-400",     bg: "bg-red-400/10 ring-red-400/20"       },
+          ].map(({ label, count, color, bg }) => (
+            <div key={label} className={`flex flex-col items-center gap-1 rounded-xl p-3 ring-1 ${bg}`}>
+              <span className={`text-2xl font-bold ${color}`}>{count}</span>
+              <span className="text-center text-[10px] text-zinc-500">{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        {/* Precio */}
+        <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
+          <h3 className="mb-4 text-sm font-semibold text-white">Precios</h3>
+          {conPrecio.length === 0 ? (
+            <p className="text-xs italic text-zinc-600">Sin obras con precio</p>
+          ) : (
+            <div className="space-y-3">
+              {[
+                { label: "Promedio",  valor: precioAvg },
+                { label: "Máximo",   valor: precioMax },
+                { label: "Mínimo",   valor: precioMin },
+                { label: "Con precio", valor: conPrecio.length, esCantidad: true },
+              ].map(({ label, valor, esCantidad }) => (
+                <div key={label} className="flex items-center justify-between">
+                  <span className="text-xs text-zinc-400">{label}</span>
+                  <span className="text-xs font-semibold text-amber-400">
+                    {esCantidad ? `${valor} obra${valor !== 1 ? "s" : ""}` : `$${valor.toLocaleString("es-MX")}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Tipo */}
+        <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
+          <h3 className="mb-4 text-sm font-semibold text-white">Por tipo</h3>
+          <div className="space-y-3">
+            {porTipo.map(([tipo, count]) => (
+              <BarraAnalisis key={tipo} label={tipo} valor={count} total={total} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        {/* Técnica */}
+        <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
+          <h3 className="mb-4 text-sm font-semibold text-white">Por técnica</h3>
+          <div className="space-y-3">
+            {porTecnica.map(([tec, count]) => (
+              <BarraAnalisis key={tec} label={tec} valor={count} total={total} />
+            ))}
+          </div>
+        </div>
+
+        {/* Movimiento */}
+        <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
+          <h3 className="mb-4 text-sm font-semibold text-white">Por movimiento</h3>
+          <div className="space-y-3">
+            {porMovimiento.map(([mov, count]) => (
+              <BarraAnalisis key={mov} label={mov} valor={count} total={total} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Tamaño */}
+      <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
+        <h3 className="mb-4 text-sm font-semibold text-white">Por tamaño</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {porTamano.map(([tam, count]) => (
+            <BarraAnalisis key={tam} label={tam} valor={count} total={total} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Componente principal ────────────────────────────────────── */
 export default function MiPerfilArtista() {
   const { perfil, guardar, cerrarSesion } = usePerfil();
+  const { toast } = useToast();
   const { obras, listo: obrasListas, agregar, actualizar, eliminar } = useObrasArtista();
+  const { favoritos } = useFavoritos();
+  const { seleccion: comparando } = useComparacion();
+  const [fichas, setFichas] = useState<FichaArte[]>([]);
+
+  useEffect(() => {
+    getFichas().then(setFichas).catch(() => {});
+  }, []);
 
   const [vista, setVista] = useState<Vista>("obras");
   const [formAjustes, setFormAjustes] = useState<DatosPerfil | null>(null);
@@ -145,6 +308,7 @@ export default function MiPerfilArtista() {
     e.preventDefault();
     if (!formAjustes) return;
     guardar(formAjustes);
+    toast("Perfil actualizado", { icono: "✓" });
     cerrarAjustes();
   }
 
@@ -174,6 +338,18 @@ export default function MiPerfilArtista() {
   const nombreMostrar = perfil.nombre || "Tu nombre";
   const obrasConPrecio = obras.filter((o) => o.precio > 0);
   const totalValor = obrasConPrecio.reduce((s, o) => s + o.precio, 0);
+  const perfilPublicoHref = perfil.slug ? `/artistas/${perfil.slug}` : "/artistas";
+
+  const compras: number[] = [];
+  const obrasFavoritas  = fichas.filter(f => favoritos.includes(f.id));
+  const obrasAdquiridas = fichas.filter(f => compras.includes(f.id));
+
+  const navItems: { id: Vista; label: string; badge?: number }[] = [
+    { id: "obras",      label: "Mis obras",       badge: obras.length || undefined },
+    { id: "favoritos",  label: "Favoritas",        badge: favoritos.length || undefined },
+    { id: "adquiridas", label: "Adquiridas",       badge: obrasAdquiridas.length || undefined },
+    { id: "analisis",   label: "Análisis" },
+  ];
 
   return (
     <>
@@ -186,7 +362,7 @@ export default function MiPerfilArtista() {
               <img src={perfil.banner_url} alt="" className="h-full w-full object-cover" />
             </div>
           ) : (
-            <div className="h-44 w-full bg-gradient-to-br from-zinc-800 via-amber-950/30 to-zinc-900 sm:h-56" />
+            <div className="h-44 w-full bg-gradient-to-br from-amber-950/60 via-zinc-900 to-zinc-950 sm:h-56" />
           )}
 
           <div className="mx-auto max-w-6xl px-4 sm:px-8">
@@ -203,13 +379,24 @@ export default function MiPerfilArtista() {
                 )}
               </div>
 
-              {/* Nombre */}
-              <div className="ml-32 mt-2 pt-2 sm:ml-44 sm:mt-0">
-                <h1 className="text-xl font-bold text-white sm:text-2xl">{nombreMostrar}</h1>
-                <p className="mt-0.5 text-sm text-zinc-400">
-                  {perfil.especialidad || "Artista"}
-                  {perfil.pais && <> · <span className="text-zinc-500">{perfil.pais}</span></>}
-                </p>
+              {/* Nombre + botón perfil público */}
+              <div className="ml-32 mt-2 flex flex-1 flex-wrap items-end justify-between gap-3 pt-2 sm:ml-44 sm:mt-0">
+                <div>
+                  <h1 className="text-xl font-bold text-white sm:text-2xl">{nombreMostrar}</h1>
+                  <p className="mt-0.5 text-sm text-zinc-400">
+                    {perfil.especialidad || "Artista"}
+                    {perfil.pais && <> · <span className="text-zinc-500">{perfil.pais}</span></>}
+                  </p>
+                </div>
+                <Link
+                  href={perfilPublicoHref}
+                  className="flex items-center gap-1.5 rounded-full bg-white/5 px-4 py-2 text-xs text-zinc-300 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-3.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                  </svg>
+                  Ver perfil público
+                </Link>
               </div>
             </div>
 
@@ -233,7 +420,7 @@ export default function MiPerfilArtista() {
 
         {/* ── Layout 3 columnas ──────────────────────────────── */}
         <div className="mx-auto mt-6 max-w-6xl px-4 sm:px-8">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr_220px]">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-[220px_1fr] lg:grid-cols-[240px_1fr_220px]">
 
             {/* ── Sidebar izquierdo ─────────────────────────── */}
             <aside className="space-y-4">
@@ -254,24 +441,26 @@ export default function MiPerfilArtista() {
               <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
                 <h2 className="mb-3 text-sm font-semibold text-white">Mi espacio</h2>
                 <nav className="space-y-1">
-                  <button type="button" onClick={() => setVista("obras")}
-                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition ${
-                      vista === "obras"
-                        ? "bg-white/10 text-white"
-                        : "text-zinc-300 hover:bg-white/5 hover:text-white"
-                    }`}>
-                    <span>Mis obras</span>
-                    {obras.length > 0 && (
-                      <span className="text-xs font-semibold text-amber-400">{obras.length}</span>
-                    )}
-                  </button>
+                  {navItems.map(item => (
+                    <button key={item.id} type="button" onClick={() => setVista(item.id)}
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition ${
+                        vista === item.id
+                          ? "bg-amber-400/10 text-amber-400 ring-1 ring-amber-400/20"
+                          : "text-zinc-300 hover:bg-white/5 hover:text-white"
+                      }`}>
+                      <span>{item.label}</span>
+                      {item.badge !== undefined && item.badge > 0 && (
+                        <span className="text-xs font-semibold text-amber-400">{item.badge}</span>
+                      )}
+                    </button>
+                  ))}
                 </nav>
 
                 <div className="mt-3 border-t border-white/5 pt-3">
                   <button type="button" onClick={abrirAjustes}
                     className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
                       vista === "ajustes"
-                        ? "bg-white/10 text-white"
+                        ? "bg-amber-400/10 text-amber-400 ring-1 ring-amber-400/20"
                         : "text-zinc-400 hover:bg-white/5 hover:text-white"
                     }`}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-4 shrink-0">
@@ -332,6 +521,83 @@ export default function MiPerfilArtista() {
                     </div>
                   )}
                 </div>
+              )}
+
+              {/* ── Favoritas ── */}
+              {vista === "favoritos" && (
+                <div>
+                  <div className="mb-5 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white">Favoritas</h2>
+                      <p className="mt-0.5 text-xs text-zinc-500">
+                        {obrasFavoritas.length === 0
+                          ? "Marca obras con ♥ para guardarlas aquí"
+                          : `${obrasFavoritas.length} ${obrasFavoritas.length === 1 ? "obra" : "obras"} guardadas`}
+                      </p>
+                    </div>
+                    <Link href="/catalogo/fisicos"
+                      className="rounded-full bg-white/5 px-4 py-1.5 text-xs text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white">
+                      + Explorar
+                    </Link>
+                  </div>
+                  {obrasFavoritas.length === 0 ? (
+                    <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-white/10 py-16 text-center">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-12 text-zinc-700">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                      </svg>
+                      <p className="text-sm text-zinc-500">Aún no tienes obras favoritas</p>
+                      <Link href="/catalogo/fisicos"
+                        className="rounded-full bg-amber-400 px-5 py-2 text-xs font-semibold text-zinc-900 transition hover:bg-amber-300">
+                        Explorar galería
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                      {obrasFavoritas.map(ficha => <FichaObra key={ficha.id} ficha={ficha} fluida />)}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── Adquiridas ── */}
+              {vista === "adquiridas" && (
+                <div>
+                  <div className="mb-5 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white">Adquiridas</h2>
+                      <p className="mt-0.5 text-xs text-zinc-500">
+                        {obrasAdquiridas.length === 0
+                          ? "Aquí aparecerán las obras que adquieras"
+                          : `${obrasAdquiridas.length} ${obrasAdquiridas.length === 1 ? "obra adquirida" : "obras adquiridas"}`}
+                      </p>
+                    </div>
+                    <Link href="/catalogo/fisicos"
+                      className="rounded-full bg-white/5 px-4 py-1.5 text-xs text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white">
+                      + Explorar
+                    </Link>
+                  </div>
+                  {obrasAdquiridas.length === 0 ? (
+                    <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-white/10 py-16 text-center">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-12 text-zinc-700">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                      </svg>
+                      <p className="text-sm text-zinc-500">Aún no has adquirido ninguna obra</p>
+                      <Link href="/catalogo/fisicos"
+                        className="rounded-full bg-amber-400 px-5 py-2 text-xs font-semibold text-zinc-900 transition hover:bg-amber-300">
+                        Explorar galería
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                      {obrasAdquiridas.map(ficha => <FichaObra key={ficha.id} ficha={ficha} fluida />)}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── Análisis ── */}
+              {vista === "analisis" && (
+                <SeccionAnalisis obras={obras} />
               )}
 
               {/* ── Ajustes ── */}
@@ -454,22 +720,33 @@ export default function MiPerfilArtista() {
             </main>
 
             {/* ── Sidebar derecho ───────────────────────────── */}
-            <aside className="space-y-4">
+            <aside className="hidden space-y-4 lg:block">
               <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
                 <h2 className="mb-3 text-sm font-semibold text-white">Estadísticas</h2>
-                <div className="space-y-3">
-                  {[
-                    { label: "Obras subidas",    valor: obras.length.toString(),          color: "text-amber-400" },
-                    { label: "Con precio",        valor: obrasConPrecio.length.toString(), color: "text-white"     },
-                    { label: "Físicas",           valor: obras.filter(o => o.tipo === "Físico").length.toString(), color: "text-white" },
-                    { label: "JPG Certificado",   valor: obras.filter(o => o.tipo === "JPG Certificado").length.toString(), color: "text-white" },
-                  ].map(({ label, valor, color }) => (
-                    <div key={label} className="flex items-center justify-between">
-                      <span className="text-xs text-zinc-400">{label}</span>
-                      <span className={`text-xs font-semibold ${color}`}>{valor}</span>
-                    </div>
-                  ))}
-                </div>
+                {obras.length === 0 ? (
+                  <div className="flex flex-col items-center gap-3 py-4 text-center">
+                    <p className="text-xs text-zinc-500">Aún no tienes obras registradas</p>
+                    <button type="button" onClick={() => setModalObra("nueva")}
+                      className="rounded-full bg-amber-400/10 px-4 py-2 text-xs font-semibold text-amber-400 ring-1 ring-amber-400/20 transition hover:bg-amber-400/20">
+                      + Añade tu primera obra
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {[
+                      { label: "Obras subidas",    valor: obras.length.toString(),          color: "text-amber-400" },
+                      { label: "Aprobadas",         valor: obras.filter(o => o.estado === "aprobada").length.toString(),  color: "text-emerald-400" },
+                      { label: "En revisión",       valor: obras.filter(o => o.estado === "pendiente").length.toString(), color: "text-amber-400"   },
+                      { label: "Favoritas",         valor: favoritos.length.toString(), color: "text-white" },
+                      { label: "Adquiridas",        valor: obrasAdquiridas.length.toString(), color: "text-white" },
+                    ].map(({ label, valor, color }) => (
+                      <div key={label} className="flex items-center justify-between">
+                        <span className="text-xs text-zinc-400">{label}</span>
+                        <span className={`text-xs font-semibold ${color}`}>{valor}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {obras.length > 0 && (
@@ -486,6 +763,22 @@ export default function MiPerfilArtista() {
                       <p className="text-xs italic text-zinc-600">Sin técnicas registradas</p>
                     )}
                   </div>
+                </div>
+              )}
+
+              {perfil.slug && (
+                <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
+                  <h2 className="mb-2 text-sm font-semibold text-white">Tu perfil público</h2>
+                  <p className="mb-3 text-xs text-zinc-500">
+                    Así te ven los coleccionistas
+                  </p>
+                  <Link href={perfilPublicoHref}
+                    className="flex w-full items-center justify-center gap-1.5 rounded-full bg-amber-400/10 px-3 py-2 text-xs font-semibold text-amber-400 ring-1 ring-amber-400/20 transition hover:bg-amber-400/20">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                    Ver perfil público
+                  </Link>
                 </div>
               )}
             </aside>

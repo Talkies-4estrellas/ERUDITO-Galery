@@ -6,8 +6,9 @@ import Link from "next/link";
 import { usePerfil, generarSlug, type DatosPerfil } from "@/hooks/usePerfil";
 import { useObrasEmpresa, type ObraEmpresa } from "@/hooks/useObrasEmpresa";
 import FormObraEmpresa from "@/components/FormObraEmpresa";
+import { useToast } from "@/components/ToastProvider";
 
-type Vista = "obras" | "ajustes";
+type Vista = "obras" | "analisis" | "ajustes";
 
 function iniciales(nombre: string): string {
   const partes = nombre.trim().split(/\s+/);
@@ -133,6 +134,7 @@ function TarjetaObraEmpresa({
 
 export default function MiPerfilEmpresa() {
   const { perfil, guardar, cerrarSesion } = usePerfil();
+  const { toast } = useToast();
   const { obras, listo: obrasListas, agregar, actualizar, eliminar } = useObrasEmpresa();
 
   const [vista, setVista] = useState<Vista>("obras");
@@ -140,6 +142,11 @@ export default function MiPerfilEmpresa() {
   const [subiendoAvatar, setSubiendoAvatar] = useState(false);
   const [subiendoBanner, setSubiendoBanner] = useState(false);
   const [modalObra, setModalObra] = useState<null | "nueva" | string>(null);
+  const [pendingAction, setPendingAction] = useState<{
+    tipo: "eliminar" | "editar";
+    obraId: string;
+    titulo: string;
+  } | null>(null);
 
   const avatarRef = useRef<HTMLInputElement>(null);
   const bannerRef = useRef<HTMLInputElement>(null);
@@ -150,10 +157,12 @@ export default function MiPerfilEmpresa() {
 
   function abrirAjustes() { setFormAjustes({ ...perfil! }); setVista("ajustes"); }
   function cerrarAjustes() { setFormAjustes(null); setVista("obras"); }
+  function cerrarVista() { setVista("obras"); }
   function submitAjustes(e: React.FormEvent) {
     e.preventDefault();
     if (!formAjustes) return;
     guardar(formAjustes);
+    toast("Perfil actualizado", { icono: "✓" });
     cerrarAjustes();
   }
 
@@ -173,6 +182,17 @@ export default function MiPerfilEmpresa() {
   function guardarObra(datos: Omit<ObraEmpresa, "id">) {
     if (modalObra === "nueva") agregar(datos);
     else if (typeof modalObra === "string") actualizar(modalObra, datos);
+  }
+
+  function confirmarAccion() {
+    if (!pendingAction) return;
+    if (pendingAction.tipo === "eliminar") {
+      eliminar(pendingAction.obraId);
+      toast(`"${pendingAction.titulo}" eliminada`, { icono: "✓" });
+    } else {
+      setModalObra(pendingAction.obraId);
+    }
+    setPendingAction(null);
   }
 
   const obraEnEdicion =
@@ -196,7 +216,7 @@ export default function MiPerfilEmpresa() {
               <img src={perfil.banner_url} alt="" className="h-full w-full object-cover" />
             </div>
           ) : (
-            <div className="h-44 w-full bg-gradient-to-br from-zinc-800 via-violet-950/40 to-zinc-900 sm:h-56" />
+            <div className="h-44 w-full bg-gradient-to-br from-violet-950/60 via-zinc-900 to-zinc-950 sm:h-56" />
           )}
 
           <div className="mx-auto max-w-6xl px-4 sm:px-8">
@@ -256,7 +276,7 @@ export default function MiPerfilEmpresa() {
 
         {/* ── Layout 3 columnas ──────────────────────────────── */}
         <div className="mx-auto mt-6 max-w-6xl px-4 sm:px-8">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr_220px]">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-[220px_1fr] lg:grid-cols-[240px_1fr_220px]">
 
             {/* ── Sidebar izquierdo ─────────────────────────── */}
             <aside className="space-y-4">
@@ -299,23 +319,28 @@ export default function MiPerfilEmpresa() {
               <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
                 <h2 className="mb-3 text-sm font-semibold text-white">Mi espacio</h2>
                 <nav className="space-y-1">
-                  <button type="button" onClick={() => setVista("obras")}
-                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition ${
-                      vista === "obras"
-                        ? "bg-white/10 text-white"
-                        : "text-zinc-300 hover:bg-white/5 hover:text-white"
-                    }`}>
-                    <span>Obras publicadas</span>
-                    {obras.length > 0 && (
-                      <span className="text-xs font-semibold text-violet-400">{obras.length}</span>
-                    )}
-                  </button>
+                  {[
+                    { id: "obras",   label: "Obras publicadas", badge: obras.length || undefined },
+                    { id: "analisis", label: "Análisis" },
+                  ].map(({ id, label, badge }) => (
+                    <button key={id} type="button" onClick={() => setVista(id as Vista)}
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition ${
+                        vista === id
+                          ? "bg-violet-400/10 text-violet-400 ring-1 ring-violet-400/20"
+                          : "text-zinc-300 hover:bg-white/5 hover:text-white"
+                      }`}>
+                      <span>{label}</span>
+                      {badge !== undefined && (
+                        <span className="text-xs font-semibold text-violet-400">{badge}</span>
+                      )}
+                    </button>
+                  ))}
                 </nav>
                 <div className="mt-3 border-t border-white/5 pt-3">
                   <button type="button" onClick={abrirAjustes}
                     className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
                       vista === "ajustes"
-                        ? "bg-white/10 text-white"
+                        ? "bg-violet-400/10 text-violet-400 ring-1 ring-violet-400/20"
                         : "text-zinc-400 hover:bg-white/5 hover:text-white"
                     }`}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-4 shrink-0">
@@ -369,13 +394,25 @@ export default function MiPerfilEmpresa() {
                         <TarjetaObraEmpresa
                           key={obra.id}
                           obra={obra}
-                          onEditar={() => setModalObra(obra.id)}
-                          onEliminar={() => eliminar(obra.id)}
+                          onEditar={() => setPendingAction({ tipo: "editar", obraId: obra.id, titulo: obra.titulo })}
+                          onEliminar={() => setPendingAction({ tipo: "eliminar", obraId: obra.id, titulo: obra.titulo })}
                         />
                       ))}
                     </div>
                   )}
                 </div>
+              )}
+
+              {/* ── Análisis ── */}
+              {vista === "analisis" && (
+                <SeccionAnalisis
+                  obras={obras}
+                  obrasListas={obrasListas}
+                  artistasRepresentados={artistasRepresentados}
+                  totalValor={totalValor}
+                  obrasConPrecio={obrasConPrecio}
+                  onVolver={cerrarVista}
+                />
               )}
 
               {/* ── Ajustes ── */}
@@ -514,23 +551,49 @@ export default function MiPerfilEmpresa() {
             </main>
 
             {/* ── Sidebar derecho ───────────────────────────── */}
-            <aside className="space-y-4">
+            <aside className="hidden space-y-4 lg:block">
+
+              {/* Tu perfil público */}
+              <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
+                <h2 className="mb-3 text-sm font-semibold text-white">Tu galería pública</h2>
+                <p className="mb-3 text-xs leading-relaxed text-zinc-400">
+                  Así te ven los coleccionistas y compradores en ERUDITO.
+                </p>
+                <Link href={`/empresa/${slug}`}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-500/10 py-2.5 text-xs font-semibold text-violet-400 ring-1 ring-violet-400/30 transition hover:bg-violet-500/20">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-3.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                  </svg>
+                  Ver perfil público
+                </Link>
+              </div>
+
               <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
                 <h2 className="mb-3 text-sm font-semibold text-white">Estadísticas</h2>
-                <div className="space-y-3">
-                  {[
-                    { label: "Obras publicadas",       valor: obras.length.toString(),                          color: "text-violet-400" },
-                    { label: "Artistas representados", valor: artistasRepresentados.length.toString(),           color: "text-white"      },
-                    { label: "Con precio",             valor: obrasConPrecio.length.toString(),                  color: "text-white"      },
-                    { label: "Físicas",                valor: obras.filter(o => o.tipo === "Físico").length.toString(), color: "text-white" },
-                    { label: "Ediciones limitadas",    valor: obras.filter(o => o.tipo === "Edición limitada").length.toString(), color: "text-white" },
-                  ].map(({ label, valor, color }) => (
-                    <div key={label} className="flex items-center justify-between">
-                      <span className="text-xs text-zinc-400">{label}</span>
-                      <span className={`text-xs font-semibold ${color}`}>{valor}</span>
-                    </div>
-                  ))}
-                </div>
+                {obras.length === 0 ? (
+                  <div className="flex flex-col items-center gap-3 py-4 text-center">
+                    <p className="text-xs text-zinc-500">Aún no tienes obras publicadas</p>
+                    <button type="button" onClick={() => setModalObra("nueva")}
+                      className="rounded-full bg-violet-400/10 px-4 py-2 text-xs font-semibold text-violet-400 ring-1 ring-violet-400/20 transition hover:bg-violet-400/20">
+                      + Publica tu primera obra
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {[
+                      { label: "Obras publicadas",       valor: obras.length.toString(),                          color: "text-violet-400" },
+                      { label: "Artistas representados", valor: artistasRepresentados.length.toString(),           color: "text-white"      },
+                      { label: "Con precio",             valor: obrasConPrecio.length.toString(),                  color: "text-white"      },
+                      { label: "Físicas",                valor: obras.filter(o => o.tipo === "Físico").length.toString(), color: "text-white" },
+                      { label: "Ediciones limitadas",    valor: obras.filter(o => o.tipo === "Edición limitada").length.toString(), color: "text-white" },
+                    ].map(({ label, valor, color }) => (
+                      <div key={label} className="flex items-center justify-between">
+                        <span className="text-xs text-zinc-400">{label}</span>
+                        <span className={`text-xs font-semibold ${color}`}>{valor}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {obras.length > 0 && (
@@ -563,6 +626,238 @@ export default function MiPerfilEmpresa() {
           onCerrar={() => setModalObra(null)}
         />
       )}
+
+      {/* ── Modal de confirmación (editar / eliminar) ─────── */}
+      {pendingAction && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
+          onClick={() => setPendingAction(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-zinc-900 p-6 shadow-2xl ring-1 ring-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className={`text-xs font-semibold uppercase tracking-widest ${
+              pendingAction.tipo === "eliminar" ? "text-red-400" : "text-violet-400"
+            }`}>
+              {pendingAction.tipo === "eliminar" ? "Confirmar eliminación" : "Confirmar edición"}
+            </p>
+            <h2 className="mt-2 truncate text-base font-bold text-white">
+              {pendingAction.titulo}
+            </h2>
+            <p className="mt-1.5 text-sm text-zinc-400">
+              {pendingAction.tipo === "eliminar"
+                ? "Esta obra se eliminará permanentemente. Esta acción no se puede deshacer."
+                : "¿Deseas abrir el formulario de edición para esta obra?"}
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={confirmarAccion}
+                className={`flex-1 rounded-full py-2.5 text-sm font-semibold text-white transition ${
+                  pendingAction.tipo === "eliminar"
+                    ? "bg-red-500/80 hover:bg-red-500"
+                    : "bg-violet-500 hover:bg-violet-400"
+                }`}
+              >
+                {pendingAction.tipo === "eliminar" ? "Eliminar" : "Editar obra"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingAction(null)}
+                className="rounded-full bg-white/5 px-5 py-2.5 text-sm text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────── */
+/*  Sección Análisis del catálogo                              */
+/* ─────────────────────────────────────────────────────────── */
+
+function BarraProgreso({ valor, total, color }: { valor: number; total: number; color: string }) {
+  const pct = total > 0 ? Math.round((valor / total) * 100) : 0;
+  return (
+    <div className="flex items-center gap-2">
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/5">
+        <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="w-7 text-right text-[11px] font-semibold text-zinc-400">{valor}</span>
+    </div>
+  );
+}
+
+function FilaMetrica({ label, valor, accent = false }: { label: string; valor: string | number; accent?: boolean }) {
+  return (
+    <div className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+      <span className="text-xs text-zinc-400">{label}</span>
+      <span className={`text-xs font-semibold ${accent ? "text-violet-400" : "text-white"}`}>{valor}</span>
+    </div>
+  );
+}
+
+interface SeccionAnalisisProps {
+  obras: ObraEmpresa[];
+  obrasListas: boolean;
+  artistasRepresentados: string[];
+  totalValor: number;
+  obrasConPrecio: ObraEmpresa[];
+  onVolver: () => void;
+}
+
+function SeccionAnalisis({ obras, obrasListas, artistasRepresentados, totalValor, obrasConPrecio, onVolver }: SeccionAnalisisProps) {
+  const total = obras.length;
+
+  const aprobadas  = obras.filter(o => o.estado === "aprobada").length;
+  const pendientes = obras.filter(o => !o.estado || o.estado === "pendiente").length;
+  const rechazadas = obras.filter(o => o.estado === "rechazada").length;
+
+  const precioProm = obrasConPrecio.length > 0
+    ? Math.round(totalValor / obrasConPrecio.length)
+    : 0;
+  const precioMax  = obrasConPrecio.length > 0 ? Math.max(...obrasConPrecio.map(o => o.precio)) : 0;
+  const precioMin  = obrasConPrecio.length > 0 ? Math.min(...obrasConPrecio.map(o => o.precio)) : 0;
+
+  // Por tipo
+  const tipos = [...new Set(obras.map(o => o.tipo).filter(Boolean))];
+  const porTipo = tipos.map(t => ({ t, n: obras.filter(o => o.tipo === t).length }))
+    .sort((a, b) => b.n - a.n);
+
+  // Por técnica
+  const tecnicas = [...new Set(obras.map(o => o.tecnica).filter(Boolean))];
+  const porTecnica = tecnicas.map(t => ({ t, n: obras.filter(o => o.tecnica === t).length }))
+    .sort((a, b) => b.n - a.n).slice(0, 8);
+
+  // Artistas con más obras
+  const porArtista = artistasRepresentados
+    .map(nombre => ({ nombre, n: obras.filter(o => o.nombreArtista === nombre).length }))
+    .sort((a, b) => b.n - a.n).slice(0, 6);
+
+  if (!obrasListas) {
+    return <div className="py-20 text-center text-sm text-zinc-500">Cargando análisis…</div>;
+  }
+
+  if (total === 0) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-white/10 py-20 text-center">
+        <p className="text-sm text-zinc-500">Publica obras para ver el análisis de tu catálogo</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-white">Análisis del catálogo</h2>
+          <p className="mt-0.5 text-xs text-zinc-500">{total} {total === 1 ? "obra en catálogo" : "obras en catálogo"}</p>
+        </div>
+        <button type="button" onClick={onVolver}
+          className="rounded-full bg-white/5 px-4 py-1.5 text-xs text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white">
+          ← Volver
+        </button>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+
+        {/* Estado de obras */}
+        <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
+          <h3 className="mb-4 text-sm font-semibold text-white">Estado del catálogo</h3>
+          <div className="space-y-3">
+            <div>
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-xs text-emerald-400">Aprobadas</span>
+              </div>
+              <BarraProgreso valor={aprobadas} total={total} color="bg-emerald-500" />
+            </div>
+            <div>
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-xs text-amber-400">En revisión</span>
+              </div>
+              <BarraProgreso valor={pendientes} total={total} color="bg-amber-500" />
+            </div>
+            <div>
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-xs text-red-400">Rechazadas</span>
+              </div>
+              <BarraProgreso valor={rechazadas} total={total} color="bg-red-500" />
+            </div>
+          </div>
+        </div>
+
+        {/* Valoración */}
+        <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
+          <h3 className="mb-1 text-sm font-semibold text-white">Valoración del catálogo</h3>
+          <p className="mb-4 text-[10px] text-zinc-500">Solo obras con precio asignado</p>
+          <FilaMetrica label="Obras con precio" valor={obrasConPrecio.length} accent />
+          <FilaMetrica label="Valor total" valor={totalValor > 0 ? `$${totalValor.toLocaleString("es-MX")} MXN` : "—"} accent />
+          <FilaMetrica label="Precio promedio" valor={precioProm > 0 ? `$${precioProm.toLocaleString("es-MX")}` : "—"} />
+          <FilaMetrica label="Precio máximo" valor={precioMax > 0 ? `$${precioMax.toLocaleString("es-MX")}` : "—"} />
+          <FilaMetrica label="Precio mínimo" valor={precioMin > 0 ? `$${precioMin.toLocaleString("es-MX")}` : "—"} />
+        </div>
+
+        {/* Por tipo */}
+        {porTipo.length > 0 && (
+          <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
+            <h3 className="mb-4 text-sm font-semibold text-white">Distribución por tipo</h3>
+            <div className="space-y-3">
+              {porTipo.map(({ t, n }) => (
+                <div key={t}>
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-xs text-zinc-300">{t}</span>
+                  </div>
+                  <BarraProgreso valor={n} total={total} color="bg-violet-500" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Artistas con más obras */}
+        {porArtista.length > 0 && (
+          <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
+            <h3 className="mb-4 text-sm font-semibold text-white">Artistas por aportación</h3>
+            <div className="space-y-3">
+              {porArtista.map(({ nombre, n }, i) => (
+                <div key={nombre} className="flex items-center gap-3">
+                  <span className="w-4 text-[10px] font-bold text-zinc-600">{i + 1}</span>
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-400/10 text-[10px] font-bold text-violet-400">
+                    {nombre.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-zinc-200">{nombre}</p>
+                    <BarraProgreso valor={n} total={total} color="bg-violet-400" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Por técnica */}
+        {porTecnica.length > 0 && (
+          <div className="rounded-2xl bg-zinc-900/70 p-5 ring-1 ring-white/10 sm:col-span-2">
+            <h3 className="mb-4 text-sm font-semibold text-white">Técnicas en catálogo</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {porTecnica.map(({ t, n }) => (
+                <div key={t}>
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-xs text-zinc-300">{t}</span>
+                  </div>
+                  <BarraProgreso valor={n} total={total} color="bg-violet-400/70" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
   );
 }

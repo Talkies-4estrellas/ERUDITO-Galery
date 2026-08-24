@@ -1,0 +1,9 @@
+Nombre	                        Email	               Contraseña	Rol
+Ana Torres	         artista@test.com	        Test1234	Artista
+Revolution Canvas	 revolution-canvas@test.com	Test1234	Artista
+Ideas Creativas	         ideas-creativas@test.com	Test1234	Artista
+HAUCOZE	                 haucoze@test.com	        Test1234	Artista
+Pop Maze Art	         pop-maze@test.com	        Test1234	Artista
+Galería Norte Arte	 empresa@test.com	        Test1234	Empresa
+Galería Forma y Materia	 galeria-esculturas@test.com	Test1234	Empresa
+Luis Mendoza	         comprador@test.com	        Test1234	Comprador

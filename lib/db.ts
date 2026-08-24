@@ -30,7 +30,7 @@ function mapFicha(row: any): FichaArte {
     descripcion: row.descripcion ?? "",
     estrellas: row.estrellas ?? 5,
     imagen: row.imagen_principal ?? "",
-    artista: mapArtista(row.artistas),       // join obras → artistas
+    artista: row.artistas ? mapArtista(row.artistas) : { id: 0, nombre: "Desconocido", vida: "", origen: "", foto: "", bio: "" },
     perspectivas: (row.perspectivas as string[]) ?? [],
     tamano: row.tamano,
     color: row.color,
@@ -102,6 +102,7 @@ export async function getFichas(): Promise<FichaArte[]> {
     .from("obras")
     .select("*, artistas(*)")
     .eq("estado", "aprobada")
+    .not("id_artista", "is", null)
     .order("id_obra");
   if (error) throw new Error(error.message);
   return (data ?? []).map(mapFicha);
@@ -112,6 +113,7 @@ export async function getFicha(id: number): Promise<FichaArte | null> {
     .from("obras")
     .select("*, artistas(*)")
     .eq("id_obra", id)
+    .not("id_artista", "is", null)
     .single();
   if (error || !data) return null;
   return mapFicha(data);

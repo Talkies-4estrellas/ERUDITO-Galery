@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePerfil } from "@/hooks/usePerfil";
 
-export type TamanoObra = "Pequeño" | "Mediano" | "Grande";
-export type ColorObra  = "Cálido" | "Frío" | "Neutro";
-export type TipoObra   = "Físico" | "JPG Certificado" | "Impresión Oficial";
+export type TamanoObra = "Pequeño" | "Mediano" | "Grande" | "Extra grande";
+export type ColorObra  = "Cálido" | "Frío" | "Neutro" | "Multicolor";
+export type TipoObra   = "Físico" | "JPG Certificado" | "Edición limitada";
 
 export type EstadoObra = "pendiente" | "aprobada" | "rechazada";
 

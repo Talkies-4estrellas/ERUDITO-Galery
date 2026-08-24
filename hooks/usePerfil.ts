@@ -89,7 +89,7 @@ export function usePerfil() {
         ...VACIO,
         rol,
         email: email ?? undefined,
-        slug: rol === "empresa" ? "mi-galeria" : undefined,
+        slug: rol === "empresa" ? "mi-galeria" : rol === "artista" ? "mi-perfil" : undefined,
       };
 
       if (user) {
@@ -100,7 +100,7 @@ export function usePerfil() {
           bio: "",
           especialidad: "",
           pais: "",
-          slug: rol === "empresa" ? "mi-galeria" : null,
+          slug: rol === "empresa" ? "mi-galeria" : rol === "artista" ? "mi-perfil" : null,
         });
       } else {
         localStorage.setItem(CLAVE_LOCAL, JSON.stringify(nuevo));
@@ -116,7 +116,7 @@ export function usePerfil() {
       const final: DatosPerfil = {
         ...datos,
         slug:
-          datos.rol === "empresa"
+          datos.rol === "empresa" || datos.rol === "artista"
             ? datos.slug || generarSlug(datos.nombre)
             : undefined,
       };
@@ -133,8 +133,35 @@ export function usePerfil() {
           avatar_url: final.avatar_url ?? "",
           banner_url: final.banner_url ?? "",
         });
+        // Sincroniza con usuarios para que el perfil público sea visible
+        if (user.email && (final.rol === "artista" || final.rol === "empresa")) {
+          await supabase.from("usuarios").upsert({
+            email: user.email,
+            clave: "supabase-auth",
+            nombre: final.nombre,
+            bio: final.bio,
+            especialidad: final.especialidad,
+            pais: final.pais,
+            rol: final.rol,
+            slug: final.slug ?? null,
+            avatar_url: final.avatar_url ?? null,
+            banner_url: final.banner_url ?? null,
+          }, { onConflict: "email" });
+        }
       } else {
         localStorage.setItem(CLAVE_LOCAL, JSON.stringify(final));
+        // Sincroniza con tabla usuarios para que el perfil público sea visible
+        if (final.email && (final.rol === "artista" || final.rol === "empresa")) {
+          await supabase.from("usuarios").update({
+            nombre: final.nombre,
+            bio: final.bio,
+            especialidad: final.especialidad,
+            pais: final.pais,
+            slug: final.slug ?? null,
+            avatar_url: final.avatar_url ?? null,
+            banner_url: final.banner_url ?? null,
+          }).eq("email", final.email);
+        }
       }
 
       setPerfil({ ...final });

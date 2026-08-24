@@ -26,7 +26,7 @@ export default function PerfilPublicoEmpresa({ slug }: Props) {
       try {
         const { data } = await supabase
           .from("usuarios")
-          .select("nombre, bio, especialidad, pais, slug, avatar_url, email")
+          .select("nombre, bio, especialidad, pais, slug, avatar_url, banner_url, email")
           .eq("slug", slug)
           .eq("rol", "empresa")
           .single();
@@ -40,9 +40,11 @@ export default function PerfilPublicoEmpresa({ slug }: Props) {
             email: data.email ?? "",
             slug: data.slug ?? slug,
             avatar_url: data.avatar_url ?? undefined,
+            banner_url: data.banner_url ?? undefined,
           });
           const obrasRes = await fetch(`/api/empresa/obras?email=${encodeURIComponent(data.email ?? "")}`).then((r) => r.json()).catch(() => ({ obras: [] }));
-          setObras(obrasRes.obras ?? []);
+          const todasObras: ObraEmpresa[] = obrasRes.obras ?? [];
+          setObras(todasObras.filter((o: ObraEmpresa) => o.estado === "aprobada"));
         }
       } catch { /* noop */ }
       setListo(true);
@@ -80,14 +82,26 @@ export default function PerfilPublicoEmpresa({ slug }: Props) {
 
       {/* ── PORTADA ─────────────────────────────────────────────── */}
       <div className="relative">
-        <div className="h-48 w-full bg-gradient-to-br from-zinc-800 via-violet-950/40 to-zinc-900 sm:h-60" />
+        {perfil.banner_url ? (
+          <div className="h-48 w-full overflow-hidden sm:h-60">
+            <img src={perfil.banner_url} alt="" className="h-full w-full object-cover" />
+          </div>
+        ) : (
+          <div className="h-48 w-full bg-gradient-to-br from-zinc-800 via-violet-950/40 to-zinc-900 sm:h-60" />
+        )}
 
         <div className="mx-auto max-w-6xl px-4 sm:px-8">
           <div className="relative flex flex-col gap-3 pb-4 sm:flex-row sm:items-end sm:gap-6">
 
             {/* Avatar cuadrado empresa */}
-            <div className="absolute -top-14 left-0 flex size-28 shrink-0 items-center justify-center rounded-2xl bg-violet-500 text-4xl font-bold text-white ring-4 ring-zinc-950 sm:-top-16 sm:size-36 sm:text-5xl">
-              {iniciales(perfil.nombre || "GA")}
+            <div className="absolute -top-14 left-0 size-28 overflow-hidden rounded-2xl ring-4 ring-zinc-950 sm:-top-16 sm:size-36">
+              {perfil.avatar_url ? (
+                <Image src={perfil.avatar_url} alt={perfil.nombre} fill sizes="144px" className="object-cover" />
+              ) : (
+                <div className="flex size-full items-center justify-center bg-violet-500 text-4xl font-bold text-white sm:text-5xl">
+                  {iniciales(perfil.nombre || "GA")}
+                </div>
+              )}
             </div>
 
             <div className="ml-32 mt-2 flex flex-1 items-start justify-between gap-3 pt-2 sm:ml-44 sm:mt-0">
@@ -105,10 +119,6 @@ export default function PerfilPublicoEmpresa({ slug }: Props) {
                   {perfil.pais && <> · <span className="text-zinc-500">{perfil.pais}</span></>}
                 </p>
               </div>
-              <Link href="/perfil"
-                className="hidden shrink-0 rounded-full bg-white/5 px-4 py-1.5 text-xs text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 sm:block">
-                Editar perfil
-              </Link>
             </div>
           </div>
 
@@ -197,7 +207,17 @@ export default function PerfilPublicoEmpresa({ slug }: Props) {
 
             {obrasMostradas.length === 0 ? (
               <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-white/10 py-16 text-center">
-                <p className="text-sm text-zinc-500">Esta galería aún no ha publicado obras</p>
+                <p className="text-sm text-zinc-500">
+                  {artistaActivo
+                    ? `${artistaActivo} aún no tiene obras en esta galería`
+                    : "Esta galería aún no ha publicado obras"}
+                </p>
+                {artistaActivo && (
+                  <button type="button" onClick={() => setArtistaActivo(null)}
+                    className="rounded-full bg-white/5 px-4 py-1.5 text-xs text-zinc-400 ring-1 ring-white/10 hover:bg-white/10">
+                    Ver todo el catálogo
+                  </button>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
