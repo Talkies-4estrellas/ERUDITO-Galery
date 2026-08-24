@@ -1,0 +1,5 @@
+Rol	             Email	       Contraseña
+Coleccionista	 comprador@test.com	Test1234
+Artista	         artista@test.com	Test1234
+Empresa	         empresa@test.com	Test1234
+Admin	         admin@test.com	        Test1234

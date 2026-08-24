@@ -14,7 +14,8 @@ declare
 begin
 
   -- ── Migraciones de esquema ────────────────────────────────
-  alter table public.perfiles add column if not exists avatar_url text default '';
+  alter table public.perfiles add column if not exists avatar_url  text default '';
+  alter table public.perfiles add column if not exists banner_url  text default '';
 
   -- Ampliar constraint de rol para incluir 'admin'
   alter table public.perfiles drop constraint if exists perfiles_rol_check;
@@ -37,7 +38,7 @@ begin
     '{}'::jsonb,
     false, 'authenticated', 'authenticated', now(), now(),
     '', '', ''
-  ) on conflict (id) do nothing;
+  ) on conflict do nothing;
 
   -- ── Comprador / Coleccionista ─────────────────────────────
   insert into auth.users (
@@ -55,7 +56,7 @@ begin
     '{}'::jsonb,
     false, 'authenticated', 'authenticated', now(), now(),
     '', '', ''
-  ) on conflict (id) do nothing;
+  ) on conflict do nothing;
 
   -- ── Empresa / Galería ─────────────────────────────────────
   insert into auth.users (
@@ -73,7 +74,7 @@ begin
     '{}'::jsonb,
     false, 'authenticated', 'authenticated', now(), now(),
     '', '', ''
-  ) on conflict (id) do nothing;
+  ) on conflict do nothing;
 
   -- ── Administrador ─────────────────────────────────────────
   insert into auth.users (
@@ -91,7 +92,7 @@ begin
     '{}'::jsonb,
     false, 'authenticated', 'authenticated', now(), now(),
     '', '', ''
-  ) on conflict (id) do nothing;
+  ) on conflict do nothing;
 
   -- ── Identidades (requerido para login email/password) ────
   insert into auth.identities (
@@ -113,7 +114,7 @@ begin
   on conflict (provider, provider_id) do nothing;
 
   -- ── Perfiles ─────────────────────────────────────────────
-  insert into public.perfiles (id, rol, nombre, bio, especialidad, pais, slug, avatar_url)
+  insert into public.perfiles (id, rol, nombre, bio, especialidad, pais, slug, avatar_url, banner_url)
   values
     (uid_artista,
      'artista',
@@ -121,16 +122,16 @@ begin
      'Pintora expresionista de la Ciudad de México. Especialista en óleos de gran formato y técnicas mixtas.',
      'Pintura al óleo',
      'México',
-     null,
-     ''),
+     'ana-torres',
+     '', ''),
     (uid_comprador,
      'comprador',
      'Luis Mendoza',
      '',
      'Coleccionista',
      'México',
-     null,
-     ''),
+     'luis-mendoza',
+     '', ''),
     (uid_empresa,
      'empresa',
      'Galería Norte Arte',
@@ -138,16 +139,24 @@ begin
      'Arte contemporáneo',
      'México',
      'galeria-norte-arte',
-     ''),
+     '', ''),
     (uid_admin,
      'admin',
      'Administrador',
      '',
      'Administración',
      'México',
-     null,
-     '')
-  on conflict (id) do nothing;
+     'administrador',
+     '', '')
+  on conflict (id) do update set
+    rol         = excluded.rol,
+    nombre      = excluded.nombre,
+    bio         = excluded.bio,
+    especialidad= excluded.especialidad,
+    pais        = excluded.pais,
+    slug        = coalesce(excluded.slug, public.perfiles.slug),
+    avatar_url  = coalesce(nullif(public.perfiles.avatar_url,''), ''),
+    banner_url  = coalesce(nullif(public.perfiles.banner_url,''), '');
 
 end $$;
 

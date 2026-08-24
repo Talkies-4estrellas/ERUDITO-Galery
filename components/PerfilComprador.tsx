@@ -3,11 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePerfil, type DatosPerfil } from "@/hooks/usePerfil";
-import { useAuth } from "@/hooks/useAuth";
 import { useFavoritos } from "@/hooks/useFavoritos";
 import { useComparacion } from "@/hooks/useComparacion";
 import { getFichas } from "@/lib/db";
-import { supabase } from "@/lib/supabase";
 import type { FichaArte } from "@/data/fichas";
 import FichaObra from "@/components/FichaObra";
 
@@ -42,15 +40,16 @@ async function aWebP(file: File): Promise<Blob> {
   });
 }
 
-async function subirImagen(file: File, tipo: "avatar" | "banner", userId: string): Promise<string> {
+async function subirImagen(file: File, tipo: "avatar" | "banner", clave: string): Promise<string> {
   const webp = await aWebP(file);
-  const path = `${userId}/${tipo}.webp`;
-  const { error } = await supabase.storage
-    .from("perfiles")
-    .upload(path, webp, { upsert: true, contentType: "image/webp" });
-  if (error) throw error;
-  const { data } = supabase.storage.from("perfiles").getPublicUrl(path);
-  return `${data.publicUrl}?t=${Date.now()}`;
+  const form = new FormData();
+  form.append("file", new File([webp], `${tipo}.webp`, { type: "image/webp" }));
+  form.append("tipo", tipo);
+  form.append("clave", clave);
+  const res = await fetch("/api/perfil/imagen", { method: "POST", body: form });
+  if (!res.ok) throw new Error("upload");
+  const { url } = await res.json();
+  return url;
 }
 
 function IconoCamera() {
@@ -63,7 +62,6 @@ function IconoCamera() {
 }
 
 export default function PerfilComprador() {
-  const { user } = useAuth();
   const { perfil, guardar, cerrarSesion } = usePerfil();
   const { favoritos } = useFavoritos();
   const { seleccion: comparando } = useComparacion();
@@ -112,11 +110,12 @@ export default function PerfilComprador() {
     tipo: "avatar" | "banner"
   ) {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
     const setSub = tipo === "avatar" ? setSubiendoAvatar : setSubiendoBanner;
     setSub(true);
     try {
-      const url = await subirImagen(file, tipo, user.id);
+      const clave = perfil?.email || perfil?.slug || "comprador";
+      const url = await subirImagen(file, tipo, clave);
       setFormAjustes(prev => prev ? { ...prev, [`${tipo}_url`]: url } : prev);
     } catch {
       // el usuario puede reintentar
@@ -455,8 +454,7 @@ export default function PerfilComprador() {
                 <form onSubmit={submitAjustes} className="space-y-5 rounded-2xl bg-zinc-900/70 p-6 ring-1 ring-white/10">
 
                   {/* ── Imágenes ── */}
-                  {user ? (
-                    <div>
+                  <div>
                       {/* Banner */}
                       <div className="relative overflow-hidden rounded-2xl">
                         <button type="button" onClick={() => bannerRef.current?.click()}
@@ -506,11 +504,6 @@ export default function PerfilComprador() {
                         Las imágenes se convierten a .webp automáticamente · Tamaño recomendado: avatar 400×400 · portada 1200×400
                       </p>
                     </div>
-                  ) : (
-                    <p className="rounded-xl bg-white/5 px-4 py-3 text-xs text-zinc-500">
-                      Inicia sesión para subir foto de perfil y portada.
-                    </p>
-                  )}
 
                   {/* ── Datos ── */}
                   <div className="grid gap-4 sm:grid-cols-2">

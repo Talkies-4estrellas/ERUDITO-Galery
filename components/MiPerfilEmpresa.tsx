@@ -4,10 +4,8 @@ import { useRef, useState } from "react";
 import NextImage from "next/image";
 import Link from "next/link";
 import { usePerfil, generarSlug, type DatosPerfil } from "@/hooks/usePerfil";
-import { useAuth } from "@/hooks/useAuth";
 import { useObrasEmpresa, type ObraEmpresa } from "@/hooks/useObrasEmpresa";
 import FormObraEmpresa from "@/components/FormObraEmpresa";
-import { supabase } from "@/lib/supabase";
 
 type Vista = "obras" | "ajustes";
 
@@ -49,15 +47,16 @@ async function aWebP(file: File): Promise<Blob> {
   });
 }
 
-async function subirImagen(file: File, tipo: "avatar" | "banner", userId: string): Promise<string> {
+async function subirImagen(file: File, tipo: "avatar" | "banner", clave: string): Promise<string> {
   const webp = await aWebP(file);
-  const path = `${userId}/${tipo}.webp`;
-  const { error } = await supabase.storage
-    .from("perfiles")
-    .upload(path, webp, { upsert: true, contentType: "image/webp" });
-  if (error) throw error;
-  const { data } = supabase.storage.from("perfiles").getPublicUrl(path);
-  return `${data.publicUrl}?t=${Date.now()}`;
+  const form = new FormData();
+  form.append("file", new File([webp], `${tipo}.webp`, { type: "image/webp" }));
+  form.append("tipo", tipo);
+  form.append("clave", clave);
+  const res = await fetch("/api/perfil/imagen", { method: "POST", body: form });
+  if (!res.ok) throw new Error("upload");
+  const { url } = await res.json();
+  return url;
 }
 
 /* Tarjeta de obra publicada por la empresa */
@@ -124,7 +123,6 @@ function TarjetaObraEmpresa({
 }
 
 export default function MiPerfilEmpresa() {
-  const { user } = useAuth();
   const { perfil, guardar, cerrarSesion } = usePerfil();
   const { obras, listo: obrasListas, agregar, actualizar, eliminar } = useObrasEmpresa();
 
@@ -152,11 +150,12 @@ export default function MiPerfilEmpresa() {
 
   async function manejarImagen(e: React.ChangeEvent<HTMLInputElement>, tipo: "avatar" | "banner") {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
     const setSub = tipo === "avatar" ? setSubiendoAvatar : setSubiendoBanner;
     setSub(true);
     try {
-      const url = await subirImagen(file, tipo, user.id);
+      const clave = perfil?.email || perfil?.slug || "empresa";
+      const url = await subirImagen(file, tipo, clave);
       setFormAjustes(prev => prev ? { ...prev, [`${tipo}_url`]: url } : prev);
     } catch { /* el usuario puede reintentar */ }
     finally { setSub(false); e.target.value = ""; }
@@ -387,17 +386,46 @@ export default function MiPerfilEmpresa() {
                   <form onSubmit={submitAjustes} className="space-y-5 rounded-2xl bg-zinc-900/70 p-6 ring-1 ring-white/10">
 
                     {/* ── Imágenes ── */}
-                    {user ? (
-                      <div>
-                        <div className="relative overflow-hidden rounded-2xl">
+                    <div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {/* Logo */}
+                        <div>
+                          <p className="mb-2 text-xs font-medium text-zinc-400">Logo</p>
+                          <button type="button" onClick={() => avatarRef.current?.click()}
+                            className="group relative flex h-32 w-full items-center justify-center overflow-hidden rounded-2xl bg-zinc-800 ring-1 ring-white/10 transition hover:ring-violet-400/40">
+                            {formAjustes.avatar_url ? (
+                              <img src={formAjustes.avatar_url} alt="" className="size-full object-cover" />
+                            ) : (
+                              <div className="flex size-20 items-center justify-center rounded-full bg-violet-500 text-3xl font-bold text-white">
+                                {iniciales(nombreMostrar)}
+                              </div>
+                            )}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/55 opacity-0 transition group-hover:opacity-100">
+                              {subiendoAvatar ? (
+                                <span className="text-xs text-white">Subiendo…</span>
+                              ) : (
+                                <>
+                                  <IconoCamera />
+                                  <span className="text-xs text-white">Cambiar logo</span>
+                                </>
+                              )}
+                            </div>
+                          </button>
+                          <input ref={avatarRef} type="file" accept="image/*" className="hidden"
+                            onChange={e => manejarImagen(e, "avatar")} />
+                          <p className="mt-1.5 text-[10px] text-zinc-600">400 × 400 px recomendado</p>
+                        </div>
+                        {/* Portada */}
+                        <div>
+                          <p className="mb-2 text-xs font-medium text-zinc-400">Portada</p>
                           <button type="button" onClick={() => bannerRef.current?.click()}
-                            className="group relative block h-28 w-full overflow-hidden rounded-2xl">
+                            className="group relative block h-32 w-full overflow-hidden rounded-2xl ring-1 ring-white/10 transition hover:ring-violet-400/40">
                             {formAjustes.banner_url ? (
                               <img src={formAjustes.banner_url} alt="" className="h-full w-full object-cover" />
                             ) : (
                               <div className="h-full w-full bg-gradient-to-br from-zinc-800 via-violet-950/40 to-zinc-900" />
                             )}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/50 opacity-0 transition group-hover:opacity-100">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/55 opacity-0 transition group-hover:opacity-100">
                               {subiendoBanner ? (
                                 <span className="text-xs text-white">Subiendo…</span>
                               ) : (
@@ -410,38 +438,13 @@ export default function MiPerfilEmpresa() {
                           </button>
                           <input ref={bannerRef} type="file" accept="image/*" className="hidden"
                             onChange={e => manejarImagen(e, "banner")} />
-
-                          {/* Logo sobre el banner */}
-                          <div className="absolute bottom-[-20px] left-4">
-                            <button type="button" onClick={() => avatarRef.current?.click()}
-                              className="group relative block size-16 overflow-hidden rounded-xl ring-4 ring-zinc-900">
-                              {formAjustes.avatar_url ? (
-                                <img src={formAjustes.avatar_url} alt="" className="size-full object-cover" />
-                              ) : (
-                                <div className="flex size-full items-center justify-center bg-violet-500 text-lg font-bold text-white">
-                                  {iniciales(nombreMostrar)}
-                                </div>
-                              )}
-                              <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60 opacity-0 transition group-hover:opacity-100">
-                                {subiendoAvatar
-                                  ? <span className="text-[9px] text-white">…</span>
-                                  : <IconoCamera />
-                                }
-                              </div>
-                            </button>
-                            <input ref={avatarRef} type="file" accept="image/*" className="hidden"
-                              onChange={e => manejarImagen(e, "avatar")} />
-                          </div>
+                          <p className="mt-1.5 text-[10px] text-zinc-600">1200 × 400 px recomendado</p>
                         </div>
-                        <p className="mt-8 text-[11px] text-zinc-600">
-                          Las imágenes se convierten a .webp automáticamente · logo 400×400 · portada 1200×400
-                        </p>
                       </div>
-                    ) : (
-                      <p className="rounded-xl bg-white/5 px-4 py-3 text-xs text-zinc-500">
-                        Inicia sesión con cuenta verificada para subir logo y portada.
+                      <p className="mt-3 text-[10px] text-zinc-600">
+                        Las imágenes se convierten a .webp automáticamente
                       </p>
-                    )}
+                    </div>
 
                     {/* ── Datos ── */}
                     <div className="grid gap-4 sm:grid-cols-2">
