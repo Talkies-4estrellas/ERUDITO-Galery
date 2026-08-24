@@ -7,6 +7,8 @@ export type TamanoObra = "Pequeño" | "Mediano" | "Grande" | "Extra grande";
 export type ColorObra = "Cálido" | "Frío" | "Neutro" | "Multicolor";
 export type TipoObra = "Físico" | "JPG Certificado" | "Edición limitada";
 
+export type EstadoObra = "pendiente" | "aprobada" | "rechazada";
+
 export interface ObraEmpresa {
   id: string;
   nombreArtista: string;
@@ -20,6 +22,7 @@ export interface ObraEmpresa {
   movimiento: string;
   precio: number;
   tipo: TipoObra;
+  estado: EstadoObra;
 }
 
 export function useObrasEmpresa() {

@@ -7,6 +7,8 @@ export type TamanoObra = "Pequeño" | "Mediano" | "Grande";
 export type ColorObra  = "Cálido" | "Frío" | "Neutro";
 export type TipoObra   = "Físico" | "JPG Certificado" | "Impresión Oficial";
 
+export type EstadoObra = "pendiente" | "aprobada" | "rechazada";
+
 export interface ObraPropia {
   id: string;
   titulo: string;
@@ -19,6 +21,7 @@ export interface ObraPropia {
   movimiento: string;
   precio: number;
   tipo: TipoObra;
+  estado: EstadoObra;
 }
 
 export const OBRA_VACIA: Omit<ObraPropia, "id"> = {
@@ -32,6 +35,7 @@ export const OBRA_VACIA: Omit<ObraPropia, "id"> = {
   movimiento: "",
   precio: 0,
   tipo: "Físico",
+  estado: "pendiente",
 };
 
 export function useObrasArtista() {

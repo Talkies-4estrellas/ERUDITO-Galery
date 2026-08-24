@@ -42,6 +42,21 @@ interface SolicitudRow {
   motivo?: string;
 }
 
+interface ObraPendienteRow {
+  id_obra: number;
+  titulo: string;
+  anio: string | null;
+  imagen_principal: string | null;
+  tecnica: string | null;
+  movimiento: string | null;
+  precio: number | null;
+  tipo: string | null;
+  estado: string;
+  artista_email: string | null;
+  empresa_email: string | null;
+  nombre_artista: string | null;
+}
+
 // ── sub-componentes ───────────────────────────────────────────────────
 function Spinner() {
   return (
@@ -148,8 +163,10 @@ export default function PanelAdmin() {
   const [obras, setObras]               = useState<ObraRow[]>([]);
   const [eventos, setEventos]           = useState<EventoRow[]>([]);
   const [solicitudes, setSolicitudes]   = useState<SolicitudRow[]>([]);
+  const [obrasPendientes, setObrasPendientes] = useState<ObraPendienteRow[]>([]);
   const [cargandoData, setCargandoData] = useState(true);
   const [accionando, setAccionando]     = useState<number | null>(null);
+  const [accionandoObra, setAccionandoObra] = useState<number | null>(null);
   const [solicitudArechazar, setSolicitudArechazar] = useState<SolicitudRow | null>(null);
   const [motivoRechazo, setMotivoRechazo]           = useState("");
 
@@ -162,17 +179,18 @@ export default function PanelAdmin() {
     }
 
     Promise.all([
-      supabase.from("obras").select("*",   { count: "exact", head: true }),
+      supabase.from("obras").select("*",   { count: "exact", head: true }).eq("estado", "aprobada"),
       supabase.from("artistas").select("*", { count: "exact", head: true }),
       supabase.from("eventos").select("*",  { count: "exact", head: true }),
       supabase.from("perfiles").select("*", { count: "exact", head: true }),
       supabase.from("obras").select("id_obra, titulo, anio, precio, tipo, artistas(nombre)")
-        .order("id_obra", { ascending: false }).limit(10),
+        .eq("estado", "aprobada").order("id_obra", { ascending: false }).limit(10),
       supabase.from("eventos").select("id_evento, titulo, lugar, modalidad, fecha_corta")
         .order("id_evento", { ascending: false }).limit(5),
       supabase.from("solicitudes").select("*").eq("estado", "pendiente")
         .order("created_at", { ascending: false }),
-    ]).then(([obrasC, artistasC, eventosC, perfilesC, obrasData, eventosData, solicitudesData]) => {
+      fetch("/api/admin/obras").then((r) => r.json()),
+    ]).then(([obrasC, artistasC, eventosC, perfilesC, obrasData, eventosData, solicitudesData, obrasPendData]) => {
       setStats({
         obras:    obrasC.count    ?? 0,
         artistas: artistasC.count ?? 0,
@@ -182,6 +200,7 @@ export default function PanelAdmin() {
       setObras((obrasData.data as ObraRow[]) ?? []);
       setEventos((eventosData.data as EventoRow[]) ?? []);
       setSolicitudes((solicitudesData.data as SolicitudRow[]) ?? []);
+      setObrasPendientes((obrasPendData.obras ?? []) as ObraPendienteRow[]);
       setCargandoData(false);
     });
   }, [listo, perfil]);
@@ -207,6 +226,26 @@ export default function PanelAdmin() {
 
     return () => { supabase.removeChannel(canal); };
   }, [listo, perfil, toast]);
+
+  async function gestionarObra(id: number, estado: "aprobada" | "rechazada") {
+    setAccionandoObra(id);
+    try {
+      const res = await fetch("/api/admin/obras", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, estado }),
+      });
+      if (!res.ok) throw new Error("Error al actualizar");
+      setObrasPendientes((prev) => prev.filter((o) => o.id_obra !== id));
+      toast(estado === "aprobada" ? "Obra aprobada y publicada" : "Obra rechazada", {
+        icono: estado === "aprobada" ? "✓" : "✗",
+      });
+    } catch {
+      toast("Error al procesar la obra", { icono: "✗" });
+    } finally {
+      setAccionandoObra(null);
+    }
+  }
 
   async function notificar(email: string, nombre: string, rol: string, estado: "aprobado" | "rechazado", motivo?: string) {
     fetch("/api/notificar-solicitud", {
@@ -342,6 +381,91 @@ export default function PanelAdmin() {
           {statCards.map((s) => (
             <StatCard key={s.label} {...s} />
           ))}
+        </div>
+
+        {/* ── Obras pendientes de aprobación ── */}
+        <div className="mt-10">
+          <div className="mb-4 flex items-center gap-3">
+            <h2 className="text-sm font-semibold text-white">Obras pendientes de aprobación</h2>
+            {obrasPendientes.length > 0 && (
+              <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-zinc-900">
+                {obrasPendientes.length}
+              </span>
+            )}
+          </div>
+
+          {obrasPendientes.length === 0 ? (
+            <div className="rounded-2xl bg-zinc-900 px-4 py-8 text-center ring-1 ring-white/10">
+              <p className="text-sm text-zinc-600">Sin obras pendientes</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {obrasPendientes.map((o) => (
+                <div key={o.id_obra} className="rounded-2xl bg-zinc-900 p-4 ring-1 ring-white/10">
+                  <div className="flex gap-3">
+                    {/* Miniatura */}
+                    {o.imagen_principal ? (
+                      <img
+                        src={o.imagen_principal}
+                        alt={o.titulo}
+                        className="h-20 w-20 shrink-0 rounded-xl object-cover ring-1 ring-white/10"
+                      />
+                    ) : (
+                      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-zinc-800 ring-1 ring-white/10">
+                        <span className="text-2xl opacity-30">🖼️</span>
+                      </div>
+                    )}
+
+                    {/* Info */}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-zinc-200">{o.titulo}</p>
+                      <p className="mt-0.5 text-xs text-zinc-500">
+                        {o.nombre_artista
+                          ? o.nombre_artista
+                          : o.artista_email ?? o.empresa_email ?? "—"}
+                        {o.anio ? ` · ${o.anio}` : ""}
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {o.tecnica && (
+                          <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400 ring-1 ring-white/10">
+                            {o.tecnica}
+                          </span>
+                        )}
+                        {o.tipo && (
+                          <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400 ring-1 ring-white/10">
+                            {o.tipo}
+                          </span>
+                        )}
+                        {o.precio != null && o.precio > 0 && (
+                          <span className="rounded-full bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
+                            ${o.precio.toLocaleString("es-MX")} MXN
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Acciones */}
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => gestionarObra(o.id_obra, "aprobada")}
+                      disabled={accionandoObra === o.id_obra}
+                      className="flex-1 rounded-xl bg-emerald-400/10 py-2 text-xs font-semibold text-emerald-400 ring-1 ring-emerald-400/20 transition hover:bg-emerald-400/20 disabled:opacity-50"
+                    >
+                      {accionandoObra === o.id_obra ? "…" : "Aprobar y publicar"}
+                    </button>
+                    <button
+                      onClick={() => gestionarObra(o.id_obra, "rechazada")}
+                      disabled={accionandoObra === o.id_obra}
+                      className="flex-1 rounded-xl bg-red-400/10 py-2 text-xs font-semibold text-red-400 ring-1 ring-red-400/20 transition hover:bg-red-400/20 disabled:opacity-50"
+                    >
+                      {accionandoObra === o.id_obra ? "…" : "Rechazar"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── Solicitudes pendientes ── */}

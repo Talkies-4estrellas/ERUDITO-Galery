@@ -15,6 +15,7 @@ function mapObra(row: any) {
     movimiento: row.movimiento ?? "",
     precio: Number(row.precio ?? 0),
     tipo: (row.tipo ?? "Físico") as TipoObra,
+    estado: (row.estado ?? "pendiente") as "pendiente" | "aprobada" | "rechazada",
   };
 }
 
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
 
   const { data } = await db
     .from("obras")
-    .select("id_obra, titulo, anio, descripcion, imagen_principal, tecnica, tamano, color, movimiento, precio, tipo")
+    .select("id_obra, titulo, anio, descripcion, imagen_principal, tecnica, tamano, color, movimiento, precio, tipo, estado")
     .eq("artista_email", email)
     .order("id_obra", { ascending: false });
 
@@ -72,10 +73,11 @@ export async function POST(req: NextRequest) {
       movimiento: movimiento || "",
       precio: Number(precio) || 0,
       tipo: tipo || "Físico",
+      estado: "pendiente",
       estrellas: 5,
       vistas: 0,
     })
-    .select("id_obra, titulo, anio, descripcion, imagen_principal, tecnica, tamano, color, movimiento, precio, tipo")
+    .select("id_obra, titulo, anio, descripcion, imagen_principal, tecnica, tamano, color, movimiento, precio, tipo, estado")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

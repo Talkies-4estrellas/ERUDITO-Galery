@@ -101,6 +101,7 @@ export async function getFichas(): Promise<FichaArte[]> {
   const { data, error } = await supabase
     .from("obras")
     .select("*, artistas(*)")
+    .eq("estado", "aprobada")
     .order("id_obra");
   if (error) throw new Error(error.message);
   return (data ?? []).map(mapFicha);

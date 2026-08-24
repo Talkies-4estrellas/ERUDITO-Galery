@@ -102,6 +102,15 @@ function TarjetaObra({
         <p className="mt-0.5 text-[10px] text-zinc-500">
           {obra.anio}{obra.tecnica && ` · ${obra.tecnica}`}
         </p>
+        {obra.estado !== "aprobada" && (
+          <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+            obra.estado === "rechazada"
+              ? "bg-red-400/10 text-red-400"
+              : "bg-amber-400/10 text-amber-400"
+          }`}>
+            {obra.estado === "rechazada" ? "Rechazada" : "En revisión"}
+          </span>
+        )}
         {obra.precio > 0 && (
           <p className="mt-1 text-xs font-semibold text-amber-400">
             ${obra.precio.toLocaleString("es-MX")} MXN

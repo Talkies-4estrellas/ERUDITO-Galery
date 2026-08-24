@@ -18,6 +18,7 @@ const VACIO: Datos = {
   movimiento: "",
   precio: 0,
   tipo: "Físico",
+  estado: "pendiente",
 };
 
 const INPUT =
