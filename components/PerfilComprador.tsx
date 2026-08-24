@@ -455,16 +455,45 @@ export default function PerfilComprador() {
 
                   {/* ── Imágenes ── */}
                   <div>
-                      {/* Banner */}
-                      <div className="relative overflow-hidden rounded-2xl">
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Foto de perfil */}
+                      <div>
+                        <p className="mb-2 text-xs font-medium text-zinc-400">Foto de perfil</p>
+                        <button type="button" onClick={() => avatarRef.current?.click()}
+                          className="group relative flex h-32 w-full items-center justify-center overflow-hidden rounded-2xl bg-zinc-800 ring-1 ring-white/10 transition hover:ring-cyan-400/40">
+                          {formAjustes.avatar_url ? (
+                            <img src={formAjustes.avatar_url} alt="" className="size-full object-cover" />
+                          ) : (
+                            <div className="flex size-20 items-center justify-center rounded-full bg-cyan-400/20 text-3xl font-bold text-cyan-400">
+                              {iniciales(nombreMostrar)}
+                            </div>
+                          )}
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/55 opacity-0 transition group-hover:opacity-100">
+                            {subiendoAvatar ? (
+                              <span className="text-xs text-white">Subiendo…</span>
+                            ) : (
+                              <>
+                                <IconoCamera />
+                                <span className="text-xs text-white">Cambiar foto</span>
+                              </>
+                            )}
+                          </div>
+                        </button>
+                        <input ref={avatarRef} type="file" accept="image/*" className="hidden"
+                          onChange={e => manejarImagen(e, "avatar")} />
+                        <p className="mt-1.5 text-[10px] text-zinc-600">400 × 400 px recomendado</p>
+                      </div>
+                      {/* Portada */}
+                      <div>
+                        <p className="mb-2 text-xs font-medium text-zinc-400">Portada</p>
                         <button type="button" onClick={() => bannerRef.current?.click()}
-                          className="group relative block h-28 w-full overflow-hidden rounded-2xl">
+                          className="group relative block h-32 w-full overflow-hidden rounded-2xl ring-1 ring-white/10 transition hover:ring-cyan-400/40">
                           {formAjustes.banner_url ? (
                             <img src={formAjustes.banner_url} alt="" className="h-full w-full object-cover" />
                           ) : (
                             <div className="h-full w-full bg-gradient-to-br from-zinc-800 via-cyan-950/40 to-zinc-900" />
                           )}
-                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/50 opacity-0 transition group-hover:opacity-100">
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/55 opacity-0 transition group-hover:opacity-100">
                             {subiendoBanner ? (
                               <span className="text-xs text-white">Subiendo…</span>
                             ) : (
@@ -477,33 +506,13 @@ export default function PerfilComprador() {
                         </button>
                         <input ref={bannerRef} type="file" accept="image/*" className="hidden"
                           onChange={e => manejarImagen(e, "banner")} />
-
-                        {/* Avatar sobre el banner */}
-                        <div className="absolute bottom-[-20px] left-4">
-                          <button type="button" onClick={() => avatarRef.current?.click()}
-                            className="group relative block size-16 overflow-hidden rounded-full ring-4 ring-zinc-900">
-                            {formAjustes.avatar_url ? (
-                              <img src={formAjustes.avatar_url} alt="" className="size-full object-cover" />
-                            ) : (
-                              <div className="flex size-full items-center justify-center bg-cyan-400/20 text-lg font-bold text-cyan-400">
-                                {iniciales(nombreMostrar)}
-                              </div>
-                            )}
-                            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 transition group-hover:opacity-100">
-                              {subiendoAvatar
-                                ? <span className="text-[9px] text-white">…</span>
-                                : <IconoCamera />
-                              }
-                            </div>
-                          </button>
-                          <input ref={avatarRef} type="file" accept="image/*" className="hidden"
-                            onChange={e => manejarImagen(e, "avatar")} />
-                        </div>
+                        <p className="mt-1.5 text-[10px] text-zinc-600">1200 × 400 px recomendado</p>
                       </div>
-                      <p className="mt-8 text-[11px] text-zinc-600">
-                        Las imágenes se convierten a .webp automáticamente · Tamaño recomendado: avatar 400×400 · portada 1200×400
-                      </p>
                     </div>
+                    <p className="mt-3 text-[10px] text-zinc-600">
+                      Las imágenes se convierten a .webp automáticamente
+                    </p>
+                  </div>
 
                   {/* ── Datos ── */}
                   <div className="grid gap-4 sm:grid-cols-2">

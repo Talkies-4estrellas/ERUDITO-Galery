@@ -342,7 +342,7 @@ export default function MiPerfilArtista() {
                   <form onSubmit={submitAjustes} className="space-y-5 rounded-2xl bg-zinc-900/70 p-6 ring-1 ring-white/10">
 
                     {/* ── Imágenes ── */}
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-2 gap-4">
 
                       {/* Foto de perfil */}
                       <div>

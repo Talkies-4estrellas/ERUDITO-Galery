@@ -387,7 +387,7 @@ export default function MiPerfilEmpresa() {
 
                     {/* ── Imágenes ── */}
                     <div>
-                      <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid grid-cols-2 gap-4">
                         {/* Logo */}
                         <div>
                           <p className="mb-2 text-xs font-medium text-zinc-400">Logo</p>
