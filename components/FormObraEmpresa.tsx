@@ -126,13 +126,21 @@ export default function FormObraEmpresa({ inicial, onGuardar, onCerrar }: Props)
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-zinc-400">Técnica</label>
-              <input value={form.tecnica} onChange={e => set("tecnica", e.target.value)}
-                placeholder="Óleo, acrílico..." className={INPUT} />
+              <select value={form.tecnica} onChange={e => set("tecnica", e.target.value)} className={SELECT}>
+                <option value="">— Seleccionar —</option>
+                {["Óleo","Acrílico","Acuarela","Mixta","Escultura","Digital","Fotografía","Grabado","Artesanía","Cerámica","Textil"].map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium text-zinc-400">Movimiento</label>
-              <input value={form.movimiento} onChange={e => set("movimiento", e.target.value)}
-                placeholder="Surrealismo..." className={INPUT} />
+              <select value={form.movimiento} onChange={e => set("movimiento", e.target.value)} className={SELECT}>
+                <option value="">— Seleccionar —</option>
+                {["Muralismo","Modernismo","Realismo","Simbolismo","Abstracto","Retrato","Paisajismo","Fotografía"].map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -159,7 +167,7 @@ export default function FormObraEmpresa({ inicial, onGuardar, onCerrar }: Props)
           {/* Precio + Tipo */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-zinc-400">Precio (USD)</label>
+              <label className="mb-1.5 block text-xs font-medium text-zinc-400">Precio (MXN)</label>
               <input type="number" min={0} value={form.precio}
                 onChange={e => set("precio", Number(e.target.value))}
                 placeholder="0" className={INPUT} />

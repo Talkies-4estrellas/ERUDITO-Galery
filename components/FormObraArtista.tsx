@@ -123,21 +123,21 @@ export default function FormObraArtista({ inicial, onGuardar, onCerrar }: Props)
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={LABEL}>Técnica</label>
-                <input
-                  value={form.tecnica}
-                  onChange={(e) => set("tecnica", e.target.value)}
-                  placeholder="Óleo, Acuarela, Mixta..."
-                  className={INPUT}
-                />
+                <select value={form.tecnica} onChange={(e) => set("tecnica", e.target.value)} className={SELECT}>
+                  <option value="">— Seleccionar —</option>
+                  {["Óleo","Acrílico","Acuarela","Mixta","Escultura","Digital","Fotografía","Grabado","Artesanía","Cerámica","Textil"].map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className={LABEL}>Movimiento</label>
-                <input
-                  value={form.movimiento}
-                  onChange={(e) => set("movimiento", e.target.value)}
-                  placeholder="Muralismo, Abstracto..."
-                  className={INPUT}
-                />
+                <select value={form.movimiento} onChange={(e) => set("movimiento", e.target.value)} className={SELECT}>
+                  <option value="">— Seleccionar —</option>
+                  {["Muralismo","Modernismo","Realismo","Simbolismo","Abstracto","Retrato","Paisajismo","Fotografía"].map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -172,7 +172,7 @@ export default function FormObraArtista({ inicial, onGuardar, onCerrar }: Props)
             {/* Precio + Tipo */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={LABEL}>Precio (USD)</label>
+                <label className={LABEL}>Precio (MXN)</label>
                 <input
                   type="number"
                   min={0}
