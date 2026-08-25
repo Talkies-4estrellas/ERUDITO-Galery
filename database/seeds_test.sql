@@ -476,39 +476,11 @@ update public.obras set artista_email = 'pop-maze@test.com'
   where id_obra = 19;              -- El Sombrero de Paja WPAP
 
 
--- ── Obras de Galería Norte Arte ampliando catálogo digital ────
-
-insert into public.obras (
-  empresa_email, nombre_artista, titulo, anio, descripcion,
-  imagen_principal, tecnica, tamano, color, movimiento, precio, tipo,
-  estado, estrellas, vistas
-)
-values
-  ('empresa@test.com', 'Revolution Canvas',
-   'La Creación — Pop Art', '2022',
-   'Reinterpretación contemporánea de La Creación de Adán de Miguel Ángel. Las manos icónicas emergen de un estallido de pigmentos en arte urbano y vanguardia cromática.',
-   '/obras/revolution-canvas/principal.jpg', 'Arte Digital', 'Grande', 'Frío', 'Arte Digital',
-   28000, 'Impresión Oficial', 'aprobada', 5, 0),
-
-  ('empresa@test.com', 'Revolution Canvas',
-   'Noche Estrellada sobre Bellas Artes', '2024',
-   'Fusión entre la pincelada giratoria de Van Gogh y la majestuosidad del Palacio de Bellas Artes de la Ciudad de México.',
-   '/obras/bellas-artes-noche/principal.jpg', 'Arte Digital', 'Grande', 'Frío', 'Arte Digital',
-   31500, 'Impresión Oficial', 'aprobada', 5, 0),
-
-  ('empresa@test.com', 'Ideas Creativas',
-   'Colibrí en Flor', '2024',
-   'Colibrí de plumaje turquesa suspendido en pleno vuelo ante una explosión de flores tropicales. Técnica digital hiperrealista.',
-   '/obras/colibri-digital/principal.jpg', 'Arte Digital', 'Grande', 'Frío', 'Arte Digital',
-   37500, 'Impresión Oficial', 'aprobada', 5, 0),
-
-  ('empresa@test.com', 'Pop Maze Art',
-   'El Sombrero de Paja — WPAP', '2022',
-   'Retrato en técnica WPAP del icónico personaje de anime. Composición fragmentada en planos de color saturado sobre fondo azul marino.',
-   '/obras/sombrero-paja-wpap/principal.jpg', 'Arte Digital', 'Grande', 'Frío', 'Pop Art',
-   2800, 'Impresión Oficial', 'aprobada', 5, 0)
-
-on conflict do nothing;
+-- Eliminar obras duplicadas de artistas con perfil propio que quedaron
+-- asociadas a empresa@test.com — la galería solo representa artistas afiliados ficticios.
+delete from public.obras
+  where empresa_email = 'empresa@test.com'
+    and nombre_artista in ('Revolution Canvas', 'Ideas Creativas', 'Pop Maze Art');
 
 
 -- ── Obras de Galería Forma y Materia (escultores del catálogo) ──
@@ -607,26 +579,6 @@ update public.obras set
   tipo = 'Edición limitada'
   where titulo = 'Codex Digital' and empresa_email = 'empresa@test.com';
 
--- Obras de empresa@test.com (extensión catálogo digital)
-update public.obras set
-  imagen_principal = 'https://picsum.photos/seed/creacion-pop/800/1000',
-  tipo = 'Edición limitada'
-  where titulo = 'La Creación — Pop Art' and empresa_email = 'empresa@test.com';
-
-update public.obras set
-  imagen_principal = 'https://picsum.photos/seed/bellas-artes-noche/800/1000',
-  tipo = 'Edición limitada'
-  where titulo = 'Noche Estrellada sobre Bellas Artes' and empresa_email = 'empresa@test.com';
-
-update public.obras set
-  imagen_principal = 'https://picsum.photos/seed/colibri-digital/800/1000',
-  tipo = 'Edición limitada'
-  where titulo = 'Colibrí en Flor' and empresa_email = 'empresa@test.com';
-
-update public.obras set
-  imagen_principal = 'https://picsum.photos/seed/sombrero-wpap/800/1000',
-  tipo = 'Edición limitada'
-  where titulo = 'El Sombrero de Paja — WPAP' and empresa_email = 'empresa@test.com';
 
 -- Obras de galeria-esculturas@test.com
 update public.obras set imagen_principal = 'https://picsum.photos/seed/banda-rock/600/600'

@@ -20,6 +20,10 @@ export default function AuthGuard({ children, redirigirA = "/login" }: Props) {
     } catch {
       setLocalSesion(false);
     }
+
+    function manejarCierre() { setLocalSesion(false); }
+    window.addEventListener("erudito-sesion-cerrada", manejarCierre);
+    return () => window.removeEventListener("erudito-sesion-cerrada", manejarCierre);
   }, []);
 
   const autenticado = !!user || !!localSesion;

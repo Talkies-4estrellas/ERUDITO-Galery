@@ -296,6 +296,11 @@ export default function MiPerfilArtista() {
   const [subiendoAvatar, setSubiendoAvatar] = useState(false);
   const [subiendoBanner, setSubiendoBanner] = useState(false);
   const [modalObra, setModalObra] = useState<null | "nueva" | string>(null);
+  const [pendingAction, setPendingAction] = useState<{
+    tipo: "eliminar" | "editar";
+    obraId: string;
+    titulo: string;
+  } | null>(null);
 
   const avatarRef = useRef<HTMLInputElement>(null);
   const bannerRef = useRef<HTMLInputElement>(null);
@@ -323,6 +328,17 @@ export default function MiPerfilArtista() {
       setFormAjustes(prev => prev ? { ...prev, [`${tipo}_url`]: url } : prev);
     } catch { /* el usuario puede reintentar */ }
     finally { setSub(false); e.target.value = ""; }
+  }
+
+  function confirmarAccion() {
+    if (!pendingAction) return;
+    if (pendingAction.tipo === "eliminar") {
+      eliminar(pendingAction.obraId);
+      toast(`"${pendingAction.titulo}" eliminada`, { icono: "✓" });
+    } else {
+      setModalObra(pendingAction.obraId);
+    }
+    setPendingAction(null);
   }
 
   function guardarObra(datos: Omit<ObraPropia, "id">) {
@@ -514,8 +530,8 @@ export default function MiPerfilArtista() {
                         <TarjetaObra
                           key={obra.id}
                           obra={obra}
-                          onEditar={() => setModalObra(obra.id)}
-                          onEliminar={() => eliminar(obra.id)}
+                          onEditar={() => setPendingAction({ tipo: "editar", obraId: obra.id, titulo: obra.titulo })}
+                          onEliminar={() => setPendingAction({ tipo: "eliminar", obraId: obra.id, titulo: obra.titulo })}
                         />
                       ))}
                     </div>
@@ -794,6 +810,53 @@ export default function MiPerfilArtista() {
           onGuardar={guardarObra}
           onCerrar={() => setModalObra(null)}
         />
+      )}
+
+      {/* ── Modal de confirmación (editar / eliminar) ─────── */}
+      {pendingAction && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
+          onClick={() => setPendingAction(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-zinc-900 p-6 shadow-2xl ring-1 ring-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className={`text-xs font-semibold uppercase tracking-widest ${
+              pendingAction.tipo === "eliminar" ? "text-red-400" : "text-amber-400"
+            }`}>
+              {pendingAction.tipo === "eliminar" ? "Confirmar eliminación" : "Confirmar edición"}
+            </p>
+            <h2 className="mt-2 truncate text-base font-bold text-white">
+              {pendingAction.titulo}
+            </h2>
+            <p className="mt-1.5 text-sm text-zinc-400">
+              {pendingAction.tipo === "eliminar"
+                ? "Esta obra se eliminará permanentemente. Esta acción no se puede deshacer."
+                : "¿Deseas abrir el formulario de edición para esta obra?"}
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={confirmarAccion}
+                className={`flex-1 rounded-full py-2.5 text-sm font-semibold transition ${
+                  pendingAction.tipo === "eliminar"
+                    ? "bg-red-500/80 text-white hover:bg-red-500"
+                    : "bg-amber-400 text-zinc-900 hover:bg-amber-300"
+                }`}
+              >
+                {pendingAction.tipo === "eliminar" ? "Eliminar" : "Editar obra"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingAction(null)}
+                className="rounded-full bg-white/5 px-5 py-2.5 text-sm text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

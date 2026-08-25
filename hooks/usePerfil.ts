@@ -173,6 +173,7 @@ export function usePerfil() {
     localStorage.removeItem(CLAVE_LOCAL);
     setPerfil(null);
     await supabase.auth.signOut();
+    window.dispatchEvent(new Event("erudito-sesion-cerrada"));
   }, []);
 
   return { perfil, listo, elegirRol, guardar, cerrarSesion };
