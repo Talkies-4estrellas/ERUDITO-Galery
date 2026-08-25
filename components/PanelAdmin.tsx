@@ -42,6 +42,19 @@ interface SolicitudRow {
   motivo?: string;
 }
 
+type RolFiltro = "todos" | "artista" | "empresa" | "productor" | "comprador" | "admin";
+
+interface UsuarioRow {
+  id: string;
+  email: string;
+  rol: string;
+  nombre: string;
+  especialidad: string;
+  pais: string;
+  slug: string | null;
+  created_at: string;
+}
+
 interface ObraPendienteRow {
   id_obra: number;
   titulo: string;
@@ -164,6 +177,8 @@ export default function PanelAdmin() {
   const [eventos, setEventos]           = useState<EventoRow[]>([]);
   const [solicitudes, setSolicitudes]   = useState<SolicitudRow[]>([]);
   const [obrasPendientes, setObrasPendientes] = useState<ObraPendienteRow[]>([]);
+  const [usuarios, setUsuarios]         = useState<UsuarioRow[]>([]);
+  const [rolFiltro, setRolFiltro]       = useState<RolFiltro>("todos");
   const [cargandoData, setCargandoData] = useState(true);
   const [accionando, setAccionando]     = useState<number | null>(null);
   const [accionandoObra, setAccionandoObra] = useState<number | null>(null);
@@ -190,7 +205,8 @@ export default function PanelAdmin() {
       supabase.from("solicitudes").select("*").eq("estado", "pendiente")
         .order("created_at", { ascending: false }),
       fetch("/api/admin/obras").then((r) => r.json()),
-    ]).then(([obrasC, artistasC, eventosC, perfilesC, obrasData, eventosData, solicitudesData, obrasPendData]) => {
+      fetch("/api/admin/usuarios").then((r) => r.json()),
+    ]).then(([obrasC, artistasC, eventosC, perfilesC, obrasData, eventosData, solicitudesData, obrasPendData, usuariosData]) => {
       setStats({
         obras:    obrasC.count    ?? 0,
         artistas: artistasC.count ?? 0,
@@ -201,6 +217,7 @@ export default function PanelAdmin() {
       setEventos((eventosData.data as EventoRow[]) ?? []);
       setSolicitudes((solicitudesData.data as SolicitudRow[]) ?? []);
       setObrasPendientes((obrasPendData.obras ?? []) as ObraPendienteRow[]);
+      setUsuarios((usuariosData.usuarios ?? []) as UsuarioRow[]);
       setCargandoData(false);
     });
   }, [listo, perfil]);
@@ -351,9 +368,27 @@ export default function PanelAdmin() {
   };
 
   const rolColor: Record<string, string> = {
-    artista: "bg-amber-400/10 text-amber-400",
-    empresa: "bg-violet-400/10 text-violet-400",
+    artista:   "bg-amber-400/10 text-amber-400",
+    empresa:   "bg-violet-400/10 text-violet-400",
+    productor: "bg-orange-400/10 text-orange-400",
+    comprador: "bg-sky-400/10 text-sky-400",
+    admin:     "bg-rose-400/10 text-rose-400",
   };
+
+  const usuariosFiltrados = rolFiltro === "todos"
+    ? usuarios
+    : usuarios.filter((u) => u.rol === rolFiltro);
+
+  const conteoRol = (rol: string) => usuarios.filter((u) => u.rol === rol).length;
+
+  const ROLES_FILTRO: { id: RolFiltro; label: string }[] = [
+    { id: "todos",     label: `Todos (${usuarios.length})` },
+    { id: "artista",   label: `Artistas (${conteoRol("artista")})` },
+    { id: "empresa",   label: `Empresas (${conteoRol("empresa")})` },
+    { id: "productor", label: `Productores (${conteoRol("productor")})` },
+    { id: "comprador", label: `Compradores (${conteoRol("comprador")})` },
+    { id: "admin",     label: `Admin (${conteoRol("admin")})` },
+  ];
 
   return (
     <PageFade>
@@ -634,6 +669,83 @@ export default function PanelAdmin() {
                 </div>
               ))
             )}
+          </div>
+        </div>
+
+        {/* ── Usuarios del sistema ── */}
+        <div className="mt-10" id="usuarios">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-white">Usuarios del sistema</h2>
+            <span className="text-xs text-zinc-500">{usuarios.length} cuentas</span>
+          </div>
+
+          {/* Filtro por rol */}
+          <div className="mb-3 flex flex-wrap gap-2">
+            {ROLES_FILTRO.map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => setRolFiltro(id)}
+                className={`rounded-full px-3 py-1 text-[11px] font-medium ring-1 transition ${
+                  rolFiltro === id
+                    ? "bg-amber-400 text-zinc-900 ring-amber-400"
+                    : "bg-zinc-800 text-zinc-400 ring-white/10 hover:bg-zinc-700 hover:text-zinc-200"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl ring-1 ring-white/10">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="bg-zinc-800/60">
+                  {["Nombre", "Email", "Rol", "Especialidad", "País", "Desde"].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {usuariosFiltrados.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="bg-zinc-900 px-4 py-8 text-center text-sm text-zinc-600">
+                      Sin usuarios en esta categoría
+                    </td>
+                  </tr>
+                ) : (
+                  usuariosFiltrados.map((u) => (
+                    <tr key={u.id} className="bg-zinc-900 transition hover:bg-zinc-800/50">
+                      <td className="px-4 py-3">
+                        <span className="font-medium text-zinc-200">{u.nombre || <span className="text-zinc-600 italic">sin nombre</span>}</span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-zinc-400">{u.email}</td>
+                      <td className="px-4 py-3">
+                        {u.rol !== "—" ? (
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${rolColor[u.rol] ?? "bg-zinc-800 text-zinc-400"}`}>
+                            {u.rol}
+                          </span>
+                        ) : (
+                          <span className="text-zinc-600">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-zinc-400">
+                        {u.especialidad || <span className="text-zinc-600">—</span>}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-zinc-400">
+                        {u.pais || <span className="text-zinc-600">—</span>}
+                      </td>
+                      <td className="px-4 py-3 text-[10px] text-zinc-600">
+                        {new Date(u.created_at).toLocaleDateString("es-MX", {
+                          day: "numeric", month: "short", year: "numeric",
+                        })}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
