@@ -68,10 +68,6 @@ export default function BotonAuth() {
               className="block rounded-xl px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white">
               Mi perfil
             </Link>
-            <Link href="/privado" onClick={() => setAbierto(false)}
-              className="block rounded-xl px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white">
-              🔒 Área privada
-            </Link>
             {perfil.rol === "admin" && (
               <Link href="/admin" onClick={() => setAbierto(false)}
                 className="block rounded-xl px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white">
