@@ -460,6 +460,42 @@ on conflict (email) do update set
   slug         = excluded.slug;
 
 
+-- ── accesos_prueba: TODOS los test accounts ────────────────────────────────
+-- GoTrue v2.195+ no autentifica usuarios insertados vía SQL puro.
+-- La ruta 1 del login lee esta tabla → localStorage (sin JWT).
+
+insert into public.accesos_prueba (email, clave, rol, nombre, bio, especialidad, pais, slug, avatar_url)
+values
+  -- Cuentas principales
+  ('artista@test.com', 'Test1234', 'artista', 'Ana Torres',
+   'Pintora expresionista de la Ciudad de México. Especialista en óleos de gran formato y técnicas mixtas.',
+   'Pintura al óleo', 'México', 'ana-torres', ''),
+  ('empresa@test.com', 'Test1234', 'empresa', 'Galería Norte Arte',
+   'Galería dedicada al arte contemporáneo emergente mexicano.',
+   'Arte contemporáneo', 'México', 'galeria-norte-arte', ''),
+  ('comprador@test.com', 'Test1234', 'comprador', 'Luis Mendoza',
+   '', 'Coleccionista', 'México', 'luis-mendoza', ''),
+  ('admin@test.com', 'Test1234', 'admin', 'Administrador',
+   '', 'Administración', 'México', 'administrador', ''),
+  -- Artistas y empresa de catálogo
+  ('revolution-canvas@test.com', 'Test1234', 'artista', 'Revolution Canvas',
+   'Colectivo de arte digital que reinterpreta obras maestras del arte clásico con estética urbana y de vanguardia.',
+   'Arte Digital', 'México', 'revolution-canvas', ''),
+  ('ideas-creativas@test.com', 'Test1234', 'artista', 'Ideas Creativas',
+   'Estudio de arte digital especializado en ilustraciones hiperrealistas de la naturaleza.',
+   'Arte Digital', 'México', 'ideas-creativas', ''),
+  ('haucoze@test.com', 'Test1234', 'artista', 'HAUCOZE',
+   'Estudio de escultura figurativa especializado en colecciones de resina de alta densidad con acabados metálicos.',
+   'Escultura Figurativa', 'México', 'haucoze', ''),
+  ('pop-maze@test.com', 'Test1234', 'artista', 'Pop Maze Art',
+   'Estudio especializado en el estilo WPAP: retratos fragmentados en planos geométricos de color.',
+   'Pop Art / WPAP', 'México', 'pop-maze-art', ''),
+  ('galeria-esculturas@test.com', 'Test1234', 'empresa', 'Galería Forma y Materia',
+   'Galería especializada en escultura contemporánea y decorativa.',
+   'Escultura Contemporánea', 'México', 'galeria-forma-materia', '')
+on conflict (email) do nothing;
+
+
 -- ── Linkear obras del catálogo existente a los artistas con cuenta ──
 -- Las obras 10-13, 16, 19 pasan a ser "propias" de esos artistas
 
@@ -601,3 +637,177 @@ update public.obras set imagen_principal = 'https://picsum.photos/seed/bulldog-d
 
 update public.obras set imagen_principal = 'https://picsum.photos/seed/arbol-huellas/600/600'
   where titulo = 'Árbol de Huellas — Amor y Unión' and empresa_email = 'galeria-esculturas@test.com';
+
+
+-- ============================================================
+--  Ampliar constraint de rol en perfiles para incluir 'productor'
+-- ============================================================
+
+alter table public.perfiles drop constraint if exists perfiles_rol_check;
+alter table public.perfiles add constraint perfiles_rol_check
+  check (rol in ('artista', 'comprador', 'empresa', 'admin', 'productor'));
+
+alter table public.accesos_prueba drop constraint if exists accesos_prueba_rol_check;
+alter table public.accesos_prueba add constraint accesos_prueba_rol_check
+  check (rol in ('artista', 'comprador', 'empresa', 'admin', 'productor'));
+
+
+-- ============================================================
+--  Cuentas productor para los 17 productores de cocina
+--  Contraseña de TODOS: Test1234
+-- ============================================================
+
+do $$
+declare
+  uid_p01 uuid := '55555555-0000-0000-0000-000000000001';  -- Monte Xanic
+  uid_p02 uuid := '55555555-0000-0000-0000-000000000002';  -- Casa Madero
+  uid_p03 uuid := '55555555-0000-0000-0000-000000000003';  -- Dr. Loosen
+  uid_p04 uuid := '55555555-0000-0000-0000-000000000004';  -- Castillo de Canena
+  uid_p05 uuid := '55555555-0000-0000-0000-000000000005';  -- Amal Coopérative
+  uid_p06 uuid := '55555555-0000-0000-0000-000000000006';  -- Chosen Foods
+  uid_p07 uuid := '55555555-0000-0000-0000-000000000007';  -- Gaya Vainilla
+  uid_p08 uuid := '55555555-0000-0000-0000-000000000008';  -- Cooperativa Coopaman
+  uid_p09 uuid := '55555555-0000-0000-0000-000000000009';  -- Casa Maguey
+  uid_p10 uuid := '55555555-0000-0000-0000-000000000010';  -- Cacao Bucarela
+  uid_p11 uuid := '55555555-0000-0000-0000-000000000011';  -- Valrhona
+  uid_p12 uuid := '55555555-0000-0000-0000-000000000012';  -- Conservas Ortiz
+  uid_p13 uuid := '55555555-0000-0000-0000-000000000013';  -- Plantin
+  uid_p14 uuid := '55555555-0000-0000-0000-000000000014';  -- Caviar de Neuvic
+  uid_p15 uuid := '55555555-0000-0000-0000-000000000015';  -- Kab Ik
+  uid_p16 uuid := '55555555-0000-0000-0000-000000000016';  -- Comvita
+  uid_p17 uuid := '55555555-0000-0000-0000-000000000017';  -- Schwarzwälder Imkerei
+begin
+
+  -- ── auth.users ───────────────────────────────────────────────
+  insert into auth.users (
+    id, instance_id, email, encrypted_password,
+    email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+    is_super_admin, role, aud, created_at, updated_at,
+    confirmation_token, recovery_token, email_change_token_new
+  ) values
+    (uid_p01,'00000000-0000-0000-0000-000000000000','monte-xanic@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p02,'00000000-0000-0000-0000-000000000000','casa-madero@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p03,'00000000-0000-0000-0000-000000000000','dr-loosen@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p04,'00000000-0000-0000-0000-000000000000','castillo-canena@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p05,'00000000-0000-0000-0000-000000000000','amal-cooperativa@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p06,'00000000-0000-0000-0000-000000000000','chosen-foods@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p07,'00000000-0000-0000-0000-000000000000','gaya-vainilla@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p08,'00000000-0000-0000-0000-000000000000','coopaman@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p09,'00000000-0000-0000-0000-000000000000','casa-maguey@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p10,'00000000-0000-0000-0000-000000000000','cacao-bucarela@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p11,'00000000-0000-0000-0000-000000000000','valrhona@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p12,'00000000-0000-0000-0000-000000000000','conservas-ortiz@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p13,'00000000-0000-0000-0000-000000000000','plantin@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p14,'00000000-0000-0000-0000-000000000000','caviar-neuvic@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p15,'00000000-0000-0000-0000-000000000000','kab-ik@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p16,'00000000-0000-0000-0000-000000000000','comvita@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','',''),
+    (uid_p17,'00000000-0000-0000-0000-000000000000','schwarzwalder-imkerei@test.com',crypt('Test1234',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}'::jsonb,'{}'::jsonb,false,'authenticated','authenticated',now(),now(),'','','')
+  on conflict do nothing;
+
+  -- ── auth.identities ──────────────────────────────────────────
+  insert into auth.identities (
+    id, user_id, provider_id, identity_data, provider,
+    created_at, updated_at, last_sign_in_at
+  ) values
+    (gen_random_uuid(),uid_p01,'monte-xanic@test.com',jsonb_build_object('sub',uid_p01::text,'email','monte-xanic@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p02,'casa-madero@test.com',jsonb_build_object('sub',uid_p02::text,'email','casa-madero@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p03,'dr-loosen@test.com',jsonb_build_object('sub',uid_p03::text,'email','dr-loosen@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p04,'castillo-canena@test.com',jsonb_build_object('sub',uid_p04::text,'email','castillo-canena@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p05,'amal-cooperativa@test.com',jsonb_build_object('sub',uid_p05::text,'email','amal-cooperativa@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p06,'chosen-foods@test.com',jsonb_build_object('sub',uid_p06::text,'email','chosen-foods@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p07,'gaya-vainilla@test.com',jsonb_build_object('sub',uid_p07::text,'email','gaya-vainilla@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p08,'coopaman@test.com',jsonb_build_object('sub',uid_p08::text,'email','coopaman@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p09,'casa-maguey@test.com',jsonb_build_object('sub',uid_p09::text,'email','casa-maguey@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p10,'cacao-bucarela@test.com',jsonb_build_object('sub',uid_p10::text,'email','cacao-bucarela@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p11,'valrhona@test.com',jsonb_build_object('sub',uid_p11::text,'email','valrhona@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p12,'conservas-ortiz@test.com',jsonb_build_object('sub',uid_p12::text,'email','conservas-ortiz@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p13,'plantin@test.com',jsonb_build_object('sub',uid_p13::text,'email','plantin@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p14,'caviar-neuvic@test.com',jsonb_build_object('sub',uid_p14::text,'email','caviar-neuvic@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p15,'kab-ik@test.com',jsonb_build_object('sub',uid_p15::text,'email','kab-ik@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p16,'comvita@test.com',jsonb_build_object('sub',uid_p16::text,'email','comvita@test.com'),'email',now(),now(),now()),
+    (gen_random_uuid(),uid_p17,'schwarzwalder-imkerei@test.com',jsonb_build_object('sub',uid_p17::text,'email','schwarzwalder-imkerei@test.com'),'email',now(),now(),now())
+  on conflict (provider, provider_id) do nothing;
+
+  -- ── public.perfiles ──────────────────────────────────────────
+  insert into public.perfiles (id, rol, nombre, bio, especialidad, pais, slug, avatar_url, banner_url)
+  select v.id, v.rol, v.nombre, v.bio, v.especialidad, v.pais, v.slug, ''::text, ''::text
+  from (values
+    (uid_p01,'productor'::text,'Monte Xanic'::text,'Bodega icónica del Valle de Guadalupe, pionera del vino de autor en México desde 1988.'::text,'Enología'::text,'México'::text,'monte-xanic'::text),
+    (uid_p02,'productor'::text,'Casa Madero'::text,'Bodega más antigua de América (1597) en el Valle de Parras, Coahuila.'::text,'Enología'::text,'México'::text,'casa-madero'::text),
+    (uid_p03,'productor'::text,'Dr. Loosen'::text,'Bodega familiar con más de 200 años en el Mosela, referente mundial del Riesling.'::text,'Enología'::text,'Alemania'::text,'dr-loosen'::text),
+    (uid_p04,'productor'::text,'Castillo de Canena'::text,'Familia Vañó, productores de EVOO premium en Jaén desde el siglo XVIII.'::text,'Aceite de Oliva Virgen Extra'::text,'España'::text,'castillo-de-canena'::text),
+    (uid_p05,'productor'::text,'Amal Coopérative'::text,'Cooperativa femenina marroquí productora de aceite de argán gastronómico y cosmético.'::text,'Aceite de Argán'::text,'Marruecos'::text,'amal-cooperative'::text),
+    (uid_p06,'productor'::text,'Chosen Foods'::text,'Empresa especializada en aceite de aguacate puro de Michoacán, prensado en frío.'::text,'Aceite de Aguacate'::text,'México'::text,'chosen-foods'::text),
+    (uid_p07,'productor'::text,'Gaya Vainilla'::text,'Productora artesanal de vainilla de Papantla curada según el método totonaca tradicional.'::text,'Especias y Vainilla'::text,'México'::text,'gaya-vainilla'::text),
+    (uid_p08,'productor'::text,'Cooperativa Coopaman'::text,'Cooperativa de azafraneros de La Mancha con Denominación de Origen protegida.'::text,'Azafrán'::text,'España'::text,'cooperativa-coopaman'::text),
+    (uid_p09,'productor'::text,'Casa Maguey'::text,'Selección artesanal de chiles secos oaxaqueños de productores del Valle de Oaxaca.'::text,'Chiles y Especias'::text,'México'::text,'casa-maguey'::text),
+    (uid_p10,'productor'::text,'Cacao Bucarela'::text,'Chocolatería bean-to-bar del Soconusco, Chiapas, con cacao criollo y trinitario orgánico.'::text,'Chocolatería'::text,'México'::text,'cacao-bucarela'::text),
+    (uid_p11,'productor'::text,'Valrhona'::text,'Maison de chocolat fundada en 1922 en Tain-l''Hermitage, referente mundial de la alta pastelería.'::text,'Chocolatería'::text,'Francia'::text,'valrhona'::text),
+    (uid_p12,'productor'::text,'Conservas Ortiz'::text,'Empresa vasca con más de 100 años capturando anchoas del Cantábrico con anzuelo.'::text,'Conservas del Mar'::text,'España'::text,'conservas-ortiz'::text),
+    (uid_p13,'productor'::text,'Plantin'::text,'Negociante y conservero de trufas del Périgord, referencia europea desde 1930.'::text,'Trufas y Conservas'::text,'Francia'::text,'plantin'::text),
+    (uid_p14,'productor'::text,'Caviar de Neuvic'::text,'Piscifactoría en el río Dordoña criando esturiones en agua pura para caviar de alta gama.'::text,'Caviar y Esturión'::text,'Francia'::text,'caviar-de-neuvic'::text),
+    (uid_p15,'productor'::text,'Kab Ik'::text,'Proyecto maya de apicultura con abeja melipona Xunán Kaab en Valladolid, Yucatán.'::text,'Miel Melipona'::text,'México'::text,'kab-ik'::text),
+    (uid_p16,'productor'::text,'Comvita'::text,'Empresa neozelandesa líder en miel de manuka certificada MGO, fundada en 1974.'::text,'Miel Manuka'::text,'Nueva Zelanda'::text,'comvita'::text),
+    (uid_p17,'productor'::text,'Schwarzwälder Imkerei'::text,'Apicultura familiar en la Selva Negra productora de miel de bosque de temporada.'::text,'Miel de Bosque'::text,'Alemania'::text,'schwarzwalder-imkerei'::text)
+  ) as v(id, rol, nombre, bio, especialidad, pais, slug)
+  where exists (select 1 from auth.users where id = v.id)
+  on conflict (id) do update set
+    nombre      = excluded.nombre,
+    bio         = excluded.bio,
+    especialidad= excluded.especialidad,
+    pais        = excluded.pais,
+    slug        = coalesce(excluded.slug, public.perfiles.slug);
+
+end $$;
+
+
+-- ── accesos_prueba: cuentas productor ─────────────────────────────────────────
+
+insert into public.accesos_prueba (email, clave, rol, nombre, bio, especialidad, pais, slug, avatar_url)
+values
+  ('monte-xanic@test.com','Test1234','productor','Monte Xanic','Bodega icónica del Valle de Guadalupe, pionera del vino de autor en México desde 1988.','Enología','México','monte-xanic',''),
+  ('casa-madero@test.com','Test1234','productor','Casa Madero','Bodega más antigua de América (1597) en el Valle de Parras, Coahuila.','Enología','México','casa-madero',''),
+  ('dr-loosen@test.com','Test1234','productor','Dr. Loosen','Bodega familiar con más de 200 años en el Mosela, referente mundial del Riesling.','Enología','Alemania','dr-loosen',''),
+  ('castillo-canena@test.com','Test1234','productor','Castillo de Canena','Familia Vañó, productores de EVOO premium en Jaén desde el siglo XVIII.','Aceite de Oliva Virgen Extra','España','castillo-de-canena',''),
+  ('amal-cooperativa@test.com','Test1234','productor','Amal Coopérative','Cooperativa femenina marroquí productora de aceite de argán gastronómico y cosmético.','Aceite de Argán','Marruecos','amal-cooperative',''),
+  ('chosen-foods@test.com','Test1234','productor','Chosen Foods','Empresa especializada en aceite de aguacate puro de Michoacán, prensado en frío.','Aceite de Aguacate','México','chosen-foods',''),
+  ('gaya-vainilla@test.com','Test1234','productor','Gaya Vainilla','Productora artesanal de vainilla de Papantla curada según el método totonaca tradicional.','Especias y Vainilla','México','gaya-vainilla',''),
+  ('coopaman@test.com','Test1234','productor','Cooperativa Coopaman','Cooperativa de azafraneros de La Mancha con Denominación de Origen protegida.','Azafrán','España','cooperativa-coopaman',''),
+  ('casa-maguey@test.com','Test1234','productor','Casa Maguey','Selección artesanal de chiles secos oaxaqueños de productores del Valle de Oaxaca.','Chiles y Especias','México','casa-maguey',''),
+  ('cacao-bucarela@test.com','Test1234','productor','Cacao Bucarela','Chocolatería bean-to-bar del Soconusco, Chiapas, con cacao criollo y trinitario orgánico.','Chocolatería','México','cacao-bucarela',''),
+  ('valrhona@test.com','Test1234','productor','Valrhona','Maison de chocolat fundada en 1922 en Tain-l''Hermitage, referente mundial de la alta pastelería.','Chocolatería','Francia','valrhona',''),
+  ('conservas-ortiz@test.com','Test1234','productor','Conservas Ortiz','Empresa vasca con más de 100 años capturando anchoas del Cantábrico con anzuelo.','Conservas del Mar','España','conservas-ortiz',''),
+  ('plantin@test.com','Test1234','productor','Plantin','Negociante y conservero de trufas del Périgord, referencia europea desde 1930.','Trufas y Conservas','Francia','plantin',''),
+  ('caviar-neuvic@test.com','Test1234','productor','Caviar de Neuvic','Piscifactoría en el río Dordoña criando esturiones en agua pura para caviar de alta gama.','Caviar y Esturión','Francia','caviar-de-neuvic',''),
+  ('kab-ik@test.com','Test1234','productor','Kab Ik','Proyecto maya de apicultura con abeja melipona Xunán Kaab en Valladolid, Yucatán.','Miel Melipona','México','kab-ik',''),
+  ('comvita@test.com','Test1234','productor','Comvita','Empresa neozelandesa líder en miel de manuka certificada MGO, fundada en 1974.','Miel Manuka','Nueva Zelanda','comvita',''),
+  ('schwarzwalder-imkerei@test.com','Test1234','productor','Schwarzwälder Imkerei','Apicultura familiar en la Selva Negra productora de miel de bosque de temporada.','Miel de Bosque','Alemania','schwarzwalder-imkerei','')
+on conflict (email) do update set
+  nombre      = excluded.nombre,
+  bio         = excluded.bio,
+  especialidad= excluded.especialidad,
+  pais        = excluded.pais,
+  slug        = excluded.slug;
+
+
+-- ── Linkear productos_cocina a sus cuentas productor ──────────────────────────
+
+alter table public.productos_cocina add column if not exists productor_email text;
+
+update public.productos_cocina set productor_email = 'monte-xanic@test.com'       where productor = 'Monte Xanic';
+update public.productos_cocina set productor_email = 'casa-madero@test.com'        where productor = 'Casa Madero';
+update public.productos_cocina set productor_email = 'dr-loosen@test.com'          where productor = 'Dr. Loosen';
+update public.productos_cocina set productor_email = 'castillo-canena@test.com'    where productor = 'Castillo de Canena';
+update public.productos_cocina set productor_email = 'amal-cooperativa@test.com'   where productor = 'Amal Coopérative';
+update public.productos_cocina set productor_email = 'chosen-foods@test.com'       where productor = 'Chosen Foods';
+update public.productos_cocina set productor_email = 'gaya-vainilla@test.com'      where productor = 'Gaya Vainilla';
+update public.productos_cocina set productor_email = 'coopaman@test.com'           where productor = 'Cooperativa Coopaman';
+update public.productos_cocina set productor_email = 'casa-maguey@test.com'        where productor = 'Casa Maguey';
+update public.productos_cocina set productor_email = 'cacao-bucarela@test.com'     where productor = 'Cacao Bucarela';
+update public.productos_cocina set productor_email = 'valrhona@test.com'           where productor = 'Valrhona';
+update public.productos_cocina set productor_email = 'conservas-ortiz@test.com'    where productor = 'Conservas Ortiz';
+update public.productos_cocina set productor_email = 'plantin@test.com'            where productor = 'Plantin';
+update public.productos_cocina set productor_email = 'caviar-neuvic@test.com'      where productor = 'Caviar de Neuvic';
+update public.productos_cocina set productor_email = 'kab-ik@test.com'             where productor = 'Kab Ik';
+update public.productos_cocina set productor_email = 'comvita@test.com'            where productor = 'Comvita';
+update public.productos_cocina set productor_email = 'schwarzwalder-imkerei@test.com' where productor = 'Schwarzwälder Imkerei';

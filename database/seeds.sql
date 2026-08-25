@@ -324,3 +324,165 @@ on conflict (id_evento) do nothing;
 
 -- Reiniciar secuencia
 select setval('eventos_id_evento_seq', (select max(id_evento) from eventos));
+
+
+-- ── Productos Cocina ────────────────────────────────────────
+insert into public.productos_cocina
+  (id, nombre, productor, origen, descripcion, imagen, precio, unidad, categoria, destacado, activo)
+values
+  -- Vinos
+  (1,
+   'Monte Xanic Gran Ricardo 2019',
+   'Monte Xanic',
+   'Valle de Guadalupe, Baja California',
+   'Ensamble de Cabernet Sauvignon, Merlot y Petit Verdot de los mejores lotes de la bodega. Crianza de 18 meses en barricas nuevas de roble francés. Aromas de ciruela madura, grafito y tabaco, con un tanino sedoso y una larga persistencia. La referencia del vino de autor mexicano.',
+   'https://picsum.photos/seed/vino-monte-xanic/600/800',
+   890.00, '750 ml', 'Vinos', true, true),
+
+  (2,
+   'Casa Madero 3V Gran Reserva 2020',
+   'Casa Madero',
+   'Valle de Parras, Coahuila',
+   'Ensamble de Cabernet Sauvignon, Merlot y Shiraz proveniente de la bodega más antigua de América (1597). Crianza de 14 meses en roble francés. Intenso, con notas de mora, pimienta negra y vainilla. Emblema del vino del norte de México.',
+   'https://picsum.photos/seed/vino-casa-madero/600/800',
+   620.00, '750 ml', 'Vinos', false, true),
+
+  (3,
+   'Riesling Spätlese Mosel 2021',
+   'Dr. Loosen',
+   'Mosela, Alemania',
+   'Riesling de viñedos de pizarra azul con más de 60 años de edad. Cosecha tardía que equilibra una acidez eléctrica con una dulzura natural delicada. Notas de melocotón blanco, flores y mineralidad pétrea. Imprescindible para entender el Riesling en su máxima expresión.',
+   'https://picsum.photos/seed/vino-dr-loosen/600/800',
+   780.00, '750 ml', 'Vinos', false, true),
+
+  -- Aceites
+  (4,
+   'Aceite de Oliva Hojiblanca EVOO',
+   'Castillo de Canena',
+   'Jaén, España',
+   'Aceite de primera prensada en frío, cosecha temprana de aceitunas Hojiblanca. Índice de acidez inferior a 0.15%. Aroma fresco a hierba cortada y tomate verde, con un amargor elegante y picante limpio que evidencia un alto contenido de polifenoles.',
+   'https://picsum.photos/seed/aceite-canena/600/800',
+   420.00, '500 ml', 'Aceites', true, true),
+
+  (5,
+   'Aceite de Argán Gastronómico',
+   'Amal Coopérative',
+   'Souss-Massa, Marruecos',
+   'Producido por la cooperativa femenina Amal mediante tostado artesanal y prensado en frío de las almendras del argán. Aroma intenso a fruto seco tostado, sabor profundo y persistente. Ideal para aderezar cuscús, ensaladas y postres tradicionales.',
+   'https://picsum.photos/seed/aceite-argan/600/800',
+   580.00, '250 ml', 'Aceites', false, true),
+
+  (6,
+   'Aceite de Aguacate Puro',
+   'Chosen Foods',
+   'Michoacán, México',
+   'Prensado en frío de aguacates Hass de Michoacán en su punto óptimo de madurez. Punto de humo de 270 °C, ideal para altas temperaturas. Perfil suave con notas de mantequilla y hierba fresca. Certificado non-GMO y sin refinar.',
+   'https://picsum.photos/seed/aceite-aguacate/600/800',
+   310.00, '500 ml', 'Aceites', false, true),
+
+  -- Especias
+  (7,
+   'Vainilla de Papantla Entera',
+   'Gaya Vainilla',
+   'Papantla, Veracruz, México',
+   'Vainas de Vanilla planifolia curadas durante 6 meses según el método tradicional totonaca. Contenido de vainillina superior al 2%. Aroma floral intenso con notas de higo, caramelo y madera húmeda. La vainilla de Veracruz es reconocida como la mejor del mundo por su perfume complejo.',
+   'https://picsum.photos/seed/vainilla-papantla/600/800',
+   180.00, '3 vainas (15 g)', 'Especias', true, true),
+
+  (8,
+   'Azafrán de La Mancha D.O. Categoría 1',
+   'Cooperativa Coopaman',
+   'La Mancha, España',
+   'Hebras seleccionadas manualmente del Crocus sativus durante la cosecha de otoño. Categoría 1 según ISO 3632, la más alta posible. Intensidad colorante superior a 250 unidades. Un gramo equivale al trabajo de 150-200 flores. El azafrán con mayor valor por peso del mundo.',
+   'https://picsum.photos/seed/azafran-mancha/600/800',
+   950.00, '2 g', 'Especias', false, true),
+
+  (9,
+   'Mezcla de Chiles Oaxaqueños Premium',
+   'Casa Maguey',
+   'Oaxaca, México',
+   'Selección artesanal de chiles secos: ancho, mulato, pasilla negro y chile negro oaxaqueño. Secado al sol y seleccionado a mano en comunidades del Valle de Oaxaca. Base imprescindible para moles, adobos y marinadas. Sin conservadores ni aditivos.',
+   'https://picsum.photos/seed/chiles-oaxaca/600/800',
+   145.00, '200 g surtido', 'Especias', false, true),
+
+  -- Chocolates
+  (10,
+   'Chocolate de Origen Chiapas 70%',
+   'Cacao Bucarela',
+   'Soconusco, Chiapas, México',
+   'Bean-to-bar elaborado con cacao criollo y trinitario del Soconusco, una de las regiones cacaoteras más antiguas de Mesoamérica. 70% cacao, tostado medio para conservar notas frutales. Rojo de frutos silvestres, cereza y un final largo y floral. Certificado orgánico.',
+   'https://picsum.photos/seed/chocolate-chiapas/600/800',
+   195.00, '80 g', 'Chocolates', true, true),
+
+  (11,
+   'Valrhona Guanaja Noir 70%',
+   'Valrhona',
+   'Tain-l''Hermitage, Francia',
+   'Couverture icónica de Valrhona creada en 1986. Ensamble de cacaos de Trinidad, Jamaica y Santo Tomé. 70% de cacao mínimo, sin lecitina de soja. Intenso y amargo, con notas de café, regaliz y una acidez vibrante que lo convierte en favorito de pasteleros profesionales.',
+   'https://picsum.photos/seed/chocolate-valrhona/600/800',
+   320.00, '250 g', 'Chocolates', false, true),
+
+  -- Conservas
+  (12,
+   'Anchoas del Cantábrico en AOVE',
+   'Conservas Ortiz',
+   'País Vasco, España',
+   'Anchoas de la especie Engraulis encrasicolus capturadas en el Mar Cantábrico con anzuelo, maduradas 18 meses en sal gruesa. Fileteadas a mano y conservadas en aceite de oliva virgen extra. Umami puro, textura sedosa y salinidad equilibrada. Las mejores anchoas de España.',
+   'https://picsum.photos/seed/anchoas-ortiz/600/800',
+   280.00, '47 g (16 filetes)', 'Conservas', false, true),
+
+  (13,
+   'Trufa Negra Melanosporum Entera',
+   'Plantin',
+   'Périgord, Francia',
+   'Tuber melanosporum entera, primera cocción. Cosecha invernal en los bosques de roble del Périgord Negro. Aroma penetrante e inconfundible con notas de tierra mojada, musgo y cacao. Eleva cualquier preparación: pastas, risottos, huevos y salsas. La trufa más cotizada del mundo.',
+   'https://picsum.photos/seed/trufa-negra/600/800',
+   1150.00, '25 g', 'Conservas', false, true),
+
+  (14,
+   'Caviar Osetra Imperial',
+   'Caviar de Neuvic',
+   'Dordoña, Francia',
+   'Hueva de esturión Acipenser gueldenstaedtii criado en las aguas puras del río Dordoña. Granos medianos dorados con reflejos verdes. Sabor a avellana tostada y mantequilla con una cremosidad prolongada. Certificado por el Consejo Internacional de Pesca. El lujo gastronómico definitivo.',
+   'https://picsum.photos/seed/caviar-osetra/600/800',
+   3800.00, '30 g', 'Conservas', false, true),
+
+  -- Mieles
+  (15,
+   'Miel de Abeja Melipona Yucatán',
+   'Kab Ik',
+   'Valladolid, Yucatán, México',
+   'Producida por la abeja nativa maya Melipona beecheii, sin aguijón y en peligro de extinción. La miel más escasa de México: cada colmena produce apenas 1-2 litros al año. Textura líquida, color ámbar claro y sabor complejo con acidez natural, notas florales y un ligero retrogusto ahumado.',
+   'https://picsum.photos/seed/miel-melipona/600/800',
+   690.00, '250 ml', 'Mieles', true, true),
+
+  (16,
+   'Miel de Manuka MGO 400+',
+   'Comvita',
+   'Isla Sur, Nueva Zelanda',
+   'Producida por abejas que polinizan el arbusto Leptospermum scoparium en la remota isla sur de Nueva Zelanda. Certificado MGO 400+ por laboratorio independiente. Textura cremosa, sabor robusto con notas de tierra y caramelo oscuro. Reconocida mundialmente por sus propiedades naturales.',
+   'https://picsum.photos/seed/miel-manuka/600/800',
+   820.00, '250 g', 'Mieles', false, true),
+
+  (17,
+   'Miel de Bosque Negro',
+   'Schwarzwälder Imkerei',
+   'Selva Negra, Alemania',
+   'Melada de bosque recolectada en los abetos y hayas de la Schwarzwald. Color caoba oscuro y sabor intenso con notas de pino, madera y regaliz. Rica en minerales y enzimas. Se produce únicamente cuando los pulgones del abeto generan abundante melada, lo que la hace muy escasa.',
+   'https://picsum.photos/seed/miel-bosque/600/800',
+   445.00, '350 g', 'Mieles', false, true)
+
+on conflict (id) do update set
+  nombre      = excluded.nombre,
+  productor   = excluded.productor,
+  origen      = excluded.origen,
+  descripcion = excluded.descripcion,
+  imagen      = excluded.imagen,
+  precio      = excluded.precio,
+  unidad      = excluded.unidad,
+  categoria   = excluded.categoria,
+  destacado   = excluded.destacado,
+  activo      = excluded.activo;
+
+-- Reiniciar secuencia
+select setval('productos_cocina_id_seq', (select max(id) from productos_cocina));

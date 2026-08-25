@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const CLAVE_LOCAL = "erudito-perfil";
 
-export type Rol = "artista" | "comprador" | "empresa" | "admin";
+export type Rol = "artista" | "comprador" | "empresa" | "admin" | "productor";
 
 export interface DatosPerfil {
   rol: Rol;
@@ -89,7 +89,7 @@ export function usePerfil() {
         ...VACIO,
         rol,
         email: email ?? undefined,
-        slug: rol === "empresa" ? "mi-galeria" : rol === "artista" ? "mi-perfil" : undefined,
+        slug: rol === "empresa" ? "mi-galeria" : rol === "artista" || rol === "productor" ? "mi-perfil" : undefined,
       };
 
       if (user) {
@@ -100,7 +100,7 @@ export function usePerfil() {
           bio: "",
           especialidad: "",
           pais: "",
-          slug: rol === "empresa" ? "mi-galeria" : rol === "artista" ? "mi-perfil" : null,
+          slug: rol === "empresa" ? "mi-galeria" : rol === "artista" || rol === "productor" ? "mi-perfil" : null,
         });
       } else {
         localStorage.setItem(CLAVE_LOCAL, JSON.stringify(nuevo));
@@ -116,7 +116,7 @@ export function usePerfil() {
       const final: DatosPerfil = {
         ...datos,
         slug:
-          datos.rol === "empresa" || datos.rol === "artista"
+          datos.rol === "empresa" || datos.rol === "artista" || datos.rol === "productor"
             ? datos.slug || generarSlug(datos.nombre)
             : undefined,
       };
@@ -134,7 +134,7 @@ export function usePerfil() {
           banner_url: final.banner_url ?? "",
         });
         // Sincroniza con usuarios para que el perfil público sea visible
-        if (user.email && (final.rol === "artista" || final.rol === "empresa")) {
+        if (user.email && (final.rol === "artista" || final.rol === "empresa" || final.rol === "productor")) {
           await supabase.from("usuarios").upsert({
             email: user.email,
             clave: "supabase-auth",
@@ -151,7 +151,7 @@ export function usePerfil() {
       } else {
         localStorage.setItem(CLAVE_LOCAL, JSON.stringify(final));
         // Sincroniza con tabla usuarios para que el perfil público sea visible
-        if (final.email && (final.rol === "artista" || final.rol === "empresa")) {
+        if (final.email && (final.rol === "artista" || final.rol === "empresa" || final.rol === "productor")) {
           await supabase.from("usuarios").update({
             nombre: final.nombre,
             bio: final.bio,

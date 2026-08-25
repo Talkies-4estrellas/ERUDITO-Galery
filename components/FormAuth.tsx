@@ -189,17 +189,19 @@ export default function FormAuth({ modo }: Props) {
       router.push("/perfil");
     } catch (err: unknown) {
       const e = err as { message?: unknown; code?: string; status?: number };
-      const raw = typeof e?.message === "string" ? e.message : "";
-      const msg = raw || (err instanceof Error ? err.message : "Error inesperado");
-      if (
-        msg.toLowerCase().includes("invalid login credentials") ||
+      const raw = typeof e?.message === "string" ? e.message : (err instanceof Error ? err.message : "");
+      const isCredentials =
+        raw.toLowerCase().includes("invalid") ||
+        raw.toLowerCase().includes("credentials") ||
         e?.code === "invalid_credentials" ||
-        e?.status === 400
-      ) {
+        e?.status === 400 ||
+        e?.status === 401;
+      if (isCredentials) {
         setErrorClave("credenciales");
       } else {
         setErrorClave("general");
-        setErrorMsg(msg || `Error ${e?.status ?? "desconocido"}`);
+        const legible = raw.length > 0 && !raw.startsWith("{") && !raw.startsWith("[");
+        setErrorMsg(legible ? raw : `Error al conectar con el servidor${e?.status ? ` (${e.status})` : ""}`);
       }
     } finally {
       setEnviando(false);
