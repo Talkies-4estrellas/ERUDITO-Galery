@@ -5,8 +5,12 @@ import PerfilArtista from "@/components/PerfilArtista";
 import { getArtistas, getArtista, getFichasPorArtista } from "@/lib/db";
 
 export async function generateStaticParams() {
-  const artistas = await getArtistas();
-  return artistas.map((a) => ({ id: String(a.id) }));
+  try {
+    const artistas = await getArtistas();
+    return artistas.map((a) => ({ id: String(a.id) }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({

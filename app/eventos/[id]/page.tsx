@@ -3,8 +3,12 @@ import { getEventos, getEvento, getFichas } from "@/lib/db";
 import DetalleEvento from "@/components/DetalleEvento";
 
 export async function generateStaticParams() {
-  const eventos = await getEventos();
-  return eventos.map((e) => ({ id: String(e.id) }));
+  try {
+    const eventos = await getEventos();
+    return eventos.map((e) => ({ id: String(e.id) }));
+  } catch {
+    return [];
+  }
 }
 
 export default async function PaginaEvento({

@@ -6,8 +6,12 @@ import RegistrarVisita from "@/components/RegistrarVisita";
 import { getFichas, getFicha } from "@/lib/db";
 
 export async function generateStaticParams() {
-  const fichas = await getFichas();
-  return fichas.map((f) => ({ id: String(f.id) }));
+  try {
+    const fichas = await getFichas();
+    return fichas.map((f) => ({ id: String(f.id) }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({
