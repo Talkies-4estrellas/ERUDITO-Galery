@@ -1,5 +1,0 @@
-Email	                Contraseña	Rol
-artista@test.com	Test1234	Artista — "Ana Torres"
-comprador@test.com	Test1234	Coleccionista — "Luis Mendoza"
-empresa@test.com	Test1234	Galería — "Galería Norte Arte"
-admin@test.com          Test1234        Administrador 

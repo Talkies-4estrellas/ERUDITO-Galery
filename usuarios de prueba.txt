@@ -7,3 +7,7 @@ Pop Maze Art	         pop-maze@test.com	        Test1234	Artista
 Galería Norte Arte	 empresa@test.com	        Test1234	Empresa
 Galería Forma y Materia	 galeria-esculturas@test.com	Test1234	Empresa
 Luis Mendoza	         comprador@test.com	        Test1234	Comprador
+Monte Xanic	         monte-xanic@test.com	        Test1234	Productor
+Kab Ik	                 kab-ik@test.com	        Test1234	Productor
+Cacao Bucarela	         cacao-bucarela@test.com	Test1234	Productor
+Administrador	         admin@test.com	                Test1234	Admin

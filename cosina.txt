@@ -1,0 +1,18 @@
+Productor	               Email	               Contraseña
+Monte Xanic	        monte-xanic@test.com	        Test1234
+Casa Madero	        casa-madero@test.com	        Test1234
+Dr. Loosen	        dr-loosen@test.com	        Test1234
+Castillo de Canena	castillo-canena@test.com	Test1234
+Amal Coopérative	amal-cooperativa@test.com	Test1234
+Chosen Foods	        chosen-foods@test.com	        Test1234
+Gaya Vainilla	        gaya-vainilla@test.com	        Test1234
+Cooperativa Coopaman	coopaman@test.com	        Test1234
+Casa Maguey	        casa-maguey@test.com	        Test1234
+Cacao Bucarela	        cacao-bucarela@test.com  	Test1234
+Valrhona	        valrhona@test.com	        Test1234
+Conservas Ortiz	        conservas-ortiz@test.com	Test1234
+Plantin	                plantin@test.com	        Test1234
+Caviar de Neuvic	caviar-neuvic@test.com	        Test1234
+Kab Ik	                kab-ik@test.com	                Test1234
+Comvita         	comvita@test.com	        Test1234
+Schwarzwälder Imkerei	schwarzwalder-imkerei@test.com	Test1234
