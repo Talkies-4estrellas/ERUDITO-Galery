@@ -6,7 +6,13 @@ import { servicios } from "@/data/servicios";
 const BASE = process.env.NEXT_PUBLIC_URL ?? "https://erudito-galeria.vercel.app";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [artistas, fichas] = await Promise.all([getArtistas(), getFichas()]);
+  let artistas: Awaited<ReturnType<typeof getArtistas>> = [];
+  let fichas: Awaited<ReturnType<typeof getFichas>> = [];
+  try {
+    [artistas, fichas] = await Promise.all([getArtistas(), getFichas()]);
+  } catch {
+    // Si falla en build time, devuelve solo rutas estáticas
+  }
 
   const estaticas: MetadataRoute.Sitemap = [
     { url: BASE, priority: 1 },

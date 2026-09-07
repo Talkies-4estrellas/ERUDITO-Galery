@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import PaginaArtistas from "@/components/PaginaArtistas";
 import { getArtistas, getFichas } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Artistas Digitales — ERUDITO Galery",

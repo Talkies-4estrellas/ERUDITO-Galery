@@ -1,9 +1,11 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Carousel from "@/components/Carousel";
 import SeccionEventos from "@/components/SeccionEventos";
 import FilaFichas from "@/components/FilaFichas";
 import { getFichas, getEventos, getCarousel } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "ERUDITO Galery — Arte con historia y valor",
