@@ -111,8 +111,8 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 ## Base de datos (Supabase)
 
-- Esquema completo en `database/schema.sql`.
-- Tabla `perfiles` — vinculada a `auth.users` (FK uuid). Campos: `rol`, `nombre`, `bio`, `especialidad`, `pais`, `slug`, `avatar_url`, `banner_url`. RLS activo. SQL para `banner_url`: `ALTER TABLE perfiles ADD COLUMN IF NOT EXISTS banner_url text;`
+- Esquema completo en `database/schema.sql` (sincronizado con producción — sept 2026). Cubre todas las tablas activas, RLS, índices, RPC y referencia de Storage. Sirve como fuente de verdad para migrar a otro servicio o modelar en NoSQL.
+- Tabla `perfiles` — vinculada a `auth.users` (FK uuid). Campos: `rol` (`'artista'|'comprador'|'empresa'|'admin'|'productor'`), `nombre`, `bio`, `especialidad`, `pais`, `slug`, `avatar_url`, `banner_url`. RLS activo.
 - Tabla `artistas` — 13 artistas (ids 5–17). Columnas: `id_artista`, `nombre`, `vida`, `origen`, `foto_perfil`, `biografia`. RLS: select público.
 - Tabla `obras` — 15 obras (ids 9–23) + obras de artistas/empresas de plataforma. `id_artista` **nullable**. Col `artista_email` (text, nullable) para obras de artistas registrados vía plataforma. Col `empresa_email` (text, nullable) para obras publicadas por galerías/empresas. Col `nombre_artista` (text, nullable) para el nombre del artista representado por la empresa. Col `vistas` (integer default 0). Col `estado` (text, check `'pendiente'|'aprobada'|'rechazada'`, default `'aprobada'`). Constraint `obras_tipo_check`: `tipo IN ('Físico','JPG Certificado','Edición limitada','Impresión Oficial')`. RLS: select público. Las obras subidas por usuarios van con `estado='pendiente'` y requieren aprobación del admin via `/api/admin/obras`.
 - Tabla `usuarios` — usuarios sin Supabase Auth. PK: `email`. Col `slug` (texto único por empresa). RLS: select+insert público.
