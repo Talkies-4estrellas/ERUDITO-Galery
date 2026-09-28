@@ -98,6 +98,7 @@ export default function FormAuth({ modo }: Props) {
   function guardarLocal(datos: {
     rol: Rol; nombre: string; bio: string; especialidad: string;
     pais: string; email: string; slug?: string; avatar_url: string;
+    estado?: "pendiente" | "aprobado";
   }) {
     localStorage.setItem("erudito-perfil", JSON.stringify(datos));
     window.dispatchEvent(new CustomEvent("erudito-perfil-actualizado", { detail: datos }));
