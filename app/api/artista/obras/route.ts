@@ -20,18 +20,24 @@ function mapObra(row: any) {
 }
 
 // GET ?email=X — devuelve obras del artista
+// GET ?id_artista=N — devuelve obras de artista seeded (tabla artistas)
 export async function GET(req: NextRequest) {
-  const email = req.nextUrl.searchParams.get("email") ?? "";
-  if (!email) return NextResponse.json({ obras: [] });
+  const email     = req.nextUrl.searchParams.get("email") ?? "";
+  const idArtista = req.nextUrl.searchParams.get("id_artista") ?? "";
+
+  if (!email && !idArtista) return NextResponse.json({ obras: [] });
 
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ obras: [] });
 
-  const { data } = await db
+  const base = db
     .from("obras")
     .select("id_obra, titulo, anio, descripcion, imagen_principal, tecnica, tamano, color, movimiento, precio, tipo, estado")
-    .eq("artista_email", email)
     .order("id_obra", { ascending: false });
+
+  const { data } = idArtista
+    ? await base.eq("id_artista", Number(idArtista))
+    : await base.eq("artista_email", email);
 
   return NextResponse.json({ obras: (data ?? []).map(mapObra) });
 }
@@ -48,10 +54,10 @@ export async function POST(req: NextRequest) {
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ error: "Config error" }, { status: 500 });
 
-  // Verificar que el email existe en usuarios
+  // Verificar que el email existe en usuarios y obtener su nombre
   const { data: usuario } = await db
     .from("usuarios")
-    .select("email")
+    .select("email, nombre, avatar_url")
     .eq("email", email)
     .single();
 
@@ -63,6 +69,8 @@ export async function POST(req: NextRequest) {
     .from("obras")
     .insert({
       artista_email: email,
+      nombre_artista: usuario.nombre || email.split("@")[0],
+      avatar_artista: usuario.avatar_url || "",
       titulo,
       anio: anio || new Date().getFullYear().toString(),
       descripcion: descripcion || "",

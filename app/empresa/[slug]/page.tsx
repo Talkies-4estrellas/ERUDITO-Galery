@@ -14,12 +14,22 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const { data } = await supabaseServer
+  const nombreAprox = slug.replace(/-/g, " ");
+  let { data } = await supabaseServer
     .from("usuarios")
     .select("nombre, bio")
     .eq("slug", slug)
     .eq("rol", "empresa")
-    .single();
+    .maybeSingle();
+  if (!data) {
+    const { data: porNombre } = await supabaseServer
+      .from("usuarios")
+      .select("nombre, bio")
+      .ilike("nombre", nombreAprox)
+      .eq("rol", "empresa")
+      .maybeSingle();
+    data = porNombre;
+  }
   const nombre = data?.nombre || "Galería";
   return {
     title: `${nombre} — ERUDITO Galery`,

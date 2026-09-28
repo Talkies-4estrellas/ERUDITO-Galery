@@ -19,7 +19,7 @@ export async function generateMetadata({
     .select("nombre, bio")
     .eq("slug", slug)
     .eq("rol", "artista")
-    .single();
+    .maybeSingle();
   const nombre = data?.nombre || "Artista";
   return {
     title: `${nombre} — ERUDITO Galery`,

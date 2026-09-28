@@ -26,7 +26,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 ## Estructura de páginas
 
-- `app/page.tsx` — inicio: Navbar + Carousel + SeccionEventos + FilaFichas + Footer.
+- `app/page.tsx` — inicio: Navbar + Carousel + SeccionEventos + `FilaFichas titulo="Nuevos"` (últimas obras aprobadas vía `getFichasNuevas`) + `FilaFichas` (todas las obras destacadas) + Footer. Incluye `<RealtimeRefresh tablas={["obras","artistas","eventos"]} />`.
 - `app/obra/[id]/page.tsx` — detalle de obra (SSG): resuelve la ficha y compone `DetalleObra`. NO poner clases de Tailwind aquí (ver nota).
 - `app/obras/page.tsx` — redirect a `/catalogo` (eliminada la galería con filtros, consolidada en catálogo).
 - `app/artista/[id]/page.tsx` — perfil de artista (SSG): compone `PerfilArtista`. Misma regla.
@@ -49,6 +49,8 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `app/privado/page.tsx` — compone `PaginaPrivado` (requiere sesión).
 - `app/admin/page.tsx` — compone `PanelAdmin`. Sin `<Navbar>` ni footer — UI de admin independiente. Wrapper `fixed inset-0 z-10` cubre el footer del layout raíz.
 - `app/perfil/page.tsx` — edición de perfil del usuario autenticado.
+- `app/artistas/[slug]/page.tsx` — perfil público de artista. `generateMetadata` usa `.maybeSingle()` + fallback por nombre ILIKE. Compone `PerfilPublicoArtista`.
+- `app/empresa/[slug]/page.tsx` — perfil público de galería/empresa. `generateMetadata` usa `.maybeSingle()` + fallback por nombre ILIKE. Compone `PerfilPublicoEmpresa`.
 - `app/pago/exito/page.tsx` — retorno MP aprobado. Lee `searchParams` (payment_id, payment_type, external_reference) y muestra tarjeta con ID, método y orden. Dinámico (`ƒ`).
 - `app/pago/fallido/page.tsx` — retorno MP rechazado. Muestra referencia de orden. Link a `/contacto`. Dinámico.
 - `app/pago/pendiente/page.tsx` — retorno MP pendiente. Muestra ID y orden. Dinámico.
@@ -68,13 +70,19 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `components/MiPerfilEmpresa.tsx` — perfil editable de galería/empresa. Vista "obras": CRUD de obras con `nombre_artista`. **Modal de confirmación antes de Editar o Eliminar** (estado `pendingAction`; rojo para eliminar, violeta para editar). Vista "ajustes": formulario + zonas de upload en 2 columnas ("Logo" / "Portada", acento violet). Upload via `/api/perfil/imagen`. Sin dependencia de `useAuth`/JWT. Sidebar: "Acerca de", "Artistas representados", "Mi espacio".
 - `components/FormAuth.tsx` — registro multi-rol sin confirmación de email:
   - **comprador** → guarda directo en tabla `usuarios` → redirige a `/perfil`
-  - **artista / empresa** → formulario de evaluación (nombre, especialidad, país, bio, motivación) → guarda en `solicitudes` → pantalla "Solicitud enviada"
-  - **login**: verifica en orden `accesos_prueba` (localStorage) → `usuarios` → `solicitudes` → Supabase Auth
+  - **artista / empresa** → formulario de evaluación → guarda en `solicitudes` → guarda perfil con `estado: "pendiente"` en localStorage → redirige a `/perfil` (muestra banner de espera)
+  - **login**: verifica en orden `accesos_prueba` (localStorage) → `usuarios` → `solicitudes` (si `estado="pendiente"`, entra con estado pendiente) → Supabase Auth
   - Incluye botón ojito (toggle mostrar/ocultar contraseña)
 - `components/BotonAuth.tsx` — en Navbar: muestra "Entrar" si no hay sesión, o avatar amber con dropdown (Mi perfil / Administración [solo admin] / Cerrar sesión) si hay sesión. "Área privada" eliminada del dropdown (placeholder sin datos reales; ruta `/privado` conservada en código).
 - `components/AuthGuard.tsx` — acepta dos tipos de sesión: Supabase Auth (`user` del hook) O sesión de prueba en `localStorage` (clave `erudito-perfil`). Redirige a `/login` solo si ninguna de las dos existe.
 - `components/PaginaPrivado.tsx` — vista bloqueada si no autenticado; contenido premium si autenticado.
+- `components/PerfilPublicoArtista.tsx` — perfil público de artista (client). Lookup en 3 pasos: (1a) `usuarios` por `slug` exacto, (1b) `usuarios` por `nombre ILIKE` (artistas sin slug asignado), (2) tabla `artistas` por `nombre ILIKE` (artistas seeded/históricos). Usa `.maybeSingle()` en todas las queries — nunca `.single()` (lanza 406 si no hay filas). Si se encuentra en `artistas`, carga obras vía `?id_artista=N`; si en `usuarios`, vía `?email=X`.
+- `components/PerfilPublicoEmpresa.tsx` — perfil público de galería/empresa (client). Lookup en 2 pasos: (1a) `usuarios` por `slug` exacto, (1b) `usuarios` por `nombre ILIKE` (empresas sin slug). Usa `.maybeSingle()`. Carga obras vía `/api/empresa/obras?email=X`.
 - `components/PanelAdmin.tsx` — panel de administración con **layout sidebar + contenido**. Acceso solo si `perfil.rol === "admin"`. `SeccionAdmin = "dashboard" | "obras" | "solicitudes" | "usuarios" | "cocina" | "eventos"`. **Sidebar 220px**: logo ERUDITO/Panel admin, 6 nav items con icono y badge amber para pendientes, perfil + cerrar sesión al fondo. Desktop: `sticky top-0 h-full` (flujo flex). Mobile: drawer `fixed inset-y-0 z-50` con overlay `z-40`. **Topbar sticky**: hamburguesa (mobile), breadcrumb "Admin / {sección}", badge Administrador. **Secciones vía `renderContenido()`**: Dashboard (stats × 4, alertas clickeables, tabla últimas obras, infra), Obras (tarjetas pendientes con imagen, botones Aprobar/Rechazar vía `PATCH /api/admin/obras`), Solicitudes (tarjetas con rol badge, Aprobar crea en `usuarios`, Rechazar abre `ModalRechazo` con textarea motivo + llama a `/api/notificar-solicitud`), Usuarios (tabla con chips filtro por rol, datos de `GET /api/admin/usuarios`), Cocina (placeholder próximamente), Eventos (grid de eventos). **Realtime**: suscripción `postgres_changes` en `solicitudes` INSERT — nuevas solicitudes en vivo con toast.
+
+## Realtime
+
+- `components/RealtimeRefresh.tsx` — componente client invisible. Recibe `tablas: string[]`, suscribe a `postgres_changes` de Supabase Realtime para cada tabla y llama `router.refresh()` en cualquier evento (`INSERT`, `UPDATE`, `DELETE`). Fuerza que los Server Components rerenderizen con datos frescos sin recargar la página. **Requisito**: las tablas deben estar habilitadas en Supabase Dashboard → Database → Publications → `supabase_realtime`. Montado en páginas server: home, artistas, catálogos físicos/digitales, eventos.
 
 ## Componentes
 
@@ -114,7 +122,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - Esquema completo en `database/schema.sql` (sincronizado con producción — sept 2026). Cubre todas las tablas activas, RLS, índices, RPC y referencia de Storage. Sirve como fuente de verdad para migrar a otro servicio o modelar en NoSQL.
 - Tabla `perfiles` — vinculada a `auth.users` (FK uuid). Campos: `rol` (`'artista'|'comprador'|'empresa'|'admin'|'productor'`), `nombre`, `bio`, `especialidad`, `pais`, `slug`, `avatar_url`, `banner_url`. RLS activo.
 - Tabla `artistas` — 13 artistas (ids 5–17). Columnas: `id_artista`, `nombre`, `vida`, `origen`, `foto_perfil`, `biografia`. RLS: select público.
-- Tabla `obras` — 15 obras (ids 9–23) + obras de artistas/empresas de plataforma. `id_artista` **nullable**. Col `artista_email` (text, nullable) para obras de artistas registrados vía plataforma. Col `empresa_email` (text, nullable) para obras publicadas por galerías/empresas. Col `nombre_artista` (text, nullable) para el nombre del artista representado por la empresa. Col `vistas` (integer default 0). Col `estado` (text, check `'pendiente'|'aprobada'|'rechazada'`, default `'aprobada'`). Constraint `obras_tipo_check`: `tipo IN ('Físico','JPG Certificado','Edición limitada','Impresión Oficial')`. RLS: select público. Las obras subidas por usuarios van con `estado='pendiente'` y requieren aprobación del admin via `/api/admin/obras`.
+- Tabla `obras` — 15 obras (ids 9–23) + obras de artistas/empresas de plataforma. `id_artista` **nullable**. Col `artista_email` (text, nullable) para obras de artistas registrados vía plataforma. Col `empresa_email` (text, nullable) para obras publicadas por galerías/empresas. Col `nombre_artista` (text, nullable) para el nombre del artista representado por la empresa **o el nombre del artista de plataforma** (guardado al insertar desde `/api/artista/obras`). Col `avatar_artista` (text, nullable) para el avatar del artista de plataforma (guardado al insertar; requiere `ALTER TABLE obras ADD COLUMN IF NOT EXISTS avatar_artista text;`). Col `vistas` (integer default 0). Col `estado` (text, check `'pendiente'|'aprobada'|'rechazada'`, default `'aprobada'`). Constraint `obras_tipo_check`: `tipo IN ('Físico','JPG Certificado','Edición limitada','Impresión Oficial')`. RLS: select público. Las obras subidas por usuarios van con `estado='pendiente'` y requieren aprobación del admin via `/api/admin/obras`.
 - Tabla `usuarios` — usuarios sin Supabase Auth. PK: `email`. Col `slug` (texto único por empresa). RLS: select+insert público.
 - Tabla `solicitudes` — solicitudes artistas/empresas. Col `motivo TEXT` (nullable) para el motivo de rechazo escrito por el admin. Realtime habilitado.
 - Tabla `resenas` — comentarios por obra, anti-duplicado por email en API.
@@ -127,7 +135,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - Bucket Storage `perfiles` — público. Estructura: `{clave}/{tipo}.webp` donde `clave` = email o slug normalizado. **Las subidas van SIEMPRE por `/api/perfil/imagen`** (Route Handler con service role) — nunca directo desde cliente. Esto permite que cuentas `accesos_prueba` (localStorage, sin JWT) suban imágenes igual que cuentas Supabase Auth. Canvas API (quality 0.85) hace la conversión a WebP en browser antes de enviar. Usado por `MiPerfilArtista`, `MiPerfilEmpresa` y `PerfilComprador`.
 - Tabla `productos_cocina` — 17 productos gastronómicos. Cols: `id`, `nombre`, `productor`, `origen`, `descripcion`, `imagen` (URL picsum/Storage), `precio`, `unidad`, `categoria`, `destacado`, `activo`, `productor_email` (FK → email del productor en `accesos_prueba`/`auth.users`), `created_at`. RLS: select público con `activo=true`. Constraints: `perfiles_rol_check` y `accesos_prueba_rol_check` incluyen `'productor'`. 17 cuentas productor en `seeds_test.sql` (UUIDs `55555555-...`, contraseña Test1234).
 - Confirmación de email **desactivada** (Authentication → Providers → Email).
-- `lib/db.ts` — mappers `mapArtista`, `mapObra`. Funciones: `getArtistas()`, `getFichas()`, `getCarousel()` (top 4 por vistas), `incrementarVistas(id)`.
+- `lib/db.ts` — mappers `mapArtista`, `mapObra`. Funciones: `getArtistas()`, `getFichas()`, `getFichasNuevas(limite?)` (últimas obras aprobadas, orden desc por id_obra), `getCarousel()` (top 4 por vistas), `incrementarVistas(id)`. `mapFicha` usa `row.nombre_artista` y `row.avatar_artista` como fallback cuando la obra no tiene `id_artista` (artistas de plataforma).
 - `lib/supabase-server.ts` — `getServerSupabase()`: cliente con service role key. Solo para Route Handlers. **Nunca importar en componentes cliente.**
 
 ## Datos
@@ -174,8 +182,8 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 ## API Routes
 
-- `app/api/upload/route.ts` — sube imagen al bucket Supabase Storage. Recibe `FormData` + query `?carpeta=X`. Devuelve `{ url }`.
-- `app/api/perfil/imagen/route.ts` — sube avatar o banner de perfil al bucket `perfiles`. Recibe `FormData`: `file` (WebP), `tipo` (`"avatar"|"banner"`), `clave` (email o slug). Usa service role — no requiere JWT. Devuelve `{ url }` con cache-busting. Punto de entrada único para `MiPerfilArtista`, `MiPerfilEmpresa` y `PerfilComprador`.
+- `app/api/upload/route.ts` — sube imagen al bucket Supabase Storage. Recibe `FormData` + query `?carpeta=X`. Devuelve `{ url }`. Usa **service role** (`getServerSupabase()`) — no anon key — para evitar error RLS en Storage.
+- `app/api/perfil/imagen/route.ts` — sube avatar o banner de perfil al bucket `perfiles`. Recibe `FormData`: `file` (WebP), `tipo` (`"avatar"|"banner"`), `clave` (email o slug), `email?` (para sincronizar). Usa service role — no requiere JWT. Devuelve `{ url }` con cache-busting. Al subir: si `tipo="avatar"` sincroniza `usuarios.avatar_url` + `obras.avatar_artista`; si `tipo="banner"` sincroniza `usuarios.banner_url`. Ambos se sincronizan de inmediato sin esperar "Guardar cambios".
 - `app/api/buscar/route.ts` — búsqueda server-side. GET `?q=X` (mín 2 chars). ILIKE en `obras` y `artistas`. Cache 15s. Devuelve `{ obras, artistas }`.
 - `app/api/resenas/route.ts` — GET `?obra_id=X` (cache 30s) / POST (insert con anti-duplicado por email, 409 si ya reseñó). Usa cliente anon.
 - `app/api/notificar-solicitud/route.ts` — POST `{ email, nombre, rol, estado, motivo? }`. Llama Resend API. FROM: `notificaciones@erudito-galeria.vercel.app`. Email de rechazo incluye bloque con `motivo` si se proporcionó.
@@ -184,10 +192,10 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `app/api/newsletter/route.ts` — POST `{ email }`. Upsert en tabla `suscriptores`. Usa service role.
 - `app/api/contacto/route.ts` — POST `{ nombre, email, asunto, mensaje }`. Inserta en `contactos` + email al admin vía Resend. Usa service role.
 - `app/api/registros-eventos/route.ts` — POST `{ evento_id, nombre, email, telefono? }`. Inserta en `registros_eventos`. Usa service role.
-- `app/api/artista/obras/route.ts` — CRUD de obras para artistas de plataforma. GET `?email=X` / POST / PUT / DELETE (body JSON). Verifica que email exista en `usuarios`. Usa service role. Retorna `ObraPropia` mapeada desde `obras`.
+- `app/api/artista/obras/route.ts` — CRUD de obras para artistas de plataforma. GET `?email=X` (artistas en `usuarios`) o `?id_artista=N` (artistas seeded en tabla `artistas`). POST / PUT / DELETE (body JSON). Verifica que email exista en `usuarios`. Usa service role. Retorna `ObraPropia` mapeada desde `obras`.
 - `app/api/empresa/obras/route.ts` — CRUD de obras para galerías/empresas. Idéntico patrón que artista/obras. GET `?email=X` / POST / PUT / DELETE (body JSON). Verifica que email exista en `usuarios` con `rol = "empresa"`. Usa `empresa_email` y `nombre_artista` en tabla `obras`. Retorna `ObraEmpresa` mapeada.
 - `app/api/admin/obras/route.ts` — GET: obras con `estado='pendiente'` (para PanelAdmin). PATCH `{ id, estado }`: aprueba (`'aprobada'`) o rechaza (`'rechazada'`). Usa service role.
-- `app/api/admin/usuarios/route.ts` — GET: cruza `auth.admin.listUsers()` (service role) con `perfiles` (id, rol, nombre, especialidad, pais, slug). Devuelve `{ usuarios: UsuarioAdmin[] }` ordenados: admin primero, luego por `created_at` desc. Usado por PanelAdmin sección Usuarios.
+- `app/api/admin/usuarios/route.ts` — GET: consulta **ambas fuentes en paralelo** — tabla `usuarios` (cuentas localStorage/solicitudes aprobadas) + `auth.admin.listUsers()` + `perfiles` (Supabase Auth). Fusiona por email: `usuarios` primero, Supabase Auth actualiza/añade. Devuelve `{ usuarios: UsuarioAdmin[] }` ordenados: admin primero, luego `created_at` desc. La mayoría de artistas/empresas/compradores de la plataforma viven en `usuarios`, no en Supabase Auth — por eso se necesitan ambas fuentes.
 - `app/api/cocina/route.ts` — GET público, `revalidate=60`. Devuelve `{ productos }` desde tabla `productos_cocina` filtrado por `activo=true`. Usado por `app/cocina/page.tsx` (server component).
 - `app/api/migrar-cocina/route.ts` — POST one-shot. Lee productos de `data/cocina.ts`, convierte imágenes de `public/images/cocina/` a WebP con `sharp`, sube al bucket `obras/cocina/[id].webp` y hace upsert en `productos_cocina`. Idempotente (nombres fijos sin timestamp).
 - `app/api/migrar-obras/route.ts` — POST one-shot. Lee fichas de `data/fichas.ts`, convierte todas las imágenes de `public/obras/` a WebP con `sharp`, sube a `obras/[id]/[nombre].webp` y actualiza `imagen_principal` + `perspectivas` en la tabla `obras`. Idempotente.
@@ -200,6 +208,8 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `lib/uploadWebp.ts` — `"use client"`. `convertToWebp()` (Canvas API), `uploadImagenWebp(file, carpeta)`, `uploadWebp(file, urlOrCarpeta)` (alias de compatibilidad).
 
 ## Hooks
+
+- `hooks/usePerfil.ts` — interfaz `DatosPerfil` incluye `estado?: "pendiente" | "aprobado"`. Cuando `estado === "pendiente"`, `PaginaPerfil` muestra `BannerPendiente` en lugar del perfil editable.
 
 - `hooks/useResenas.ts` — `cargar()` → GET `/api/resenas?obra_id=X`; `agregar()` → POST async, devuelve `{ ok, error? }`. Usa `usePerfil()` para email del usuario.
 - `hooks/useObrasArtista.ts` — migrado de localStorage a Supabase. Internamente usa `usePerfil()` para obtener el email. Llama a `/api/artista/obras` (GET/POST/PUT/DELETE). Retorna `{ obras, listo, agregar, actualizar, eliminar }` — misma interfaz que antes. Tipos: `TamanoObra = "Pequeño"|"Mediano"|"Grande"|"Extra grande"`, `ColorObra = "Cálido"|"Frío"|"Neutro"|"Multicolor"`, `TipoObra = "Físico"|"JPG Certificado"|"Edición limitada"`. Iguales a `useObrasEmpresa`.
@@ -220,16 +230,50 @@ Sin `MP_ACCESS_TOKEN`, `/api/pagos/*` no funciona. El resto ya está operativo.
 
 ## Pendientes
 
+### SQL pendiente de ejecutar en Supabase
+
+```sql
+-- Columna avatar_artista en obras (si no existe aún)
+ALTER TABLE obras ADD COLUMN IF NOT EXISTS avatar_artista text;
+-- Backfill para obras existentes de artistas de plataforma
+UPDATE obras SET avatar_artista = u.avatar_url
+  FROM usuarios u WHERE obras.artista_email = u.email;
+```
+
+También pendiente de sesión 25-08-2026:
+- 17 cuentas productor (`seeds_test.sql`)
+- 17 imágenes cocina (17 `UPDATE` en `productos_cocina`)
+- DELETE obras de empresa@test.com
+
 ### Crítico
 - `MP_ACCESS_TOKEN` — Mercado Pago → Developers → Panel → Credenciales → Access Token (sandbox: `TEST-...`, producción: `APP_USR-...`). Agregar en `.env.local` y Vercel.
-
-### Rotos conocidos (por atacar)
-_(todos resueltos — ver mejoras futuras para próximos pasos)_
 
 ### Mejoras futuras (posibles)
 - Fotos reales de artistas (reemplazar picsum.photos).
 - Bottom nav móvil, CSV export admin, búsqueda con IA (Groq).
 - Autenticación con hash de contraseña real (bcrypt) — actualmente texto plano en `usuarios.clave`.
+- Gestión de productos cocina en panel admin (sección "Cocina" placeholder).
+- "Mi colección" en PerfilComprador (placeholder vacío hasta sistema de compras).
+- Reactivar `/privado` cuando subastas y colección tengan datos reales.
+
+## Convenciones críticas
+
+### `.maybeSingle()` vs `.single()`
+Usar **siempre `.maybeSingle()`** en queries donde el row puede no existir. `.single()` lanza error 406 cuando retorna 0 filas; en un `try/catch { /* noop */ }` eso silencia el error y salta el fallback. `.maybeSingle()` retorna `{ data: null, error: null }` de forma segura.
+
+### Sistema dual de auth
+La plataforma tiene dos sistemas de identidad paralelos:
+- **Tabla `usuarios`** (PK: email): artistas/empresas/compradores aprobados vía solicitudes. Auth por `clave` en texto plano (localStorage). La mayoría de usuarios de la plataforma viven aquí.
+- **Tabla `perfiles`** (FK: `auth.users.id`): usuarios de Supabase Auth. Solo quienes se registraron con email+password directo en Supabase. Perfil privado lee de aquí si hay sesión JWT; si no, lee de localStorage.
+
+Implicación: las rutas de admin o públicas que necesiten todos los usuarios deben consultar **ambas** fuentes (`usuarios` + `auth.admin.listUsers()`).
+
+### Slugs de artistas vs empresas
+- **Artistas**: `slug = null` al aprobarse. Se asigna la primera vez que el artista guarda cambios en `/perfil`. Hasta entonces, el perfil público se localiza por `nombre ILIKE`.
+- **Empresas**: slug generado desde `nombre` al aprobarse. Disponible desde el primer login.
+
+### Banner/avatar en perfil público
+`banner_url` y `avatar_url` viven en `usuarios`. Se sincronizan automáticamente en `/api/perfil/imagen` al subir la imagen — sin necesidad de "Guardar cambios". Los externos (Wikimedia, etc.) suelen bloquear hotlinking; usar siempre URLs de Supabase Storage.
 
 ## Notas del entorno (Windows)
 

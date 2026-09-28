@@ -8,16 +8,17 @@ const supabaseAdmin = createClient(
 
 export async function POST(req: NextRequest) {
   const form = await req.formData();
-  const file  = form.get("file") as File | null;
-  const tipo  = form.get("tipo") as string | null;   // "avatar" | "banner"
-  const clave = form.get("clave") as string | null;  // email o slug (ruta única)
+  const file   = form.get("file") as File | null;
+  const tipo   = form.get("tipo") as string | null;   // "avatar" | "banner"
+  const clave  = form.get("clave") as string | null;  // email o slug (ruta única)
+  const email  = form.get("email") as string | null;  // opcional: para sincronizar obras
+  const nombre = form.get("nombre") as string | null; // opcional: para obras seeded
 
   if (!file || !tipo || !clave) {
     return NextResponse.json({ error: "Faltan campos" }, { status: 400 });
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  // Carpeta basada en clave (email o slug) normalizada
   const carpeta = clave.replace(/[^a-z0-9@._-]/gi, "_").toLowerCase();
   const path = `${carpeta}/${tipo}.webp`;
 
@@ -31,6 +32,37 @@ export async function POST(req: NextRequest) {
 
   const { data } = supabaseAdmin.storage.from("perfiles").getPublicUrl(path);
   const url = `${data.publicUrl}?t=${Date.now()}`;
+
+  // Sincroniza banner inmediatamente en usuarios
+  if (tipo === "banner" && email) {
+    await supabaseAdmin.from("usuarios")
+      .update({ banner_url: url })
+      .eq("email", email);
+  }
+
+  // Sincroniza avatar inmediatamente en usuarios y obras para que el home se actualice
+  if (tipo === "avatar" && email) {
+    // Actualiza usuarios.avatar_url
+    await supabaseAdmin.from("usuarios")
+      .update({ avatar_url: url })
+      .eq("email", email);
+
+    // Actualiza obras por artista_email (artistas de plataforma)
+    await supabaseAdmin.from("obras")
+      .update({ avatar_artista: url })
+      .eq("artista_email", email);
+
+    // Actualiza obras seeded enlazadas por id_artista (tabla artistas por nombre)
+    if (nombre) {
+      const { data: ar } = await supabaseAdmin
+        .from("artistas").select("id_artista").eq("nombre", nombre).maybeSingle();
+      if (ar?.id_artista) {
+        await supabaseAdmin.from("obras")
+          .update({ avatar_artista: url })
+          .eq("id_artista", ar.id_artista);
+      }
+    }
+  }
 
   return NextResponse.json({ url });
 }

@@ -24,23 +24,38 @@ export default function PerfilPublicoEmpresa({ slug }: Props) {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await supabase
+        const nombreAprox = slug.replace(/-/g, " ");
+
+        // 1a. Buscar por slug exacto
+        let { data } = await supabase
           .from("usuarios")
           .select("nombre, bio, especialidad, pais, slug, avatar_url, banner_url, email")
           .eq("slug", slug)
           .eq("rol", "empresa")
-          .single();
+          .maybeSingle();
+
+        // 1b. Fallback: buscar por nombre (empresas sin slug asignado)
+        if (!data) {
+          const { data: porNombre } = await supabase
+            .from("usuarios")
+            .select("nombre, bio, especialidad, pais, slug, avatar_url, banner_url, email")
+            .ilike("nombre", nombreAprox)
+            .eq("rol", "empresa")
+            .maybeSingle();
+          data = porNombre;
+        }
+
         if (data) {
           setPerfil({
             rol: "empresa",
-            nombre: data.nombre ?? "",
-            bio: data.bio ?? "",
+            nombre:       data.nombre ?? "",
+            bio:          data.bio ?? "",
             especialidad: data.especialidad ?? "",
-            pais: data.pais ?? "",
-            email: data.email ?? "",
-            slug: data.slug ?? slug,
-            avatar_url: data.avatar_url ?? undefined,
-            banner_url: data.banner_url ?? undefined,
+            pais:         data.pais ?? "",
+            email:        data.email ?? "",
+            slug:         data.slug ?? slug,
+            avatar_url:   data.avatar_url ?? undefined,
+            banner_url:   data.banner_url ?? undefined,
           });
           const obrasRes = await fetch(`/api/empresa/obras?email=${encodeURIComponent(data.email ?? "")}`).then((r) => r.json()).catch(() => ({ obras: [] }));
           const todasObras: ObraEmpresa[] = obrasRes.obras ?? [];

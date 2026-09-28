@@ -16,30 +16,53 @@ export async function GET() {
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ usuarios: [] });
 
-  // Perfiles de la plataforma (Supabase Auth)
-  const [{ data: perfiles }, { data: { users: authUsers } = { users: [] } }] =
-    await Promise.all([
-      db.from("perfiles").select("id, rol, nombre, especialidad, pais, slug"),
-      db.auth.admin.listUsers({ perPage: 1000 }),
-    ]);
+  // Consulta ambas fuentes en paralelo
+  const [
+    { data: perfiles },
+    { data: { users: authUsers } = { users: [] } },
+    { data: usuariosLocal },
+  ] = await Promise.all([
+    db.from("perfiles").select("id, rol, nombre, especialidad, pais, slug"),
+    db.auth.admin.listUsers({ perPage: 1000 }),
+    db.from("usuarios").select("email, rol, nombre, especialidad, pais, slug, created_at"),
+  ]);
 
-  const perfilMap = new Map(
-    (perfiles ?? []).map((p) => [p.id as string, p])
-  );
+  const map = new Map<string, UsuarioAdmin>();
 
-  const usuarios: UsuarioAdmin[] = authUsers.map((u) => {
+  // 1. Usuarios de la tabla "usuarios" (localStorage auth)
+  for (const u of usuariosLocal ?? []) {
+    map.set(u.email as string, {
+      id:           u.email as string,
+      email:        u.email as string,
+      rol:          (u.rol as string) ?? "—",
+      nombre:       (u.nombre as string) ?? "",
+      especialidad: (u.especialidad as string) ?? "",
+      pais:         (u.pais as string) ?? "",
+      slug:         (u.slug as string | null) ?? null,
+      created_at:   (u.created_at as string) ?? new Date(0).toISOString(),
+    });
+  }
+
+  // 2. Usuarios de Supabase Auth (con sus perfiles) — actualiza o añade
+  const perfilMap = new Map((perfiles ?? []).map((p) => [p.id as string, p]));
+  for (const u of authUsers) {
+    const email = u.email ?? "";
     const p = perfilMap.get(u.id);
-    return {
-      id:          u.id,
-      email:       u.email ?? "",
-      rol:         (p?.rol as string) ?? "—",
-      nombre:      (p?.nombre as string) ?? "",
-      especialidad:(p?.especialidad as string) ?? "",
-      pais:        (p?.pais as string) ?? "",
-      slug:        (p?.slug as string | null) ?? null,
-      created_at:  u.created_at,
-    };
-  });
+    // Si ya existe por la tabla usuarios, actualiza con datos de perfil
+    const existing = map.get(email);
+    map.set(email, {
+      id:           u.id,
+      email,
+      rol:          (p?.rol as string) ?? existing?.rol ?? "—",
+      nombre:       (p?.nombre as string) ?? existing?.nombre ?? "",
+      especialidad: (p?.especialidad as string) ?? existing?.especialidad ?? "",
+      pais:         (p?.pais as string) ?? existing?.pais ?? "",
+      slug:         (p?.slug as string | null) ?? existing?.slug ?? null,
+      created_at:   u.created_at ?? existing?.created_at ?? new Date(0).toISOString(),
+    });
+  }
+
+  const usuarios = [...map.values()];
 
   // Ordenar: admin primero, luego por created_at desc
   usuarios.sort((a, b) => {

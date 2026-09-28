@@ -34,28 +34,66 @@ export default function PerfilPublicoArtista({ slug }: Props) {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await supabase
+        const nombreAprox = slug.replace(/-/g, " ");
+
+        // 1a. Buscar en usuarios por slug exacto
+        let { data } = await supabase
           .from("usuarios")
           .select("nombre, bio, especialidad, pais, slug, avatar_url, banner_url, email")
           .eq("slug", slug)
           .eq("rol", "artista")
-          .single();
+          .maybeSingle();
+
+        // 1b. Fallback: buscar en usuarios por nombre (artistas sin slug asignado)
+        if (!data) {
+          const { data: porNombre } = await supabase
+            .from("usuarios")
+            .select("nombre, bio, especialidad, pais, slug, avatar_url, banner_url, email")
+            .ilike("nombre", nombreAprox)
+            .eq("rol", "artista")
+            .maybeSingle();
+          data = porNombre;
+        }
 
         if (data) {
           setArtista({
-            nombre:      data.nombre ?? "",
-            bio:         data.bio ?? "",
+            nombre:       data.nombre ?? "",
+            bio:          data.bio ?? "",
             especialidad: data.especialidad ?? "",
-            pais:        data.pais ?? "",
-            slug:        data.slug ?? slug,
-            avatar_url:  data.avatar_url ?? undefined,
-            banner_url:  data.banner_url ?? undefined,
-            email:       data.email ?? "",
+            pais:         data.pais ?? "",
+            slug:         data.slug ?? slug,
+            avatar_url:   data.avatar_url ?? undefined,
+            banner_url:   data.banner_url ?? undefined,
+            email:        data.email ?? "",
           });
           const res = await fetch(`/api/artista/obras?email=${encodeURIComponent(data.email ?? "")}`)
             .then(r => r.json()).catch(() => ({ obras: [] }));
           const todasObras: ObraPropia[] = res.obras ?? [];
           setObras(todasObras.filter((o: ObraPropia) => o.estado === "aprobada"));
+        } else {
+          // 2. Fallback: buscar en tabla artistas (artistas seeded / históricos)
+          const { data: seeded } = await supabase
+            .from("artistas")
+            .select("id_artista, nombre, biografia, especialidad, origen, foto_perfil")
+            .ilike("nombre", nombreAprox)
+            .maybeSingle();
+
+          if (seeded) {
+            setArtista({
+              nombre:       seeded.nombre ?? "",
+              bio:          seeded.biografia ?? "",
+              especialidad: seeded.especialidad ?? "",
+              pais:         seeded.origen ?? "",
+              slug,
+              avatar_url:   seeded.foto_perfil ?? undefined,
+              banner_url:   undefined,
+              email:        "",
+            });
+            const res = await fetch(`/api/artista/obras?id_artista=${seeded.id_artista}`)
+              .then(r => r.json()).catch(() => ({ obras: [] }));
+            const todasObras: ObraPropia[] = res.obras ?? [];
+            setObras(todasObras.filter((o: ObraPropia) => o.estado === "aprobada"));
+          }
         }
       } catch { /* noop */ }
       setListo(true);
