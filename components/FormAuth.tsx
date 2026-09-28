@@ -100,6 +100,7 @@ export default function FormAuth({ modo }: Props) {
     pais: string; email: string; slug?: string; avatar_url: string;
   }) {
     localStorage.setItem("erudito-perfil", JSON.stringify(datos));
+    window.dispatchEvent(new CustomEvent("erudito-perfil-actualizado", { detail: datos }));
   }
 
   async function submit(e: React.FormEvent) {
@@ -160,15 +161,20 @@ export default function FormAuth({ modo }: Props) {
       // 3. Solicitudes pendientes o rechazadas
       const { data: solicitud } = await supabase
         .from("solicitudes")
-        .select("estado")
+        .select("*")
         .eq("email", email)
         .eq("clave", password)
         .maybeSingle();
 
       if (solicitud) {
         if (solicitud.estado === "pendiente") {
-          setErrorClave("general");
-          setErrorMsg("Tu solicitud está siendo revisada por el administrador. Te contactaremos pronto.");
+          guardarLocal({
+            rol: solicitud.rol, nombre: solicitud.nombre ?? "", bio: solicitud.bio ?? "",
+            especialidad: solicitud.especialidad ?? "", pais: solicitud.pais ?? "",
+            email, avatar_url: "", estado: "pendiente",
+          });
+          toast("Sesión iniciada — solicitud en revisión", { icono: "⏳" });
+          router.push("/perfil");
           return;
         }
         if (solicitud.estado === "rechazado") {
@@ -264,7 +270,13 @@ export default function FormAuth({ modo }: Props) {
         }
         throw error;
       }
-      setPaso("enviada");
+      guardarLocal({
+        rol: rolElegido!, nombre, bio, especialidad, pais, email,
+        avatar_url: "", slug: rolElegido === "artista" ? "mi-perfil" : "mi-galeria",
+        estado: "pendiente",
+      });
+      toast("¡Solicitud enviada! El equipo de ERUDITO la revisará pronto.", { icono: "📋" });
+      router.push("/perfil");
     } catch (err: unknown) {
       const e = err as { message?: string };
       setErrorClave("general");

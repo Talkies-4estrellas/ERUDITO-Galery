@@ -3,7 +3,8 @@ import Navbar from "@/components/Navbar";
 import Carousel from "@/components/Carousel";
 import SeccionEventos from "@/components/SeccionEventos";
 import FilaFichas from "@/components/FilaFichas";
-import { getFichas, getEventos, getCarousel } from "@/lib/db";
+import RealtimeRefresh from "@/components/RealtimeRefresh";
+import { getFichas, getFichasNuevas, getEventos, getCarousel } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -20,18 +21,21 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [fichas, eventos, carousel] = await Promise.all([
+  const [fichas, nuevas, eventos, carousel] = await Promise.all([
     getFichas(),
+    getFichasNuevas(8),
     getEventos(),
     getCarousel(),
   ]);
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-950">
+      <RealtimeRefresh tablas={["obras", "artistas", "eventos"]} />
       <Navbar />
       <main className="flex flex-1 flex-col">
         <Carousel obras={carousel} />
         <SeccionEventos eventos={eventos} />
+        <FilaFichas titulo="Nuevos" lista={nuevas} />
         <FilaFichas lista={fichas} />
       </main>
     </div>

@@ -30,7 +30,9 @@ function mapFicha(row: any): FichaArte {
     descripcion: row.descripcion ?? "",
     estrellas: row.estrellas ?? 5,
     imagen: row.imagen_principal ?? "",
-    artista: row.artistas ? mapArtista(row.artistas) : { id: 0, nombre: "Desconocido", vida: "", origen: "", foto: "", bio: "" },
+    artista: row.artistas
+      ? { ...mapArtista(row.artistas), foto: row.avatar_artista || mapArtista(row.artistas).foto }
+      : { id: 0, nombre: row.nombre_artista || row.artista_email?.split("@")[0] || "Artista", vida: "", origen: "", foto: row.avatar_artista || `https://picsum.photos/seed/${row.artista_email ?? row.id_obra}/400/400`, bio: "" },
     perspectivas: (row.perspectivas as string[]) ?? [],
     tamano: row.tamano,
     color: row.color,
@@ -97,12 +99,22 @@ export async function getArtista(id: number): Promise<Artista | null> {
 
 // ── Obras / Fichas ─────────────────────────────────────────────
 
+export async function getFichasNuevas(limite = 8): Promise<FichaArte[]> {
+  const { data, error } = await supabase
+    .from("obras")
+    .select("*, artistas(*)")
+    .eq("estado", "aprobada")
+    .order("id_obra", { ascending: false })
+    .limit(limite);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(mapFicha);
+}
+
 export async function getFichas(): Promise<FichaArte[]> {
   const { data, error } = await supabase
     .from("obras")
     .select("*, artistas(*)")
     .eq("estado", "aprobada")
-    .not("id_artista", "is", null)
     .order("id_obra");
   if (error) throw new Error(error.message);
   return (data ?? []).map(mapFicha);

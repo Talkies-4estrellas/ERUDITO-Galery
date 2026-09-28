@@ -1,6 +1,7 @@
 ﻿import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import PaginaArtistas from "@/components/PaginaArtistas";
+import RealtimeRefresh from "@/components/RealtimeRefresh";
 import { getArtistas, getFichas } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,7 @@ export default async function Artistas() {
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-950">
+      <RealtimeRefresh tablas={["artistas", "obras"]} />
       <Navbar />
       <main className="flex flex-1 flex-col">
         <PaginaArtistas artistas={artistas} fichas={fichas} />

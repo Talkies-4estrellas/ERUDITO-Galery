@@ -5,6 +5,11 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 
 const CLAVE_LOCAL = "erudito-perfil";
+const EVENTO_PERFIL = "erudito-perfil-actualizado";
+
+function emitirPerfil(datos: DatosPerfil | null) {
+  window.dispatchEvent(new CustomEvent(EVENTO_PERFIL, { detail: datos }));
+}
 
 export type Rol = "artista" | "comprador" | "empresa" | "admin" | "productor";
 
@@ -18,6 +23,7 @@ export interface DatosPerfil {
   slug?: string;
   avatar_url?: string;
   banner_url?: string;
+  estado?: "pendiente" | "aprobado";
 }
 
 export function generarSlug(nombre: string): string {
@@ -55,7 +61,13 @@ export function usePerfil() {
         setPerfil(null);
       }
       setListo(true);
-      return;
+
+      // Sincroniza con otras instancias del hook en la misma página
+      function onActualizado(e: Event) {
+        setPerfil((e as CustomEvent<DatosPerfil | null>).detail);
+      }
+      window.addEventListener(EVENTO_PERFIL, onActualizado);
+      return () => window.removeEventListener(EVENTO_PERFIL, onActualizado);
     }
 
     supabase
@@ -107,6 +119,7 @@ export function usePerfil() {
       }
 
       setPerfil(nuevo);
+      emitirPerfil(nuevo);
     },
     [user]
   );
@@ -147,6 +160,20 @@ export function usePerfil() {
             avatar_url: final.avatar_url ?? null,
             banner_url: final.banner_url ?? null,
           }, { onConflict: "email" });
+          // Mantiene avatar y nombre en las obras del artista sincronizados
+          if (final.rol === "artista") {
+            await supabase.from("obras")
+              .update({ avatar_artista: final.avatar_url ?? null, nombre_artista: final.nombre })
+              .eq("artista_email", user.email);
+            // También sincroniza obras seeded enlazadas por id_artista (tabla artistas)
+            const { data: ar } = await supabase
+              .from("artistas").select("id_artista").eq("nombre", final.nombre).maybeSingle();
+            if (ar?.id_artista) {
+              await supabase.from("obras")
+                .update({ avatar_artista: final.avatar_url ?? null })
+                .eq("id_artista", ar.id_artista);
+            }
+          }
         }
       } else {
         localStorage.setItem(CLAVE_LOCAL, JSON.stringify(final));
@@ -161,10 +188,25 @@ export function usePerfil() {
             avatar_url: final.avatar_url ?? null,
             banner_url: final.banner_url ?? null,
           }).eq("email", final.email);
+          // Mantiene avatar y nombre en las obras del artista sincronizados
+          if (final.rol === "artista") {
+            await supabase.from("obras")
+              .update({ avatar_artista: final.avatar_url ?? null, nombre_artista: final.nombre })
+              .eq("artista_email", final.email);
+            // También sincroniza obras seeded enlazadas por id_artista (tabla artistas)
+            const { data: ar } = await supabase
+              .from("artistas").select("id_artista").eq("nombre", final.nombre).maybeSingle();
+            if (ar?.id_artista) {
+              await supabase.from("obras")
+                .update({ avatar_artista: final.avatar_url ?? null })
+                .eq("id_artista", ar.id_artista);
+            }
+          }
         }
       }
 
       setPerfil({ ...final });
+      emitirPerfil({ ...final });
     },
     [user]
   );
@@ -172,6 +214,7 @@ export function usePerfil() {
   const cerrarSesion = useCallback(async () => {
     localStorage.removeItem(CLAVE_LOCAL);
     setPerfil(null);
+    emitirPerfil(null);
     await supabase.auth.signOut();
     window.dispatchEvent(new Event("erudito-sesion-cerrada"));
   }, []);

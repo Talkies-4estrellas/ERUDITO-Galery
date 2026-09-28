@@ -2,6 +2,7 @@
 import { Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import PaginaEventos from "@/components/PaginaEventos";
+import RealtimeRefresh from "@/components/RealtimeRefresh";
 import { getEventos } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,7 @@ export default async function EventosPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-950">
+      <RealtimeRefresh tablas={["eventos"]} />
       <Navbar />
       <main className="flex-1">
         <Suspense>

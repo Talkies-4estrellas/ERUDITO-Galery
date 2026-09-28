@@ -60,6 +60,181 @@ async function subirImagen(file: File, tipo: "avatar" | "banner", clave: string)
   return url;
 }
 
+/* ── Modal de recorte ─────────────────────────────────────────── */
+function CropModal({ file, tipo, onConfirm, onCerrar }: {
+  file: File;
+  tipo: "avatar" | "banner";
+  onConfirm: (blob: Blob) => void;
+  onCerrar: () => void;
+}) {
+  const isAvatar = tipo === "avatar";
+  const OW = isAvatar ? 400 : 1200;
+  const OH = isAvatar ? 400 : 400;
+
+  const [src, setSrc] = useState("");
+  const [nw, setNw] = useState(0);
+  const [nh, setNh] = useState(0);
+  const [cw, setCw] = useState(0);
+  const [ch, setCh] = useState(0);
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const isDragging = useRef(false);
+  const dragOrigin = useRef({ mx: 0, my: 0, ox: 0, oy: 0 });
+  const imgRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setSrc(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      setScale(s => Math.max(0.1, Math.min(8, s * (1 - e.deltaY * 0.001))));
+    };
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, []);
+
+  function clampedOffset(ox: number, oy: number, s: number, _cw: number, _ch: number) {
+    if (nw === 0 || _cw === 0) return { x: ox, y: oy };
+    const maxX = Math.max(0, (nw * s - _cw) / 2);
+    const maxY = Math.max(0, (nh * s - _ch) / 2);
+    return { x: Math.max(-maxX, Math.min(maxX, ox)), y: Math.max(-maxY, Math.min(maxY, oy)) };
+  }
+
+  function applyZoom(s: number) {
+    const newS = Math.max(0.1, Math.min(8, s));
+    setScale(newS);
+    setOffset(o => clampedOffset(o.x, o.y, newS, cw, ch));
+  }
+
+  function onImgLoad() {
+    const img = imgRef.current;
+    const el = containerRef.current;
+    if (!img || !el) return;
+    const w = el.clientWidth, h = el.clientHeight;
+    setCw(w); setCh(h);
+    setNw(img.naturalWidth); setNh(img.naturalHeight);
+    setScale(Math.max(w / img.naturalWidth, h / img.naturalHeight));
+    setOffset({ x: 0, y: 0 });
+  }
+
+  function startDrag(mx: number, my: number) {
+    isDragging.current = true;
+    dragOrigin.current = { mx, my, ox: offset.x, oy: offset.y };
+  }
+  function moveDrag(mx: number, my: number) {
+    if (!isDragging.current) return;
+    const { mx: sx, my: sy, ox, oy } = dragOrigin.current;
+    setOffset(clampedOffset(ox + mx - sx, oy + my - sy, scale, cw, ch));
+  }
+  function stopDrag() { isDragging.current = false; }
+
+  function confirmar() {
+    const img = imgRef.current;
+    const el = containerRef.current;
+    if (!img || !el || nw === 0) return;
+    const w = el.clientWidth, h = el.clientHeight;
+    const canvas = document.createElement("canvas");
+    canvas.width = OW; canvas.height = OH;
+    const ctx = canvas.getContext("2d")!;
+    ctx.scale(OW / w, OH / h);
+    const imgLeft = w / 2 - (nw * scale) / 2 + offset.x;
+    const imgTop  = h / 2 - (nh * scale) / 2 + offset.y;
+    ctx.drawImage(img, imgLeft, imgTop, nw * scale, nh * scale);
+    canvas.toBlob(blob => { if (blob) onConfirm(blob); }, "image/webp", 0.85);
+  }
+
+  const imgLeft = cw > 0 ? cw / 2 - (nw * scale) / 2 + offset.x : 0;
+  const imgTop  = ch > 0 ? ch / 2 - (nh * scale) / 2 + offset.y : 0;
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-xl rounded-3xl bg-zinc-900 p-6 shadow-2xl ring-1 ring-white/10">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-white">
+              {isAvatar ? "Ajustar logo" : "Ajustar portada"}
+            </p>
+            <p className="text-xs text-zinc-500">Arrastra para mover · rueda del ratón para zoom</p>
+          </div>
+          <button type="button" onClick={onCerrar}
+            className="flex size-8 items-center justify-center rounded-full text-zinc-500 transition hover:bg-white/10 hover:text-white">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div
+          ref={containerRef}
+          className={`relative mx-auto overflow-hidden rounded-2xl bg-zinc-800 cursor-grab active:cursor-grabbing select-none ${isAvatar ? "w-[280px] h-[280px]" : "w-full"}`}
+          style={!isAvatar ? { aspectRatio: "3 / 1" } : undefined}
+          onMouseDown={e => startDrag(e.clientX, e.clientY)}
+          onMouseMove={e => moveDrag(e.clientX, e.clientY)}
+          onMouseUp={stopDrag}
+          onMouseLeave={stopDrag}
+          onTouchStart={e => { const t = e.touches[0]; startDrag(t.clientX, t.clientY); }}
+          onTouchMove={e => { e.preventDefault(); const t = e.touches[0]; moveDrag(t.clientX, t.clientY); }}
+          onTouchEnd={stopDrag}
+        >
+          {src && (
+            <img ref={imgRef} src={src} onLoad={onImgLoad} draggable={false} alt=""
+              style={nw > 0 ? {
+                position: "absolute", width: nw * scale, height: nh * scale,
+                left: imgLeft, top: imgTop, userSelect: "none", pointerEvents: "none",
+              } : { display: "none" }} />
+          )}
+
+          {/* Borde redondeado para logo */}
+          {isAvatar && cw > 0 && (
+            <div className="pointer-events-none absolute inset-0 rounded-2xl ring-2 ring-violet-400/50" />
+          )}
+
+          {/* Guías de tercios para banner */}
+          {!isAvatar && cw > 0 && (
+            <svg width="100%" height="100%" className="pointer-events-none absolute inset-0">
+              <line x1="33.33%" y1="0" x2="33.33%" y2="100%" stroke="rgba(255,255,255,0.13)" strokeWidth="1" />
+              <line x1="66.66%" y1="0" x2="66.66%" y2="100%" stroke="rgba(255,255,255,0.13)" strokeWidth="1" />
+              <line x1="0" y1="33.33%" x2="100%" y2="33.33%" stroke="rgba(255,255,255,0.13)" strokeWidth="1" />
+              <line x1="0" y1="66.66%" x2="100%" y2="66.66%" stroke="rgba(255,255,255,0.13)" strokeWidth="1" />
+              <rect x="1" y="1" width="calc(100% - 2px)" height="calc(100% - 2px)"
+                fill="none" stroke="#8b5cf6" strokeWidth="1.5" strokeOpacity="0.4" />
+            </svg>
+          )}
+        </div>
+
+        <div className="mt-4 flex items-center gap-2">
+          <button type="button" onClick={() => applyZoom(scale * 0.85)}
+            className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white/5 text-lg font-light text-zinc-400 transition hover:bg-white/10 hover:text-white">−</button>
+          <input type="range" min={10} max={500} value={Math.round(scale * 100)}
+            onChange={e => applyZoom(Number(e.target.value) / 100)}
+            className="flex-1 cursor-pointer accent-violet-500" />
+          <button type="button" onClick={() => applyZoom(scale * 1.15)}
+            className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white/5 text-lg font-light text-zinc-400 transition hover:bg-white/10 hover:text-white">+</button>
+          <span className="w-10 text-right text-xs tabular-nums text-zinc-500">{Math.round(scale * 100)}%</span>
+        </div>
+
+        <div className="mt-5 flex gap-3">
+          <button type="button" onClick={confirmar}
+            className="flex-1 rounded-full bg-violet-500 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-400">
+            Aplicar
+          </button>
+          <button type="button" onClick={onCerrar}
+            className="rounded-full bg-white/5 px-6 py-2.5 text-sm text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* Tarjeta de obra publicada por la empresa */
 function TarjetaObraEmpresa({
   obra,
@@ -141,6 +316,9 @@ export default function MiPerfilEmpresa() {
   const [formAjustes, setFormAjustes] = useState<DatosPerfil | null>(null);
   const [subiendoAvatar, setSubiendoAvatar] = useState(false);
   const [subiendoBanner, setSubiendoBanner] = useState(false);
+  const [dragOverAvatar, setDragOverAvatar] = useState(false);
+  const [dragOverBanner, setDragOverBanner] = useState(false);
+  const [cropFile, setCropFile] = useState<{ file: File; tipo: "avatar" | "banner" } | null>(null);
   const [modalObra, setModalObra] = useState<null | "nueva" | string>(null);
   const [pendingAction, setPendingAction] = useState<{
     tipo: "eliminar" | "editar";
@@ -166,17 +344,44 @@ export default function MiPerfilEmpresa() {
     cerrarAjustes();
   }
 
-  async function manejarImagen(e: React.ChangeEvent<HTMLInputElement>, tipo: "avatar" | "banner") {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function procesarArchivo(file: File, tipo: "avatar" | "banner") {
+    if (!file.type.startsWith("image/")) return;
+    setCropFile({ file, tipo });
+  }
+
+  async function confirmarCrop(blob: Blob, tipo: "avatar" | "banner") {
+    setCropFile(null);
     const setSub = tipo === "avatar" ? setSubiendoAvatar : setSubiendoBanner;
     setSub(true);
     try {
       const clave = perfil?.email || perfil?.slug || "empresa";
-      const url = await subirImagen(file, tipo, clave);
+      const form = new FormData();
+      form.append("file", new File([blob], `${tipo}.webp`, { type: "image/webp" }));
+      form.append("tipo", tipo);
+      form.append("clave", clave);
+      if (perfil?.email)  form.append("email",  perfil.email);
+      if (perfil?.nombre) form.append("nombre", perfil.nombre);
+      const res = await fetch("/api/perfil/imagen", { method: "POST", body: form });
+      if (!res.ok) throw new Error("upload");
+      const { url } = await res.json();
       setFormAjustes(prev => prev ? { ...prev, [`${tipo}_url`]: url } : prev);
     } catch { /* el usuario puede reintentar */ }
-    finally { setSub(false); e.target.value = ""; }
+    finally { setSub(false); }
+  }
+
+  function manejarImagen(e: React.ChangeEvent<HTMLInputElement>, tipo: "avatar" | "banner") {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    procesarArchivo(file, tipo);
+    e.target.value = "";
+  }
+
+  function manejarDrop(e: React.DragEvent, tipo: "avatar" | "banner") {
+    e.preventDefault();
+    setDragOverAvatar(false);
+    setDragOverBanner(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) procesarArchivo(file, tipo);
   }
 
   function guardarObra(datos: Omit<ObraEmpresa, "id">) {
@@ -438,7 +643,11 @@ export default function MiPerfilEmpresa() {
                         <div>
                           <p className="mb-2 text-xs font-medium text-zinc-400">Logo</p>
                           <button type="button" onClick={() => avatarRef.current?.click()}
-                            className="group relative flex h-32 w-full items-center justify-center overflow-hidden rounded-2xl bg-zinc-800 ring-1 ring-white/10 transition hover:ring-violet-400/40">
+                            onDragOver={e => { e.preventDefault(); setDragOverAvatar(true); }}
+                            onDragEnter={e => { e.preventDefault(); setDragOverAvatar(true); }}
+                            onDragLeave={() => setDragOverAvatar(false)}
+                            onDrop={e => manejarDrop(e, "avatar")}
+                            className={`group relative flex h-32 w-full items-center justify-center overflow-hidden rounded-2xl bg-zinc-800 ring-1 transition ${dragOverAvatar ? "scale-[1.02] ring-violet-400/60 bg-violet-400/5" : "ring-white/10 hover:ring-violet-400/40"}`}>
                             {formAjustes.avatar_url ? (
                               <img src={formAjustes.avatar_url} alt="" className="size-full object-cover" />
                             ) : (
@@ -446,9 +655,14 @@ export default function MiPerfilEmpresa() {
                                 {iniciales(nombreMostrar)}
                               </div>
                             )}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/55 opacity-0 transition group-hover:opacity-100">
+                            <div className={`absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/55 transition ${dragOverAvatar ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
                               {subiendoAvatar ? (
                                 <span className="text-xs text-white">Subiendo…</span>
+                              ) : dragOverAvatar ? (
+                                <>
+                                  <IconoCamera />
+                                  <span className="text-xs text-white">Suelta para subir</span>
+                                </>
                               ) : (
                                 <>
                                   <IconoCamera />
@@ -465,15 +679,24 @@ export default function MiPerfilEmpresa() {
                         <div>
                           <p className="mb-2 text-xs font-medium text-zinc-400">Portada</p>
                           <button type="button" onClick={() => bannerRef.current?.click()}
-                            className="group relative block h-32 w-full overflow-hidden rounded-2xl ring-1 ring-white/10 transition hover:ring-violet-400/40">
+                            onDragOver={e => { e.preventDefault(); setDragOverBanner(true); }}
+                            onDragEnter={e => { e.preventDefault(); setDragOverBanner(true); }}
+                            onDragLeave={() => setDragOverBanner(false)}
+                            onDrop={e => manejarDrop(e, "banner")}
+                            className={`group relative block h-32 w-full overflow-hidden rounded-2xl ring-1 transition ${dragOverBanner ? "scale-[1.02] ring-violet-400/60 bg-violet-400/5" : "ring-white/10 hover:ring-violet-400/40"}`}>
                             {formAjustes.banner_url ? (
                               <img src={formAjustes.banner_url} alt="" className="h-full w-full object-cover" />
                             ) : (
                               <div className="h-full w-full bg-gradient-to-br from-zinc-800 via-violet-950/40 to-zinc-900" />
                             )}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/55 opacity-0 transition group-hover:opacity-100">
+                            <div className={`absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/55 transition ${dragOverBanner ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
                               {subiendoBanner ? (
                                 <span className="text-xs text-white">Subiendo…</span>
+                              ) : dragOverBanner ? (
+                                <>
+                                  <IconoCamera />
+                                  <span className="text-xs text-white">Suelta para subir</span>
+                                </>
                               ) : (
                                 <>
                                   <IconoCamera />
@@ -617,6 +840,15 @@ export default function MiPerfilEmpresa() {
           </div>
         </div>
       </div>
+
+      {cropFile && (
+        <CropModal
+          file={cropFile.file}
+          tipo={cropFile.tipo}
+          onConfirm={blob => confirmarCrop(blob, cropFile.tipo)}
+          onCerrar={() => setCropFile(null)}
+        />
+      )}
 
       {/* ── Modal de obra ───────────────────────────────────── */}
       {modalObra !== null && (

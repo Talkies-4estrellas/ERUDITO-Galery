@@ -1,6 +1,7 @@
 ﻿import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import PaginaCatalogoSeccion from "@/components/PaginaCatalogoSeccion";
+import RealtimeRefresh from "@/components/RealtimeRefresh";
 import { getFichas } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,7 @@ export default async function CatalogoDigitales() {
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-950">
+      <RealtimeRefresh tablas={["obras"]} />
       <Navbar />
       <main className="flex flex-1 flex-col">
         <PaginaCatalogoSeccion
