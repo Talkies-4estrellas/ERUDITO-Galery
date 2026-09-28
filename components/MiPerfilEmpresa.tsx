@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import NextImage from "next/image";
 import Link from "next/link";
 import { usePerfil, generarSlug, type DatosPerfil } from "@/hooks/usePerfil";
