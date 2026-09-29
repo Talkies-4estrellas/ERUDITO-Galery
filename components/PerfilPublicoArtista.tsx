@@ -131,7 +131,7 @@ export default function PerfilPublicoArtista({ slug }: Props) {
       <div className="relative">
         {artista.banner_url ? (
           <div className="h-48 w-full overflow-hidden sm:h-60">
-            <img src={artista.banner_url} alt="" className="h-full w-full object-cover" />
+            <img src={artista.banner_url} alt="" className="h-full w-full object-cover object-top" />
           </div>
         ) : (
           <div className="h-48 w-full bg-gradient-to-br from-amber-950/60 via-zinc-900 to-zinc-950 sm:h-60" />
@@ -143,7 +143,7 @@ export default function PerfilPublicoArtista({ slug }: Props) {
             {/* Avatar */}
             <div className="absolute -top-14 left-0 size-28 overflow-hidden rounded-full ring-4 ring-zinc-950 sm:-top-16 sm:size-36">
               {artista.avatar_url ? (
-                <Image src={artista.avatar_url} alt={artista.nombre} fill sizes="144px" className="object-cover" />
+                <Image src={artista.avatar_url} alt={artista.nombre} fill sizes="144px" className="object-cover" loading="lazy" />
               ) : (
                 <div className="flex size-full items-center justify-center bg-amber-400 text-4xl font-bold text-zinc-900 sm:text-5xl">
                   {iniciales(artista.nombre || "AR")}
@@ -299,7 +299,7 @@ function TarjetaObraPublica({ obra }: { obra: ObraPropia }) {
     <div className="group flex flex-col overflow-hidden rounded-2xl bg-zinc-900 ring-1 ring-white/10 transition hover:ring-amber-400/30">
       <div className="relative aspect-[3/4] bg-zinc-800">
         {obra.imagen ? (
-          <Image src={obra.imagen} alt={obra.titulo} fill sizes="220px"
+          <Image src={obra.imagen} alt={obra.titulo} fill sizes="220px" loading="lazy"
             className="object-cover transition-transform duration-500 group-hover:scale-105" />
         ) : (
           <div className="flex h-full items-center justify-center">

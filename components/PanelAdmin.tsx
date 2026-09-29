@@ -150,6 +150,8 @@ export default function PanelAdmin() {
   const [accionandoObra, setAccionandoObra]             = useState<number | null>(null);
   const [solicitudArechazar, setSolicitudArechazar]     = useState<SolicitudRow | null>(null);
   const [motivoRechazo, setMotivoRechazo]               = useState("");
+  const [usuarioAEliminar, setUsuarioAEliminar]         = useState<UsuarioRow | null>(null);
+  const [eliminando, setEliminando]                     = useState(false);
 
   // ── carga inicial ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -250,6 +252,25 @@ export default function PanelAdmin() {
       notificar(s.email, s.nombre, s.rol, "rechazado", motivo || undefined);
     } catch { toast("Error al rechazar", { icono: "✗" }); }
     finally { setAccionando(null); }
+  }
+
+  async function eliminarUsuario(u: UsuarioRow) {
+    setEliminando(true);
+    try {
+      const res = await fetch("/api/admin/usuarios", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: u.email }),
+      });
+      if (!res.ok) throw new Error();
+      setUsuarios((prev) => prev.filter((x) => x.email !== u.email));
+      setUsuarioAEliminar(null);
+      toast(`${u.nombre || u.email} eliminado del sistema`, { icono: "🗑" });
+    } catch {
+      toast("Error al eliminar el usuario", { icono: "✗" });
+    } finally {
+      setEliminando(false);
+    }
   }
 
   // ── guards ─────────────────────────────────────────────────────────────────
@@ -540,14 +561,14 @@ export default function PanelAdmin() {
             <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="bg-zinc-800/60">
-                  {["Nombre", "Email", "Rol", "Especialidad", "País", "Desde"].map((h) => (
+                  {["Nombre", "Email", "Rol", "Especialidad", "País", "Desde", ""].map((h) => (
                     <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {usuariosFiltrados.length === 0 ? (
-                  <tr><td colSpan={6} className="bg-zinc-900 px-4 py-8 text-center text-sm text-zinc-600">Sin usuarios en esta categoría</td></tr>
+                  <tr><td colSpan={7} className="bg-zinc-900 px-4 py-8 text-center text-sm text-zinc-600">Sin usuarios en esta categoría</td></tr>
                 ) : usuariosFiltrados.map((u) => (
                   <tr key={u.id} className="bg-zinc-900 transition hover:bg-zinc-800/50">
                     <td className="px-4 py-3 font-medium text-zinc-200">
@@ -563,6 +584,16 @@ export default function PanelAdmin() {
                     <td className="px-4 py-3 text-xs text-zinc-400">{u.pais || <span className="text-zinc-600">—</span>}</td>
                     <td className="px-4 py-3 text-[10px] text-zinc-600">
                       {new Date(u.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {u.rol !== "admin" && (
+                        <button
+                          onClick={() => setUsuarioAEliminar(u)}
+                          title="Eliminar usuario"
+                          className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-red-500/10 hover:text-red-400">
+                          🗑
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -755,6 +786,38 @@ export default function PanelAdmin() {
           onConfirmar={() => { rechazar(solicitudArechazar, motivoRechazo); setSolicitudArechazar(null); }}
           onCancelar={() => setSolicitudArechazar(null)}
         />
+      )}
+
+      {/* Modal eliminar usuario */}
+      {usuarioAEliminar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-zinc-900 p-6 ring-1 ring-white/10">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/15 text-xl">🗑</span>
+              <h3 className="text-base font-bold text-white">Eliminar usuario</h3>
+            </div>
+            <p className="text-sm text-zinc-300">
+              ¿Eliminar a <span className="font-semibold text-white">{usuarioAEliminar.nombre || usuarioAEliminar.email}</span>?
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              Esta acción borrará todas sus obras e imágenes de forma permanente y no se puede deshacer.
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                onClick={() => setUsuarioAEliminar(null)}
+                disabled={eliminando}
+                className="flex-1 rounded-full bg-zinc-800 py-2 text-sm font-medium text-zinc-300 ring-1 ring-white/10 transition hover:bg-zinc-700 disabled:opacity-50">
+                Cancelar
+              </button>
+              <button
+                onClick={() => eliminarUsuario(usuarioAEliminar)}
+                disabled={eliminando}
+                className="flex-1 rounded-full bg-red-600 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-50">
+                {eliminando ? "Eliminando…" : "Sí, eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </PageFade>
   );

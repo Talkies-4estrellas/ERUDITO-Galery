@@ -32,7 +32,7 @@ function mapFicha(row: any): FichaArte {
     imagen: row.imagen_principal ?? "",
     artista: row.artistas
       ? { ...mapArtista(row.artistas), foto: row.avatar_artista || mapArtista(row.artistas).foto }
-      : { id: 0, nombre: row.nombre_artista || row.artista_email?.split("@")[0] || "Artista", vida: "", origen: "", foto: row.avatar_artista || `https://picsum.photos/seed/${row.artista_email ?? row.id_obra}/400/400`, bio: "" },
+      : { id: emailToId(row.artista_email ?? ""), nombre: row.nombre_artista || row.artista_email?.split("@")[0] || "Artista", vida: "", origen: "", foto: `https://picsum.photos/seed/${row.artista_email ?? row.id_obra}/400/400`, bio: "" },
     perspectivas: (row.perspectivas as string[]) ?? [],
     tamano: row.tamano,
     color: row.color,
@@ -68,7 +68,7 @@ function mapObra(row: any): Obra {
   return {
     id: row.id_obra,
     titulo: row.titulo,
-    autor: row.artistas?.nombre ?? "",
+    autor: row.artistas?.nombre ?? row.nombre_artista ?? "",
     anio: row.anio ?? "",
     descripcion: row.descripcion ?? "",
     estrellas: row.estrellas ?? 5,
@@ -78,13 +78,45 @@ function mapObra(row: any): Obra {
 
 // ── Artistas ───────────────────────────────────────────────────
 
+// Hash estable del email → ID negativo único (mismo valor en artista y en sus obras)
+function emailToId(email: string): number {
+  let h = 5381;
+  for (let i = 0; i < email.length; i++) h = ((h << 5) + h + email.charCodeAt(i)) | 0;
+  return h >= 0 ? -(h + 1) : h;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapUsuarioArtista(row: any): Artista {
+  return {
+    id: emailToId(row.email),
+    nombre: row.nombre,
+    vida: "",
+    origen: row.especialidad ?? "",
+    pais: row.pais || undefined,
+    foto: row.banner_url || row.avatar_url || `https://picsum.photos/seed/${row.slug}/400/400`,
+    bio: row.bio ?? "",
+    slug: row.slug,
+  };
+}
+
 export async function getArtistas(): Promise<Artista[]> {
-  const { data, error } = await supabase
-    .from("artistas")
-    .select("*")
-    .order("id_artista");
-  if (error) throw new Error(error.message);
-  return (data ?? []).map(mapArtista);
+  const [
+    { data: dataArtistas, error: errArtistas },
+    { data: dataUsuarios, error: errUsuarios },
+    { data: dataObrasEmails },
+  ] = await Promise.all([
+    supabase.from("artistas").select("*").order("id_artista"),
+    supabase.from("usuarios").select("nombre,bio,especialidad,pais,slug,avatar_url,banner_url,email").eq("rol", "artista").order("nombre"),
+    supabase.from("obras").select("artista_email").eq("estado", "aprobada").not("artista_email", "is", null),
+  ]);
+  if (errArtistas) throw new Error(errArtistas.message);
+  if (errUsuarios) throw new Error(errUsuarios.message);
+  const emailsConObras = new Set((dataObrasEmails ?? []).map((r) => r.artista_email));
+  const artistasTabla = (dataArtistas ?? []).map(mapArtista);
+  const artistasPlataforma = (dataUsuarios ?? [])
+    .filter((row) => emailsConObras.has(row.email))
+    .map(mapUsuarioArtista);
+  return [...artistasTabla, ...artistasPlataforma];
 }
 
 export async function getArtista(id: number): Promise<Artista | null> {
@@ -104,6 +136,7 @@ export async function getFichasNuevas(limite = 8): Promise<FichaArte[]> {
     .from("obras")
     .select("*, artistas(*)")
     .eq("estado", "aprobada")
+    .or("id_artista.not.is.null,artista_email.not.is.null")
     .order("id_obra", { ascending: false })
     .limit(limite);
   if (error) throw new Error(error.message);
@@ -115,6 +148,7 @@ export async function getFichas(): Promise<FichaArte[]> {
     .from("obras")
     .select("*, artistas(*)")
     .eq("estado", "aprobada")
+    .or("id_artista.not.is.null,artista_email.not.is.null")
     .order("id_obra");
   if (error) throw new Error(error.message);
   return (data ?? []).map(mapFicha);
@@ -148,7 +182,9 @@ export async function getFichasPorArtista(
 export async function getCarousel(): Promise<Obra[]> {
   const { data, error } = await supabase
     .from("obras")
-    .select("id_obra, titulo, anio, descripcion, estrellas, imagen_principal, artistas(nombre)")
+    .select("id_obra, titulo, anio, descripcion, estrellas, imagen_principal, nombre_artista, artistas(nombre)")
+    .eq("estado", "aprobada")
+    .or("id_artista.not.is.null,artista_email.not.is.null")
     .order("vistas", { ascending: false })
     .limit(4);
   if (error) throw new Error(error.message);

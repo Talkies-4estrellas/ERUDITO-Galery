@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 días
     remotePatterns: [
       {
         protocol: "https",
@@ -16,6 +17,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "dtqijxpdavazfovpzjmw.supabase.co",
         pathname: "/storage/v1/object/public/**",
+      },
+      {
+        // Wikimedia Commons / Wikipedia — imágenes de obras y artistas
+        protocol: "https",
+        hostname: "upload.wikimedia.org",
       },
     ],
   },

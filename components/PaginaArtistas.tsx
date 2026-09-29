@@ -233,7 +233,7 @@ export default function PaginaArtistas({
             return (
               <Link
                 key={artista.id}
-                href={`/artista/${artista.id}`}
+                href={artista.slug ? `/artistas/${artista.slug}` : `/artista/${artista.id}`}
                 className="group overflow-hidden rounded-2xl bg-zinc-900 ring-1 ring-white/10 transition hover:ring-amber-400/40"
               >
                 <div className="relative aspect-square overflow-hidden">
@@ -248,7 +248,7 @@ export default function PaginaArtistas({
                 <div className="p-4">
                   <h2 className="text-sm font-bold text-white">{artista.nombre}</h2>
                   <p className="mt-0.5 text-xs text-zinc-400">
-                    {artista.vida} · {artista.origen}
+                    {artista.vida ? `${artista.vida} · ` : ""}{artista.origen}
                   </p>
                   {/* Tags de técnica y corriente */}
                   {(tecnicasArtista.length > 0 || movimientosArtista.length > 0) && (

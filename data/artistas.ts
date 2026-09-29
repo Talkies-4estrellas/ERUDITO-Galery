@@ -6,6 +6,7 @@ export interface Artista {
   pais?: string;
   foto: string;
   bio: string;
+  slug?: string;   // solo artistas de plataforma (usuarios con rol='artista')
 }
 
 // artistas[0] = Revolution Canvas (id 7)

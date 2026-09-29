@@ -73,3 +73,35 @@ export async function GET() {
 
   return NextResponse.json({ usuarios });
 }
+
+export async function DELETE(req: Request) {
+  const { email } = await req.json();
+  if (!email) return NextResponse.json({ error: "email requerido" }, { status: 400 });
+
+  const db = getServerSupabase();
+  if (!db) return NextResponse.json({ error: "sin db" }, { status: 500 });
+
+  // Eliminar obras del usuario (como artista o empresa)
+  await db.from("obras").delete().eq("artista_email", email);
+  await db.from("obras").delete().eq("empresa_email", email);
+
+  // Eliminar imágenes del storage (carpeta derivada del email)
+  const carpeta = email.replace(/[^a-z0-9@._-]/gi, "_").toLowerCase();
+  const { data: archivos } = await db.storage.from("perfiles").list(carpeta);
+  if (archivos && archivos.length > 0) {
+    const rutas = archivos.map((f) => `${carpeta}/${f.name}`);
+    await db.storage.from("perfiles").remove(rutas);
+  }
+
+  // Eliminar de la tabla usuarios
+  await db.from("usuarios").delete().eq("email", email);
+
+  // Eliminar de Supabase Auth si existe
+  const { data: { users: authUsers } } = await db.auth.admin.listUsers({ perPage: 1000 });
+  const authUser = authUsers.find((u) => u.email === email);
+  if (authUser) {
+    await db.auth.admin.deleteUser(authUser.id);
+  }
+
+  return NextResponse.json({ ok: true });
+}
