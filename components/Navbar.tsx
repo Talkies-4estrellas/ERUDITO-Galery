@@ -7,6 +7,8 @@ import BuscadorModal from "@/components/BuscadorModal";
 import BotonTema from "@/components/BotonTema";
 import BotonAuth from "@/components/BotonAuth";
 import { useFavoritos } from "@/hooks/useFavoritos";
+import { useTema } from "@/hooks/useTema";
+import { usePerfil } from "@/hooks/usePerfil";
 
 /* ─── Grupos de menú explícitos ─── */
 const PRIMARIOS   = ["Catálogo", "Artistas", "Cocina", "Eventos"];
@@ -137,6 +139,8 @@ function ItemMenu({
 
 function MenuMovil({ alCerrar, onBuscar }: { alCerrar: () => void; onBuscar?: () => void }) {
   const [abierto, setAbierto] = useState<string | null>(null);
+  const { tema, alternar } = useTema();
+  const { perfil } = usePerfil();
 
   return (
     <div className="mt-2 rounded-2xl bg-zinc-900/95 p-4 ring-1 ring-white/10 backdrop-blur lg:hidden">
@@ -210,6 +214,49 @@ function MenuMovil({ alCerrar, onBuscar }: { alCerrar: () => void; onBuscar?: ()
           </li>
         ))}
       </ul>
+
+      {/* Auth + Tema en móvil */}
+      <div className="mt-3 border-t border-white/10 pt-3 flex items-center gap-1">
+        {perfil ? (
+          <Link
+            href="/perfil"
+            onClick={alCerrar}
+            className="flex flex-1 items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-200 hover:bg-white/5"
+          >
+            <svg className="size-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+            Mi perfil
+          </Link>
+        ) : (
+          <Link
+            href="/login"
+            onClick={alCerrar}
+            className="flex flex-1 items-center gap-2 rounded-lg px-3 py-2 text-sm text-amber-400 hover:bg-white/5"
+          >
+            <svg className="size-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+            </svg>
+            Iniciar sesión
+          </Link>
+        )}
+        <button
+          type="button"
+          onClick={alternar}
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-white/5"
+        >
+          {tema === "oscuro" ? (
+            <svg className="size-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+            </svg>
+          ) : (
+            <svg className="size-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+            </svg>
+          )}
+          {tema === "oscuro" ? "Tema claro" : "Tema oscuro"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -318,11 +365,15 @@ export default function Navbar() {
                   )}
                 </Link>
 
-                {/* Auth */}
-                <BotonAuth />
+                {/* Auth — solo visible en sm+ */}
+                <div className="hidden sm:block">
+                  <BotonAuth />
+                </div>
 
-                {/* Tema */}
-                <BotonTema />
+                {/* Tema — solo visible en sm+ */}
+                <div className="hidden sm:block">
+                  <BotonTema />
+                </div>
 
                 {/* Hamburguesa móvil */}
                 <button
