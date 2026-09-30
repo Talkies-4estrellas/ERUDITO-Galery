@@ -128,7 +128,7 @@ export default function DetalleEvento({ evento, obras }: { evento: Evento; obras
         {/* Fecha y lugar */}
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-400">
           <span>
-            📅 {new Date(evento.fecha + "T12:00:00").toLocaleDateString("es-MX", {
+            📅 {new Date(evento.fecha.includes("T") ? evento.fecha : evento.fecha + "T12:00:00").toLocaleDateString("es-MX", {
               weekday: "long",
               day: "numeric",
               month: "long",
