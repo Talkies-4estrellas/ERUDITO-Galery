@@ -32,9 +32,9 @@ function Estrellas({ n }: { n: number }) {
 }
 
 export default function FichaObra({ ficha, fluida = false, comparable = false }: Props) {
-  const [hovered, setHovered]     = useState(false);
-  const [cardRect, setCardRect]   = useState<DOMRect | null>(null);
-  const [mounted, setMounted]     = useState(false);
+  const [hovered, setHovered]   = useState(false);
+  const [cardRect, setCardRect] = useState<DOMRect | null>(null);
+  const [mounted, setMounted]   = useState(false);
   const artRef  = useRef<HTMLElement>(null);
   const imgRef  = useRef<HTMLAnchorElement>(null);
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -43,7 +43,11 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
 
   const mostrar = useCallback(() => {
     if (hideRef.current) clearTimeout(hideRef.current);
-    if (artRef.current) setCardRect(artRef.current.getBoundingClientRect());
+    if (!artRef.current) return;
+    const rect = artRef.current.getBoundingClientRect();
+    /* Solo muestra si caben al menos 120 px debajo del card */
+    if (window.innerHeight - rect.bottom - 8 < 120) return;
+    setCardRect(rect);
     setHovered(true);
   }, []);
 
@@ -54,7 +58,17 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
     }, 80);
   }, []);
 
-  /* Cierra el tooltip si el usuario hace scroll vertical de la página */
+  const handleTap = useCallback(() => {
+    /* Solo en dispositivos táctiles (sin hover nativo) */
+    if (!window.matchMedia("(hover: none)").matches) return;
+    if (hovered) {
+      ocultar();
+    } else {
+      mostrar();
+    }
+  }, [hovered, mostrar, ocultar]);
+
+  /* Cierra si el usuario hace scroll */
   useEffect(() => {
     if (!hovered) return;
     const cerrar = () => { setHovered(false); setCardRect(null); };
@@ -62,50 +76,54 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
     return () => window.removeEventListener("scroll", cerrar);
   }, [hovered]);
 
-  /* Calcula posición del tooltip (fixed) — siempre debajo del card */
+  /* Posición del tooltip — siempre debajo del card */
   const tooltipStyle = cardRect ? (() => {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const tw = Math.min(cardRect.width + 32, 300);
     let lft  = cardRect.left + cardRect.width / 2 - tw / 2;
     lft = Math.max(8, Math.min(lft, vw - tw - 8));
-
-    /* Ancla el tooltip justo debajo del card; si el card se sale del
-       viewport, lo ancla al borde inferior con al menos 100 px visibles */
-    const anchor = Math.min(cardRect.bottom + 8, vh - 108);
-    const maxH   = Math.max(vh - anchor - 8, 100);
-
     return {
       position: "fixed" as const,
-      left: lft, top: anchor,
-      width: tw, maxHeight: maxH, overflowY: "auto" as const,
+      left: lft,
+      top: cardRect.bottom + 8,
+      width: tw,
+      maxHeight: vh - cardRect.bottom - 16,
+      overflowY: "auto" as const,
       zIndex: 9999,
     };
-  })() : {};
+  })() : null;
 
   const tooltip =
-    hovered && cardRect && mounted
+    hovered && cardRect && tooltipStyle && mounted
       ? createPortal(
-          <div
-            style={tooltipStyle}
-            onMouseEnter={() => { if (hideRef.current) clearTimeout(hideRef.current); }}
-            onMouseLeave={ocultar}
-            className="rounded-2xl bg-zinc-900 px-4 py-4 shadow-2xl ring-1 ring-white/15 backdrop-blur-md
-                       opacity-0 scale-95 animate-[fichaTooltip_180ms_ease_forwards]"
-          >
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
-              Descripción
-            </p>
-            <p className="text-[13px] leading-relaxed text-zinc-200">{ficha.descripcion}</p>
-            <div className="mt-3 border-t border-white/10 pt-3 flex items-center gap-2">
-              <Estrellas n={ficha.estrellas} />
-              {ficha.precio > 0 && (
-                <span className="ml-auto shrink-0 text-xs font-semibold text-amber-400">
-                  ${ficha.precio.toLocaleString("es-MX")}
-                </span>
-              )}
+          <>
+            {/* Backdrop — solo en móvil, toca fuera para cerrar */}
+            <div
+              className="fixed inset-0 sm:hidden"
+              style={{ zIndex: 9998 }}
+              onClick={ocultar}
+            />
+            <div
+              style={tooltipStyle}
+              onMouseEnter={() => { if (hideRef.current) clearTimeout(hideRef.current); }}
+              onMouseLeave={ocultar}
+              className="rounded-2xl bg-zinc-900 px-4 py-4 shadow-2xl ring-1 ring-white/15 backdrop-blur-md opacity-0 scale-95 animate-[fichaTooltip_180ms_ease_forwards]"
+            >
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+                Descripción
+              </p>
+              <p className="text-[13px] leading-relaxed text-zinc-200">{ficha.descripcion}</p>
+              <div className="mt-3 border-t border-white/10 pt-3 flex items-center gap-2">
+                <Estrellas n={ficha.estrellas} />
+                {ficha.precio > 0 && (
+                  <span className="ml-auto shrink-0 text-xs font-semibold text-amber-400">
+                    ${ficha.precio.toLocaleString("es-MX")}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>,
+          </>,
           document.body
         )
       : null;
@@ -117,6 +135,7 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
         className={`group ${fluida ? "w-full" : "w-60 shrink-0 snap-start sm:w-64"}`}
         onMouseEnter={mostrar}
         onMouseLeave={ocultar}
+        onClick={handleTap}
       >
         {/* ── IMAGEN ─────────────────────────────────────────── */}
         <Link
@@ -162,24 +181,19 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
 
         {/* ── PANEL DE INFO — siempre visible ────────────────── */}
         <div className="mt-3 rounded-2xl bg-zinc-900/95 px-4 py-3.5 ring-1 ring-white/10">
-
-          {/* Título + año */}
           <p className="truncate text-sm font-bold uppercase tracking-wide text-white leading-tight">
             {ficha.titulo}
           </p>
           <p className="mt-0.5 text-[10px] text-zinc-500">{ficha.anio}</p>
 
-          {/* Estrellas */}
           <div className="mt-2">
             <Estrellas n={ficha.estrellas} />
           </div>
 
-          {/* Descripción — truncada, el tooltip muestra la completa */}
           <p className="mt-1.5 line-clamp-2 text-[11px] leading-relaxed text-zinc-400">
             {ficha.descripcion}
           </p>
 
-          {/* Tags + precio */}
           <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap gap-1">
               {ficha.movimiento && (
@@ -198,7 +212,6 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
             )}
           </div>
 
-          {/* Artista */}
           <div className="mt-3 border-t border-white/10 pt-3">
             <CapsulaArtista artista={ficha.artista} />
           </div>
