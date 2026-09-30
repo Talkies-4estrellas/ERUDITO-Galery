@@ -71,6 +71,18 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
   const tooltipStyle = cardRect ? (() => {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
+    /* Móvil: ancho completo para que siempre quede bajo su obra */
+    if (vw < 640) {
+      return {
+        position: "fixed" as const,
+        left: 8,
+        top: cardRect.bottom + 4,
+        width: vw - 16,
+        maxHeight: vh - cardRect.bottom - 16,
+        overflowY: "auto" as const,
+        zIndex: 9999,
+      };
+    }
     const tw = Math.min(cardRect.width + 32, 300);
     let lft  = cardRect.left + cardRect.width / 2 - tw / 2;
     lft = Math.max(8, Math.min(lft, vw - tw - 8));
