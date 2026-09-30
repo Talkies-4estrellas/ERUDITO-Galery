@@ -165,7 +165,7 @@ function TarjetaEvento({ evento, onRegistrar }: { evento: Evento; onRegistrar: (
           {evento.titulo}
         </h3>
         <p className="mt-1 text-xs text-zinc-500">{evento.lugar}</p>
-        <p className="mt-3 flex-1 text-sm leading-relaxed text-zinc-400">
+        <p className="mt-3 flex-1 line-clamp-4 text-sm leading-relaxed text-zinc-400 sm:line-clamp-none">
           {evento.descripcion}
         </p>
 
@@ -220,9 +220,9 @@ export default function PaginaEventos({
   const pasados = filtrados.filter((e) => new Date(e.fecha) < new Date());
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8 sm:py-16">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 sm:py-16">
       {/* Encabezado */}
-      <div className="mb-10">
+      <div className="mb-6 sm:mb-10">
         <p className="text-xs font-semibold uppercase tracking-widest text-amber-400">Agenda</p>
         <h1 className="mt-1 text-3xl font-bold text-white sm:text-4xl">{titulo}</h1>
         <p className="mt-2 max-w-lg text-sm text-zinc-400">{descripcion}</p>
@@ -266,7 +266,7 @@ export default function PaginaEventos({
           </button>
         </div>
       ) : (
-        <div className="space-y-10">
+        <div className="space-y-6 sm:space-y-10">
           {/* Próximos */}
           {proximos.length > 0 && (
             <div>

@@ -149,6 +149,7 @@ export default function PaginaCatalogoSeccion({
       {/* Filtros avanzados */}
       <div className="mt-4">
         <button
+          type="button"
           onClick={() => setFiltrosAbiertos((v) => !v)}
           className="flex items-center gap-1.5 text-xs text-zinc-400 transition hover:text-zinc-200"
         >

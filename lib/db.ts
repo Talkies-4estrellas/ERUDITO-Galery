@@ -32,7 +32,7 @@ function mapFicha(row: any): FichaArte {
     imagen: row.imagen_principal ?? "",
     artista: row.artistas
       ? { ...mapArtista(row.artistas), foto: row.avatar_artista || mapArtista(row.artistas).foto }
-      : { id: emailToId(row.artista_email ?? ""), nombre: row.nombre_artista || row.artista_email?.split("@")[0] || "Artista", vida: "", origen: "", foto: `https://picsum.photos/seed/${row.artista_email ?? row.id_obra}/400/400`, bio: "" },
+      : { id: emailToId(row.artista_email ?? ""), nombre: row.nombre_artista || row.artista_email?.split("@")[0] || "Artista", vida: "", origen: "", foto: row.avatar_artista || `https://picsum.photos/seed/${row.artista_email ?? row.id_obra}/400/400`, bio: "" },
     perspectivas: (row.perspectivas as string[]) ?? [],
     tamano: row.tamano,
     color: row.color,
@@ -93,7 +93,7 @@ function mapUsuarioArtista(row: any): Artista {
     vida: "",
     origen: row.especialidad ?? "",
     pais: row.pais || undefined,
-    foto: row.banner_url || row.avatar_url || `https://picsum.photos/seed/${row.slug}/400/400`,
+    foto: row.avatar_url || row.banner_url || `https://picsum.photos/seed/${row.slug}/400/400`,
     bio: row.bio ?? "",
     slug: row.slug,
   };
@@ -159,10 +159,15 @@ export async function getFicha(id: number): Promise<FichaArte | null> {
     .from("obras")
     .select("*, artistas(*)")
     .eq("id_obra", id)
-    .not("id_artista", "is", null)
     .single();
-  if (error || !data) return null;
-  return mapFicha(data);
+  if (error) { console.error("[getFicha] supabase error:", error); return null; }
+  if (!data) { console.error("[getFicha] no data for id:", id); return null; }
+  try {
+    return mapFicha(data);
+  } catch (e) {
+    console.error("[getFicha] mapFicha threw:", e);
+    return null;
+  }
 }
 
 export async function getFichasPorArtista(

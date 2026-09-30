@@ -13,24 +13,24 @@ export default function EstadisticasValor({ ficha }: Props) {
   const [abierta, setAbierta] = useState<string | null>(null);
 
   /* ── Gráfica de interés ──────────────────────────────────────────── */
-  const maxInteres = Math.max(...ficha.graficaInteres);
-  const deltaInteres =
-    ficha.graficaInteres[ficha.graficaInteres.length - 1] -
-    ficha.graficaInteres[ficha.graficaInteres.length - 2];
-  const totalInteres = ficha.graficaInteres.reduce((a, b) => a + b, 0);
+  const gi = ficha.graficaInteres ?? [];
+  const maxInteres = gi.length > 0 ? Math.max(...gi) || 1 : 1;
+  const deltaInteres = gi.length >= 2 ? gi[gi.length - 1] - gi[gi.length - 2] : 0;
+  const totalInteres = gi.reduce((a, b) => a + b, 0);
 
   /* ── Gráfica de valor ────────────────────────────────────────────── */
-  const precios = ficha.graficaValor.map((p) => p.valor);
-  const minPrecio = Math.min(...precios);
-  const maxPrecio = Math.max(...precios);
+  const hasValor = ficha.graficaValor.length > 0;
+  const precios = hasValor ? ficha.graficaValor.map((p) => p.valor) : [];
+  const minPrecio = hasValor ? Math.min(...precios) : 0;
+  const maxPrecio = hasValor ? Math.max(...precios) : 0;
   const rango = maxPrecio - minPrecio || 1;
   // Normaliza a 15-100% para que siempre haya barra visible
   const alturaPct = (v: number) => 15 + ((v - minPrecio) / rango) * 85;
 
-  const mesIdx = Math.min(MES_ACTUAL, ficha.graficaValor.length - 1);
-  const precioActual = ficha.graficaValor[mesIdx].valor;
-  const precioAnterior = ficha.graficaValor[Math.max(0, mesIdx - 1)].valor;
-  const cambioPct = (((precioActual - precioAnterior) / precioAnterior) * 100).toFixed(1);
+  const mesIdx = hasValor ? Math.min(MES_ACTUAL, ficha.graficaValor.length - 1) : 0;
+  const precioActual = hasValor ? ficha.graficaValor[mesIdx].valor : 0;
+  const precioAnterior = hasValor ? ficha.graficaValor[Math.max(0, mesIdx - 1)].valor : 0;
+  const cambioPct = precioAnterior > 0 ? (((precioActual - precioAnterior) / precioAnterior) * 100).toFixed(1) : "0.0";
   const subio = precioActual >= precioAnterior;
 
   /* ── Secciones del acordeón ──────────────────────────────────────── */
@@ -84,7 +84,7 @@ export default function EstadisticasValor({ ficha }: Props) {
                 </span>
               </p>
               <div className="mt-4 flex h-28 items-end justify-between gap-2 px-1">
-                {ficha.graficaInteres.map((altura, i) => (
+                {gi.map((altura, i) => (
                   <div
                     key={i}
                     className="w-3 rounded-full bg-gradient-to-t from-fuchsia-800 via-purple-500 to-purple-300"
@@ -102,6 +102,7 @@ export default function EstadisticasValor({ ficha }: Props) {
             </div>
 
             {/* Valor estimado por mes */}
+            {hasValor ? (
             <div className="rounded-2xl bg-zinc-900 p-5 ring-1 ring-white/10">
               <div className="flex items-start justify-between">
                 <p className="text-2xl font-bold text-white">
@@ -146,6 +147,13 @@ export default function EstadisticasValor({ ficha }: Props) {
                 Valor estimado de mercado por mes (último año).
               </p>
             </div>
+            ) : (
+            <div className="rounded-2xl bg-zinc-900 p-5 ring-1 ring-white/10 flex items-center justify-center">
+              <p className="text-sm text-zinc-500 text-center">
+                Valor de mercado no disponible para esta obra.
+              </p>
+            </div>
+            )}
           </div>
 
           {/* Acordeones */}

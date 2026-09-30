@@ -31,7 +31,7 @@ export default function Carousel({ obras }: { obras: Obra[] }) {
 
   return (
     <section
-      className="mx-auto w-full max-w-6xl px-4 pb-10 pt-6 sm:px-8"
+      className="mx-auto w-full max-w-6xl px-4 pb-6 pt-6 sm:px-8 sm:pb-10"
       onMouseEnter={() => setPausado(true)}
       onMouseLeave={() => setPausado(false)}
     >
@@ -63,8 +63,7 @@ export default function Carousel({ obras }: { obras: Obra[] }) {
             </h2>
             <span className="text-xs text-zinc-400">{obra.anio}</span>
           </div>
-          <p className="mt-1 text-xs font-semibold text-zinc-300">Descripción:</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-zinc-300 sm:text-sm">
+          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-zinc-300 sm:line-clamp-none sm:text-sm">
             {obra.descripcion}
           </p>
           <div className="mt-3 flex items-center justify-between">

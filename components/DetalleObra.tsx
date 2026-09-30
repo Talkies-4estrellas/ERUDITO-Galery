@@ -1,6 +1,7 @@
-import Image from "next/image";
+// componentes del detalle de obra
 import Link from "next/link";
 import type { FichaArte } from "@/data/fichas";
+import LightboxHero from "@/components/LightboxHero";
 import VisorPerspectivas from "@/components/VisorPerspectivas";
 import CapsulaArtista from "@/components/CapsulaArtista";
 import EstadisticasValor from "@/components/EstadisticasValor";
@@ -26,14 +27,7 @@ export default function DetalleObra({ ficha, similares }: Props) {
     <PageFade>
       {/* ── HERO ─────────────────────────────────────────────────── */}
       <section className="relative h-[68vh] min-h-[460px] w-full overflow-hidden">
-        <Image
-          src={ficha.imagen}
-          alt={ficha.titulo}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
+        <LightboxHero src={ficha.imagen} alt={ficha.titulo} />
 
         {/* Desenfoque progresivo sobre la imagen */}
         <div
@@ -126,10 +120,12 @@ export default function DetalleObra({ ficha, similares }: Props) {
             </div>
 
             {/* Visor de perspectivas */}
-            <div>
-              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-zinc-500">Perspectivas</p>
-              <VisorPerspectivas titulo={ficha.titulo} imagenes={ficha.perspectivas} />
-            </div>
+            {ficha.perspectivas.length > 0 && (
+              <div>
+                <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-zinc-500">Perspectivas</p>
+                <VisorPerspectivas titulo={ficha.titulo} imagenes={ficha.perspectivas} />
+              </div>
+            )}
 
             {/* Certificaciones */}
             {ficha.certificaciones.length > 0 && (
@@ -158,7 +154,7 @@ export default function DetalleObra({ ficha, similares }: Props) {
           </div>
 
           {/* ── Panel de compra (sticky) ───────────────────── */}
-          <aside className="h-fit lg:sticky lg:top-24">
+          <aside className="order-first h-fit lg:order-last lg:sticky lg:top-24">
             <PanelCompra ficha={ficha} />
           </aside>
         </div>

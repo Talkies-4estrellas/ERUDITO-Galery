@@ -170,7 +170,7 @@ export default function PerfilPublicoArtista({ slug }: Props) {
           </div>
 
           {/* Stats */}
-          <div className="mt-14 flex gap-6 border-t border-white/10 pt-3 sm:mt-2">
+          <div className="mt-4 flex gap-6 border-t border-white/10 pt-3 sm:mt-2">
             {[
               { valor: obras.length,                                                       etiqueta: "Obras" },
               { valor: tecnicas.length,                                                    etiqueta: "Técnicas" },

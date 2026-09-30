@@ -24,7 +24,7 @@ export default function FilaFichas({
   };
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-8">
+    <section className="mx-auto w-full max-w-6xl px-4 pb-8 sm:px-8 sm:pb-16">
       <div className="mb-5 flex items-center justify-between">
         <h2 className="text-lg font-semibold tracking-wide text-white">
           {titulo}

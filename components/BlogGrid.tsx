@@ -53,7 +53,7 @@ function HeroArticulo({ articulo }: { articulo: Articulo }) {
 
   return (
     <Link href={`/blog/${articulo.id}`}>
-      <article className="group relative overflow-hidden rounded-3xl" style={{ minHeight: "420px" }}>
+      <article className="group relative overflow-hidden rounded-3xl" style={{ minHeight: "300px" }}>
         <Image
           src={articulo.imagen}
           alt={articulo.titulo}
@@ -65,7 +65,7 @@ function HeroArticulo({ articulo }: { articulo: Articulo }) {
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/80 via-transparent to-transparent" />
 
-        <div className="relative flex h-full flex-col justify-end p-8 sm:p-12" style={{ minHeight: "420px" }}>
+        <div className="relative flex h-full flex-col justify-end p-6 sm:p-12" style={{ minHeight: "300px" }}>
           <div className="max-w-xl">
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-widest ring-1 ${color}`}>
@@ -101,9 +101,9 @@ export default function BlogGrid() {
   const [hero, ...resto] = articulos;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8 sm:py-16">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 sm:py-16">
       {/* Hero */}
-      <div className="mb-12">
+      <div className="mb-8 sm:mb-12">
         <HeroArticulo articulo={hero} />
       </div>
 
@@ -113,7 +113,7 @@ export default function BlogGrid() {
       </p>
 
       {/* Grid */}
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
         {resto.map((a) => (
           <TarjetaArticulo key={a.id} articulo={a} />
         ))}

@@ -16,8 +16,8 @@ export default function SeccionEventos({ eventos }: { eventos: Evento[] }) {
   };
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-8">
-      <div className="flex items-baseline justify-between">
+    <section className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 sm:py-10">
+      <div className="flex flex-wrap items-center justify-between gap-y-2">
         <h2 className="text-lg font-semibold tracking-wide text-white">
           Próximos eventos
         </h2>

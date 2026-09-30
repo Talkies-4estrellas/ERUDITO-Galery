@@ -221,7 +221,7 @@ export default function PaginaArtistas({
           </button>
         </div>
       ) : (
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
           {filtrados.map((artista) => {
             const obras = obrasPorArtista.get(artista.id) ?? [];
             const promedio = obras.length > 0
@@ -245,14 +245,14 @@ export default function PaginaArtistas({
                     className="object-cover transition duration-300 group-hover:scale-105"
                   />
                 </div>
-                <div className="p-4">
-                  <h2 className="text-sm font-bold text-white">{artista.nombre}</h2>
-                  <p className="mt-0.5 text-xs text-zinc-400">
+                <div className="p-3 sm:p-4">
+                  <h2 className="text-xs font-bold text-white sm:text-sm">{artista.nombre}</h2>
+                  <p className="mt-0.5 line-clamp-1 text-[10px] text-zinc-400 sm:text-xs">
                     {artista.vida ? `${artista.vida} · ` : ""}{artista.origen}
                   </p>
                   {/* Tags de técnica y corriente */}
                   {(tecnicasArtista.length > 0 || movimientosArtista.length > 0) && (
-                    <div className="mt-2 flex flex-wrap gap-1">
+                    <div className="mt-1.5 hidden flex-wrap gap-1 sm:flex">
                       {movimientosArtista.map((m) => (
                         <span key={m} className="rounded-full bg-amber-400/10 px-2 py-0.5 text-[10px] text-amber-400 ring-1 ring-amber-400/20">
                           {m}
@@ -265,7 +265,7 @@ export default function PaginaArtistas({
                       ))}
                     </div>
                   )}
-                  <div className="mt-3 flex items-center justify-between text-xs">
+                  <div className="mt-2 flex items-center justify-between text-[10px] sm:mt-3 sm:text-xs">
                     <span className="text-zinc-500">
                       {obras.length} {obras.length === 1 ? "obra" : "obras"}
                     </span>
