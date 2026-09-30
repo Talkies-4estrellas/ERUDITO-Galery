@@ -36,7 +36,6 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
   const [cardRect, setCardRect] = useState<DOMRect | null>(null);
   const [mounted, setMounted]   = useState(false);
   const artRef  = useRef<HTMLElement>(null);
-  const imgRef  = useRef<HTMLAnchorElement>(null);
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
@@ -45,7 +44,6 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
     if (hideRef.current) clearTimeout(hideRef.current);
     if (!artRef.current) return;
     const rect = artRef.current.getBoundingClientRect();
-    /* Solo muestra si caben al menos 120 px debajo del card */
     if (window.innerHeight - rect.bottom - 8 < 120) return;
     setCardRect(rect);
     setHovered(true);
@@ -59,16 +57,10 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
   }, []);
 
   const handleTap = useCallback(() => {
-    /* Solo en dispositivos táctiles (sin hover nativo) */
     if (!window.matchMedia("(hover: none)").matches) return;
-    if (hovered) {
-      ocultar();
-    } else {
-      mostrar();
-    }
+    if (hovered) { ocultar(); } else { mostrar(); }
   }, [hovered, mostrar, ocultar]);
 
-  /* Cierra si el usuario hace scroll */
   useEffect(() => {
     if (!hovered) return;
     const cerrar = () => { setHovered(false); setCardRect(null); };
@@ -76,7 +68,6 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
     return () => window.removeEventListener("scroll", cerrar);
   }, [hovered]);
 
-  /* Posición del tooltip — siempre debajo del card */
   const tooltipStyle = cardRect ? (() => {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
@@ -98,7 +89,6 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
     hovered && cardRect && tooltipStyle && mounted
       ? createPortal(
           <>
-            {/* Backdrop — solo en móvil, toca fuera para cerrar */}
             <div
               className="fixed inset-0 sm:hidden"
               style={{ zIndex: 9998 }}
@@ -110,9 +100,7 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
               onMouseLeave={ocultar}
               className="rounded-2xl bg-zinc-900 px-4 py-4 shadow-2xl ring-1 ring-white/15 backdrop-blur-md opacity-0 scale-95 animate-[fichaTooltip_180ms_ease_forwards]"
             >
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
-                Descripción
-              </p>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Descripción</p>
               <p className="text-[13px] leading-relaxed text-zinc-200">{ficha.descripcion}</p>
               <div className="mt-3 border-t border-white/10 pt-3 flex items-center gap-2">
                 <Estrellas n={ficha.estrellas} />
@@ -137,9 +125,8 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
         onMouseLeave={ocultar}
         onClick={handleTap}
       >
-        {/* ── IMAGEN ─────────────────────────────────────────── */}
+        {/* ── IMAGEN con overlay ─────────────────────────────────── */}
         <Link
-          ref={imgRef}
           href={`/obra/${ficha.id}`}
           className="relative block aspect-[3/4] overflow-hidden rounded-3xl bg-zinc-800 ring-1 ring-white/10"
         >
@@ -168,53 +155,44 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
             </div>
           )}
 
-          {/* Botón "Ver obra" — aparece en hover */}
-          <div
-            className="absolute inset-x-4 bottom-4 transition-opacity duration-300"
-            style={{ opacity: hovered ? 1 : 0 }}
-          >
-            <div className="w-full rounded-full bg-amber-300 py-2.5 text-center text-xs font-bold text-zinc-900">
-              Ver obra
+          {/* ── INFO OVERLAY ── gradiente en la parte inferior ─── */}
+          <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/95 via-black/75 to-transparent px-4 pb-4 pt-20">
+            <p className="truncate text-sm font-bold uppercase tracking-wide text-white leading-tight">
+              {ficha.titulo}
+            </p>
+            <p className="mt-0.5 text-[10px] text-zinc-500">{ficha.anio}</p>
+
+            <div className="mt-1.5">
+              <Estrellas n={ficha.estrellas} />
+            </div>
+
+            <p className="mt-1.5 line-clamp-3 text-[11px] leading-relaxed text-zinc-300">
+              {ficha.descripcion}
+            </p>
+
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-1">
+              <div className="flex flex-wrap gap-1">
+                {ficha.movimiento && (
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-300 ring-1 ring-white/10">
+                    {ficha.movimiento}
+                  </span>
+                )}
+                <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-400 ring-1 ring-white/10">
+                  {ficha.tamano}
+                </span>
+              </div>
+              {ficha.precio > 0 && (
+                <span className="shrink-0 text-xs font-semibold text-amber-400">
+                  ${ficha.precio.toLocaleString("es-MX")}
+                </span>
+              )}
             </div>
           </div>
         </Link>
 
-        {/* ── PANEL DE INFO — siempre visible ────────────────── */}
-        <div className="mt-3 rounded-2xl bg-zinc-900/95 px-4 py-3.5 ring-1 ring-white/10">
-          <p className="truncate text-sm font-bold uppercase tracking-wide text-white leading-tight">
-            {ficha.titulo}
-          </p>
-          <p className="mt-0.5 text-[10px] text-zinc-500">{ficha.anio}</p>
-
-          <div className="mt-2">
-            <Estrellas n={ficha.estrellas} />
-          </div>
-
-          <p className="mt-1.5 line-clamp-2 text-[11px] leading-relaxed text-zinc-400">
-            {ficha.descripcion}
-          </p>
-
-          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap gap-1">
-              {ficha.movimiento && (
-                <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-300 ring-1 ring-white/10">
-                  {ficha.movimiento}
-                </span>
-              )}
-              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-400 ring-1 ring-white/10">
-                {ficha.tamano}
-              </span>
-            </div>
-            {ficha.precio > 0 && (
-              <span className="shrink-0 text-xs font-semibold text-amber-400">
-                ${ficha.precio.toLocaleString("es-MX")}
-              </span>
-            )}
-          </div>
-
-          <div className="mt-3 border-t border-white/10 pt-3">
-            <CapsulaArtista artista={ficha.artista} />
-          </div>
+        {/* ── CÁPSULA ARTISTA — debajo de la imagen ─────────────── */}
+        <div className="mt-3">
+          <CapsulaArtista artista={ficha.artista} />
         </div>
       </article>
 
