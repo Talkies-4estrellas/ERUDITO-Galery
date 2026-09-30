@@ -35,15 +35,16 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
   const [hovered, setHovered]   = useState(false);
   const [cardRect, setCardRect] = useState<DOMRect | null>(null);
   const [mounted, setMounted]   = useState(false);
-  const artRef  = useRef<HTMLElement>(null);
-  const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const artRef     = useRef<HTMLElement>(null);
+  const capsulaRef = useRef<HTMLDivElement>(null);
+  const hideRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
   const mostrar = useCallback(() => {
     if (hideRef.current) clearTimeout(hideRef.current);
-    if (!artRef.current) return;
-    const rect = artRef.current.getBoundingClientRect();
+    if (!capsulaRef.current) return;
+    const rect = capsulaRef.current.getBoundingClientRect();
     if (window.innerHeight - rect.bottom - 8 < 120) return;
     setCardRect(rect);
     setHovered(true);
@@ -57,7 +58,6 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
   }, []);
 
   const handleTap = useCallback(() => {
-    if (!window.matchMedia("(hover: none)").matches) return;
     if (hovered) { ocultar(); } else { mostrar(); }
   }, [hovered, mostrar, ocultar]);
 
@@ -121,9 +121,6 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
       <article
         ref={artRef}
         className={`group ${fluida ? "w-full" : "w-60 shrink-0 snap-start sm:w-64"}`}
-        onMouseEnter={mostrar}
-        onMouseLeave={ocultar}
-        onClick={handleTap}
       >
         {/* ── IMAGEN con overlay ─────────────────────────────────── */}
         <Link
@@ -135,7 +132,7 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
             alt={ficha.titulo}
             fill
             sizes="256px"
-            className={`object-cover transition-transform duration-500 ${hovered ? "scale-105" : ""}`}
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
 
           {/* Badge tipo */}
@@ -190,8 +187,14 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
           </div>
         </Link>
 
-        {/* ── CÁPSULA ARTISTA — debajo de la imagen ─────────────── */}
-        <div className="mt-3">
+        {/* ── CÁPSULA ARTISTA — dispara el tooltip ──────────────── */}
+        <div
+          ref={capsulaRef}
+          className="mt-3 cursor-pointer"
+          onMouseEnter={mostrar}
+          onMouseLeave={ocultar}
+          onClick={handleTap}
+        >
           <CapsulaArtista artista={ficha.artista} />
         </div>
       </article>

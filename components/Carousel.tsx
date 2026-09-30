@@ -55,26 +55,21 @@ export default function Carousel({ obras }: { obras: Obra[] }) {
           </div>
         ))}
 
-        {/* Tarjeta de información de la obra */}
-        <div className="absolute bottom-4 left-4 right-4 max-w-md rounded-xl bg-black/60 p-4 backdrop-blur-md sm:bottom-6 sm:left-6 sm:right-auto sm:p-5">
+        {/* Tarjeta de información — solo en desktop (overlay) */}
+        <div className="hidden sm:block absolute bottom-6 left-6 max-w-md rounded-xl bg-black/60 p-5 backdrop-blur-md">
           <div className="flex items-baseline justify-between gap-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-white sm:text-base">
+            <h2 className="text-base font-bold uppercase tracking-wider text-white">
               {obra.titulo}
             </h2>
             <span className="text-xs text-zinc-400">{obra.anio}</span>
           </div>
-          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-zinc-300 sm:line-clamp-none sm:text-sm">
+          <p className="mt-1 text-sm leading-relaxed text-zinc-300">
             {obra.descripcion}
           </p>
           <div className="mt-3 flex items-center justify-between">
             <div aria-label={`${obra.estrellas} de 5 estrellas`} className="text-sm">
               {Array.from({ length: 5 }, (_, i) => (
-                <span
-                  key={i}
-                  className={i < obra.estrellas ? "text-amber-400" : "text-zinc-600"}
-                >
-                  ★
-                </span>
+                <span key={i} className={i < obra.estrellas ? "text-amber-400" : "text-zinc-600"}>★</span>
               ))}
             </div>
             <Link
@@ -107,6 +102,32 @@ export default function Carousel({ obras }: { obras: Obra[] }) {
             <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
+      </div>
+
+      {/* Tarjeta de información — solo en móvil (debajo de la imagen) */}
+      <div className="sm:hidden mt-3 rounded-xl bg-zinc-900/95 px-4 py-3.5 ring-1 ring-white/10">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-white leading-tight">
+            {obra.titulo}
+          </h2>
+          <span className="shrink-0 text-xs text-zinc-400">{obra.anio}</span>
+        </div>
+        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-zinc-300">
+          {obra.descripcion}
+        </p>
+        <div className="mt-3 flex items-center justify-between">
+          <div aria-label={`${obra.estrellas} de 5 estrellas`} className="text-sm">
+            {Array.from({ length: 5 }, (_, i) => (
+              <span key={i} className={i < obra.estrellas ? "text-amber-400" : "text-zinc-600"}>★</span>
+            ))}
+          </div>
+          <Link
+            href={`/obra/${obra.id}`}
+            className="rounded-full bg-white/90 px-4 py-1.5 text-xs font-semibold text-zinc-900 transition hover:bg-amber-400"
+          >
+            Ver más
+          </Link>
+        </div>
       </div>
 
       {/* Indicadores (puntos) */}
