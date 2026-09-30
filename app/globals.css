@@ -99,3 +99,7 @@ body {
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
 }
+
+@keyframes fichaTooltip {
+  to { opacity: 1; transform: scale(1); }
+}
