@@ -92,18 +92,23 @@ export default function PaginaArtistas({
   const getPais = (a: Artista) => a.pais ?? PAISES_FALLBACK[a.id] ?? "";
 
   const paises = useMemo(() =>
-    Array.from(new Set(artistas.map(getPais).filter(Boolean))).sort()
+    Array.from(new Set(artistas.map(getPais).filter(Boolean).map((p) => p.trim()))).sort()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   , [artistas]);
 
-  // Técnica: disciplina del artista (origen, excluyendo países) + técnica de sus obras
+  // Técnica: solo técnicas individuales de las obras (sin origen del artista)
   const tecnicas = useMemo(() => {
-    const listaPaises = new Set(Object.values(PAISES_FALLBACK));
     const set = new Set<string>();
-    artistas.forEach((a) => { if (a.origen && !listaPaises.has(a.origen)) set.add(a.origen); });
-    fichas.forEach((f) => { if (f.tecnica) set.add(f.tecnica); });
+    fichas.forEach((f) => {
+      if (f.tecnica) {
+        f.tecnica.split(",").forEach((t) => {
+          const s = t.trim();
+          if (s) set.add(s);
+        });
+      }
+    });
     return Array.from(set).sort();
-  }, [artistas, fichas]);
+  }, [fichas]);
 
   const movimientos = useMemo(() =>
     Array.from(new Set(fichas.map((f) => f.movimiento).filter(Boolean))).sort()
@@ -116,7 +121,7 @@ export default function PaginaArtistas({
       if (q && !a.nombre.toLowerCase().includes(q) && !a.origen.toLowerCase().includes(q)) return false;
       if (filtroOrigen && getPais(a) !== filtroOrigen) return false;
       const obras = obrasPorArtista.get(a.id) ?? [];
-      if (filtroTecnica && a.origen !== filtroTecnica && !obras.some((o) => o.tecnica === filtroTecnica)) return false;
+      if (filtroTecnica && !obras.some((o) => o.tecnica.split(",").map((t) => t.trim()).includes(filtroTecnica))) return false;
       if (filtroMovimiento && !obras.some((o) => o.movimiento === filtroMovimiento)) return false;
       return true;
     });
