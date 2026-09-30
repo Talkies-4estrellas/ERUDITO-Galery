@@ -43,8 +43,7 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
 
   const mostrar = useCallback(() => {
     if (hideRef.current) clearTimeout(hideRef.current);
-    /* Usa solo el rect de la imagen para no incluir el panel de info */
-    if (imgRef.current) setCardRect(imgRef.current.getBoundingClientRect());
+    if (artRef.current) setCardRect(artRef.current.getBoundingClientRect());
     setHovered(true);
   }, []);
 
@@ -63,7 +62,7 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
     return () => window.removeEventListener("scroll", cerrar);
   }, [hovered]);
 
-  /* Calcula posición del tooltip (fixed) */
+  /* Calcula posición del tooltip (fixed) — siempre debajo del card */
   const tooltipStyle = cardRect ? (() => {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
@@ -71,23 +70,15 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
     let lft  = cardRect.left + cardRect.width / 2 - tw / 2;
     lft = Math.max(8, Math.min(lft, vw - tw - 8));
 
-    /* Espacio disponible abajo y arriba */
-    const spaceBelow = vh - cardRect.bottom - 12;
-    const spaceAbove = cardRect.top - 12;
+    /* Ancla el tooltip justo debajo del card; si el card se sale del
+       viewport, lo ancla al borde inferior con al menos 100 px visibles */
+    const anchor = Math.min(cardRect.bottom + 8, vh - 108);
+    const maxH   = Math.max(vh - anchor - 8, 100);
 
-    /* Mostrar abajo si cabe al menos 120 px, si no arriba */
-    if (spaceBelow >= 120) {
-      return {
-        position: "fixed" as const,
-        left: lft, top: cardRect.bottom + 8,
-        width: tw, maxHeight: spaceBelow, overflowY: "auto" as const,
-        zIndex: 9999,
-      };
-    }
     return {
       position: "fixed" as const,
-      left: lft, bottom: vh - cardRect.top + 8,
-      width: tw, maxHeight: Math.max(spaceAbove, 120), overflowY: "auto" as const,
+      left: lft, top: anchor,
+      width: tw, maxHeight: maxH, overflowY: "auto" as const,
       zIndex: 9999,
     };
   })() : {};

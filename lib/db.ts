@@ -129,6 +129,31 @@ export async function getArtista(id: number): Promise<Artista | null> {
   return mapArtista(data);
 }
 
+// ── Slugs de artistas de plataforma (obras por email) ──────────
+
+async function slugsPorEmail(rows: unknown[]): Promise<Map<string, string>> {
+  const emails = (rows as { artistas: unknown; artista_email?: string }[])
+    .filter((r) => !r.artistas && r.artista_email)
+    .map((r) => r.artista_email as string);
+  if (emails.length === 0) return new Map();
+  const { data } = await supabase
+    .from("usuarios")
+    .select("email, slug")
+    .in("email", emails)
+    .eq("rol", "artista");
+  return new Map((data ?? []).map((u) => [u.email as string, u.slug as string]));
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapFichaConSlug(row: any, slugMap: Map<string, string>): FichaArte {
+  const ficha = mapFicha(row);
+  if (!row.artistas && row.artista_email) {
+    const slug = slugMap.get(row.artista_email);
+    if (slug) ficha.artista = { ...ficha.artista, slug };
+  }
+  return ficha;
+}
+
 // ── Obras / Fichas ─────────────────────────────────────────────
 
 export async function getFichasNuevas(limite = 8): Promise<FichaArte[]> {
@@ -140,7 +165,8 @@ export async function getFichasNuevas(limite = 8): Promise<FichaArte[]> {
     .order("id_obra", { ascending: false })
     .limit(limite);
   if (error) throw new Error(error.message);
-  return (data ?? []).map(mapFicha);
+  const slugMap = await slugsPorEmail(data ?? []);
+  return (data ?? []).map((r) => mapFichaConSlug(r, slugMap));
 }
 
 export async function getFichas(): Promise<FichaArte[]> {
@@ -151,7 +177,8 @@ export async function getFichas(): Promise<FichaArte[]> {
     .or("id_artista.not.is.null,artista_email.not.is.null")
     .order("id_obra");
   if (error) throw new Error(error.message);
-  return (data ?? []).map(mapFicha);
+  const slugMap = await slugsPorEmail(data ?? []);
+  return (data ?? []).map((r) => mapFichaConSlug(r, slugMap));
 }
 
 export async function getFicha(id: number): Promise<FichaArte | null> {
@@ -163,7 +190,8 @@ export async function getFicha(id: number): Promise<FichaArte | null> {
   if (error) { console.error("[getFicha] supabase error:", error); return null; }
   if (!data) { console.error("[getFicha] no data for id:", id); return null; }
   try {
-    return mapFicha(data);
+    const slugMap = await slugsPorEmail([data]);
+    return mapFichaConSlug(data, slugMap);
   } catch (e) {
     console.error("[getFicha] mapFicha threw:", e);
     return null;
@@ -179,7 +207,8 @@ export async function getFichasPorArtista(
     .eq("id_artista", artistaId)
     .order("id_obra");
   if (error) throw new Error(error.message);
-  return (data ?? []).map(mapFicha);
+  const slugMap = await slugsPorEmail(data ?? []);
+  return (data ?? []).map((r) => mapFichaConSlug(r, slugMap));
 }
 
 // ── Carousel ───────────────────────────────────────────────────
