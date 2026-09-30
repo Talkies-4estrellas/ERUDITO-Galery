@@ -71,13 +71,13 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
   const tooltipStyle = cardRect ? (() => {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    /* Móvil: ancho completo para que siempre quede bajo su obra */
+    /* Móvil: mismo ancho y posición exacta de la tarjeta, sin clamping */
     if (vw < 640) {
       return {
         position: "fixed" as const,
-        left: 8,
+        left: cardRect.left,
         top: cardRect.bottom + 4,
-        width: vw - 16,
+        width: cardRect.width,
         maxHeight: vh - cardRect.bottom - 16,
         overflowY: "auto" as const,
         zIndex: 9999,
