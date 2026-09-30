@@ -135,11 +135,23 @@ function ItemMenu({
   );
 }
 
-function MenuMovil({ alCerrar }: { alCerrar: () => void }) {
+function MenuMovil({ alCerrar, onBuscar }: { alCerrar: () => void; onBuscar?: () => void }) {
   const [abierto, setAbierto] = useState<string | null>(null);
 
   return (
     <div className="mt-2 rounded-2xl bg-zinc-900/95 p-4 ring-1 ring-white/10 backdrop-blur lg:hidden">
+      {onBuscar && (
+        <button
+          type="button"
+          onClick={() => { onBuscar(); alCerrar(); }}
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-200 hover:bg-white/5 mb-1"
+        >
+          <svg className="size-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+          </svg>
+          Buscar obras, artistas…
+        </button>
+      )}
       <ul className="space-y-1">
         {menus.map((menu) => (
           <li key={menu.etiqueta}>
@@ -278,12 +290,12 @@ export default function Navbar() {
                 {/* Separadores */}
                 <div className="hidden h-4 w-px bg-white/10 lg:block" />
 
-                {/* Búsqueda */}
+                {/* Búsqueda — oculto en móvil, visible desde sm */}
                 <button
                   type="button"
                   aria-label="Abrir buscador"
                   onClick={() => { setBuscadorAbierto(true); setQueryBusqueda(""); }}
-                  className="flex items-center justify-center rounded-full bg-white/5 p-2 text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-amber-400"
+                  className="hidden sm:flex items-center justify-center rounded-full bg-white/5 p-2 text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-amber-400"
                 >
                   <svg className="size-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
@@ -337,7 +349,12 @@ export default function Navbar() {
             )}
           </nav>
 
-          {movilAbierto && <MenuMovil alCerrar={() => setMovilAbierto(false)} />}
+          {movilAbierto && (
+            <MenuMovil
+              alCerrar={() => setMovilAbierto(false)}
+              onBuscar={() => { setMovilAbierto(false); setBuscadorAbierto(true); setQueryBusqueda(""); }}
+            />
+          )}
         </div>
       </header>
 
