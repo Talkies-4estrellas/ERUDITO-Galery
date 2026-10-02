@@ -186,9 +186,9 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
                   {ficha.anio}
                 </span>
               </div>
-              <p className="text-[8px] font-semibold uppercase tracking-widest text-zinc-500 mb-0.5">Descripción</p>
-              <p className="line-clamp-2 text-[10px] sm:text-[11px] leading-relaxed text-zinc-300">{ficha.descripcion}</p>
-              <div className="flex justify-center mt-2">
+              <p className="text-[7px] sm:text-[8px] font-semibold uppercase tracking-widest text-zinc-500 mb-0.5">Descripción</p>
+              <p className="line-clamp-1 sm:line-clamp-2 text-[9px] sm:text-[11px] leading-relaxed text-zinc-300">{ficha.descripcion}</p>
+              <div className="flex justify-center mt-1.5">
                 <Estrellas n={ficha.estrellas} />
               </div>
             </div>
