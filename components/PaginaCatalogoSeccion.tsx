@@ -222,7 +222,7 @@ export default function PaginaCatalogoSeccion({
       {/* Grid */}
       {resultado.length > 0 ? (
         <>
-          <div className="mt-8 grid grid-cols-3 gap-x-3 gap-y-6 sm:gap-x-5 sm:gap-y-8 xl:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 xl:grid-cols-4">
             {paginadas.map((ficha) => (
               <FichaObra key={ficha.id} ficha={ficha} fluida />
             ))}

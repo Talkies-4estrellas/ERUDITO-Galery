@@ -226,7 +226,7 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
           onMouseLeave={ocultar}
           onClick={handleTap}
         >
-          <CapsulaArtista artista={ficha.artista} />
+          <CapsulaArtista artista={ficha.artista} compacta={fluida} />
         </div>
       </article>
 
