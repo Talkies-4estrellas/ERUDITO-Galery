@@ -4,6 +4,7 @@ import "./globals.css";
 import Footer from "@/components/Footer";
 import { ToastProvider } from "@/components/ToastProvider";
 import AuroraFondo from "@/components/AuroraFondo";
+import BarraNavInferior from "@/components/BarraNavInferior";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,13 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body suppressHydrationWarning className="min-h-full flex flex-col">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"
+        />
+      </head>
+      <body suppressHydrationWarning className="min-h-full flex flex-col pb-24 sm:pb-0">
         {/* Previene el flash al leer localStorage antes del primer paint */}
         <script
           dangerouslySetInnerHTML={{
@@ -43,6 +50,7 @@ export default function RootLayout({
         <ToastProvider>
           {children}
           <Footer />
+          <BarraNavInferior />
         </ToastProvider>
       </body>
     </html>

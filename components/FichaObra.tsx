@@ -50,23 +50,31 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
     setHovered(true);
   }, []);
 
+  /* Cierre suave para hover en desktop — no-op en táctil */
   const ocultar = useCallback(() => {
+    if (window.matchMedia("(hover: none)").matches) return;
     hideRef.current = setTimeout(() => {
       setHovered(false);
       setCardRect(null);
     }, 80);
   }, []);
 
+  /* Cierre inmediato para tap, scroll y backdrop */
+  const cerrar = useCallback(() => {
+    if (hideRef.current) clearTimeout(hideRef.current);
+    setHovered(false);
+    setCardRect(null);
+  }, []);
+
   const handleTap = useCallback(() => {
-    if (hovered) { ocultar(); } else { mostrar(); }
-  }, [hovered, mostrar, ocultar]);
+    if (hovered) { cerrar(); } else { mostrar(); }
+  }, [hovered, cerrar, mostrar]);
 
   useEffect(() => {
     if (!hovered) return;
-    const cerrar = () => { setHovered(false); setCardRect(null); };
     window.addEventListener("scroll", cerrar, { passive: true });
     return () => window.removeEventListener("scroll", cerrar);
-  }, [hovered]);
+  }, [hovered, cerrar]);
 
   const tooltipStyle = cardRect ? (() => {
     const vw = window.innerWidth;
@@ -104,7 +112,7 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
             <div
               className="fixed inset-0 sm:hidden"
               style={{ zIndex: 9998 }}
-              onClick={ocultar}
+              onClick={cerrar}
             />
             <div
               style={tooltipStyle}
@@ -164,8 +172,21 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
             </div>
           )}
 
-          {/* ── INFO OVERLAY ── gradiente en la parte inferior ─── */}
-          <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/95 via-black/75 to-transparent px-4 pb-4 pt-20">
+          {/* Capa 1: gradiente base */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[8] bg-gradient-to-t from-zinc-500/90 via-zinc-400/50 to-transparent pt-20" />
+
+          {/* Capa 2: blur con mask para transición sin borde visible */}
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-[9] backdrop-blur-sm"
+            style={{
+              height: "72%",
+              maskImage: "linear-gradient(to top, black 40%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to top, black 40%, transparent 100%)",
+            }}
+          />
+
+          {/* Capa 3: texto encima */}
+          <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-4 pt-20">
             <p className="truncate text-sm font-bold uppercase tracking-wide text-white leading-tight">
               {ficha.titulo}
             </p>
