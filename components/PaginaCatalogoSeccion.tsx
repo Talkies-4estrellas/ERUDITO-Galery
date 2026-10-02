@@ -62,6 +62,8 @@ export default function PaginaCatalogoSeccion({
 }: Props) {
   const PRECIO_MAX = useMemo(() => fichas.length ? Math.max(...fichas.map((f) => f.precio)) : 100000, [fichas]);
 
+  const POR_PAGINA = 15;
+
   const [categoria,       setCategoria]       = useState("");
   const [estilo,          setEstilo]          = useState("");
   const [tamano,          setTamano]          = useState("");
@@ -71,8 +73,10 @@ export default function PaginaCatalogoSeccion({
   const [orden,           setOrden]           = useState<Orden>("relevancia");
   const [busqueda,        setBusqueda]        = useState("");
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
+  const [limite,          setLimite]          = useState(POR_PAGINA);
 
   const resultado = useMemo(() => {
+    setLimite(POR_PAGINA);
     let lista = [...fichas];
     if (busqueda.trim()) {
       const q = busqueda.toLowerCase();
@@ -94,7 +98,11 @@ export default function PaginaCatalogoSeccion({
       case "anio-desc":   lista.sort((a, b) => Number(b.anio) - Number(a.anio)); break;
     }
     return lista;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fichas, categoria, estilo, tamano, precioMax, orden, busqueda]);
+
+  const paginadas = resultado.slice(0, limite);
+  const hayMas    = resultado.length > limite;
 
   const hayFiltros = categoria || estilo || tamano || precioMax < PRECIO_MAX || !!busqueda.trim();
 
@@ -120,8 +128,7 @@ export default function PaginaCatalogoSeccion({
         </div>
         <div className="flex items-center gap-4">
           <span className="text-xs text-zinc-500">
-            {resultado.length} obra{resultado.length !== 1 ? "s" : ""}
-            {hayFiltros ? " encontradas" : " en total"}
+            {paginadas.length} de {resultado.length} obra{resultado.length !== 1 ? "s" : ""}
           </span>
           <Link
             href={otroHref}
@@ -214,11 +221,25 @@ export default function PaginaCatalogoSeccion({
 
       {/* Grid */}
       {resultado.length > 0 ? (
-        <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 xl:grid-cols-4">
-          {resultado.map((ficha) => (
-            <FichaObra key={ficha.id} ficha={ficha} fluida />
-          ))}
-        </div>
+        <>
+          <div className="mt-8 grid grid-cols-3 gap-x-3 gap-y-6 sm:gap-x-5 sm:gap-y-8 xl:grid-cols-4">
+            {paginadas.map((ficha) => (
+              <FichaObra key={ficha.id} ficha={ficha} fluida />
+            ))}
+          </div>
+
+          {hayMas && (
+            <div className="mt-10 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setLimite((l) => l + POR_PAGINA)}
+                className="rounded-full bg-zinc-800 px-6 py-2.5 text-sm text-zinc-300 ring-1 ring-white/10 transition hover:bg-amber-400/10 hover:text-amber-400 hover:ring-amber-400/20"
+              >
+                Cargar más · {resultado.length - limite} restantes
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <div className="mt-16 rounded-2xl bg-zinc-900/60 py-12 text-center ring-1 ring-white/10">
           <p className="text-sm text-zinc-500">{vacio}</p>

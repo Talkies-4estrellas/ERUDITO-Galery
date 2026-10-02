@@ -173,50 +173,48 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
           )}
 
           {/* Capa 1: gradiente base */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[8] bg-gradient-to-t from-zinc-500/90 via-zinc-400/50 to-transparent pt-20" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[8] bg-gradient-to-t from-zinc-500/90 via-zinc-400/50 to-transparent h-[45%] sm:h-[72%]" />
 
           {/* Capa 2: blur con mask para transición sin borde visible */}
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-[9] backdrop-blur-sm"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-[9] backdrop-blur-sm h-[45%] sm:h-[72%]"
             style={{
-              height: "72%",
               maskImage: "linear-gradient(to top, black 40%, transparent 100%)",
               WebkitMaskImage: "linear-gradient(to top, black 40%, transparent 100%)",
             }}
           />
 
           {/* Capa 3: texto encima */}
-          <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-4 pt-20">
-            <p className="truncate text-sm font-bold uppercase tracking-wide text-white leading-tight">
+          <div className="absolute inset-x-0 bottom-0 z-10 px-2 sm:px-4 pb-3 sm:pb-4 pt-8 sm:pt-20">
+            <p className="truncate text-[10px] sm:text-sm font-bold uppercase tracking-wide text-white leading-tight">
               {ficha.titulo}
             </p>
-            <p className="mt-0.5 text-[10px] text-zinc-500">{ficha.anio}</p>
 
-            <div className="mt-1.5">
+            {/* Solo desktop */}
+            <p className="hidden sm:block mt-0.5 text-[10px] text-zinc-500">{ficha.anio}</p>
+            <div className="hidden sm:block mt-1.5">
               <Estrellas n={ficha.estrellas} />
             </div>
-
-            <p className="mt-1.5 line-clamp-3 text-[11px] leading-relaxed text-zinc-300">
+            <p className="hidden sm:block mt-1.5 line-clamp-3 text-[11px] leading-relaxed text-zinc-300">
               {ficha.descripcion}
             </p>
-
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-1">
-              <div className="flex flex-wrap gap-1">
-                {ficha.movimiento && (
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-300 ring-1 ring-white/10">
-                    {ficha.movimiento}
-                  </span>
-                )}
-                <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-400 ring-1 ring-white/10">
-                  {ficha.tamano}
-                </span>
-              </div>
-              {ficha.precio > 0 && (
-                <span className="shrink-0 text-xs font-semibold text-amber-400">
-                  ${ficha.precio.toLocaleString("es-MX")}
+            <div className="hidden sm:flex mt-2 flex-wrap items-center gap-1">
+              {ficha.movimiento && (
+                <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-300 ring-1 ring-white/10">
+                  {ficha.movimiento}
                 </span>
               )}
+              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-400 ring-1 ring-white/10">
+                {ficha.tamano}
+              </span>
             </div>
+
+            {/* Precio siempre visible */}
+            {ficha.precio > 0 && (
+              <span className="mt-1 block text-[10px] sm:text-xs font-semibold text-amber-400">
+                ${ficha.precio.toLocaleString("es-MX")}
+              </span>
+            )}
           </div>
         </Link>
 
