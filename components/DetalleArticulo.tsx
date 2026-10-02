@@ -35,7 +35,7 @@ export default function DetalleArticulo({ articulo, relacionados }: Props) {
         {/* Volver */}
         <Link
           href="/blog"
-          className="absolute left-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-black/40 px-3.5 py-1.5 text-xs text-white backdrop-blur-md transition hover:bg-black/60"
+          className="absolute left-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-black/40 px-3.5 py-1.5 text-xs text-white backdrop-blur-md transition hover:bg-black/60 dark-overlay"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-3.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
@@ -43,7 +43,7 @@ export default function DetalleArticulo({ articulo, relacionados }: Props) {
           Blog
         </Link>
 
-        <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-8 sm:px-8">
+        <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-8 sm:px-8 dark-overlay">
           <div className="mx-auto max-w-3xl space-y-3">
             <span className={`inline-flex items-center rounded-full px-3 py-0.5 text-[11px] font-semibold uppercase tracking-widest ring-1 ${color}`}>
               {articulo.categoria}

@@ -33,7 +33,7 @@ export default function BotonFavorito({ id, tamano = "sm" }: Props) {
       } ${
         activo
           ? "bg-amber-400 text-zinc-900"
-          : "bg-black/50 text-white hover:bg-black/70"
+          : "favorito-inactivo bg-black/50 text-white hover:bg-black/70"
       } ${listo ? "opacity-100" : "opacity-0"}`}
     >
       <svg

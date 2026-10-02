@@ -72,6 +72,10 @@ body {
 /* Eventos anteriores — sin opacidad en tema claro */
 [data-theme="light"] .anteriores-grid { opacity: 1; }
 
+/* Botón favorito — sin fondo en tema claro */
+[data-theme="light"] .favorito-inactivo { background-color: transparent !important; }
+[data-theme="light"] .favorito-inactivo:hover { background-color: rgb(0 0 0 / 0.10) !important; }
+
 /* Paneles con fondo oscuro fijo (inline style o gradiente) — mantener texto claro */
 [data-theme="light"] .dark-overlay .text-white    { color: #ffffff; }
 [data-theme="light"] .dark-overlay .text-zinc-100 { color: #f0efed; }
