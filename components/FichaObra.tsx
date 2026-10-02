@@ -172,56 +172,61 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
             </div>
           )}
 
-          {/* Capa 1: gradiente base */}
-          <div className={`pointer-events-none absolute inset-x-0 bottom-0 z-[8] bg-gradient-to-t from-zinc-500/90 via-zinc-400/50 to-transparent ${fluida ? "h-[45%] sm:h-[72%]" : "h-[72%]"}`} />
-
-          {/* Capa 2: blur con mask para transición sin borde visible */}
-          <div
-            className={`pointer-events-none absolute inset-x-0 bottom-0 z-[9] backdrop-blur-sm ${fluida ? "h-[45%] sm:h-[72%]" : "h-[72%]"}`}
-            style={{
-              maskImage: "linear-gradient(to top, black 40%, transparent 100%)",
-              WebkitMaskImage: "linear-gradient(to top, black 40%, transparent 100%)",
-            }}
-          />
-
-          {/* Capa 3: texto encima */}
-          <div className={`absolute inset-x-0 bottom-0 z-10 ${fluida ? "px-2 sm:px-4 pb-3 sm:pb-4 pt-8 sm:pt-20" : "px-4 pb-4 pt-20"}`}>
-            <p className={`truncate font-bold uppercase tracking-wide text-white leading-tight ${fluida ? "text-[10px] sm:text-sm" : "text-sm"}`}>
-              {ficha.titulo}
-            </p>
-
-            <p className={fluida ? "hidden sm:block mt-0.5 text-[10px] text-zinc-500" : "mt-0.5 text-[10px] text-zinc-500"}>{ficha.anio}</p>
-            <div className={fluida ? "hidden sm:block mt-1.5" : "mt-1.5"}>
-              <Estrellas n={ficha.estrellas} />
-            </div>
-            <p className={fluida ? "hidden sm:block mt-1.5 line-clamp-3 text-[11px] leading-relaxed text-zinc-300" : "mt-1.5 line-clamp-3 text-[11px] leading-relaxed text-zinc-300"}>
-              {ficha.descripcion}
-            </p>
-            <div className={fluida ? "hidden sm:flex mt-2 flex-wrap items-center justify-between gap-1" : "mt-2 flex flex-wrap items-center justify-between gap-1"}>
-              <div className="flex flex-wrap gap-1">
-                {ficha.movimiento && (
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-300 ring-1 ring-white/10">
-                    {ficha.movimiento}
-                  </span>
-                )}
-                <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-400 ring-1 ring-white/10">
-                  {ficha.tamano}
+          {/* Catálogo: gradiente + blur + texto */}
+          {fluida && <>
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[8] h-[45%] sm:h-[72%] bg-gradient-to-t from-zinc-500/90 via-zinc-400/50 to-transparent" />
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-[9] backdrop-blur-sm h-[45%] sm:h-[72%]"
+              style={{
+                maskImage: "linear-gradient(to top, black 40%, transparent 100%)",
+                WebkitMaskImage: "linear-gradient(to top, black 40%, transparent 100%)",
+              }}
+            />
+            <div className="absolute inset-x-0 bottom-0 z-10 px-2 sm:px-4 pb-3 sm:pb-4 pt-8 sm:pt-20">
+              <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                <p className="truncate font-bold uppercase tracking-wide text-white leading-tight text-[10px] sm:text-sm">
+                  {ficha.titulo}
+                </p>
+                <span className="hidden sm:inline shrink-0 font-medium text-zinc-300 text-[10px]">
+                  {ficha.anio}
                 </span>
               </div>
+              <div className="hidden sm:block">
+                <p className="text-[8px] font-semibold uppercase tracking-widest text-zinc-500 mb-0.5">Descripción</p>
+                <p className="line-clamp-2 text-[11px] leading-relaxed text-zinc-300">{ficha.descripcion}</p>
+              </div>
+              <div className="hidden sm:flex justify-center mt-2">
+                <Estrellas n={ficha.estrellas} />
+              </div>
               {ficha.precio > 0 && (
-                <span className="shrink-0 text-xs font-semibold text-amber-400">
+                <span className="sm:hidden mt-1 block text-[10px] font-semibold text-amber-400">
                   ${ficha.precio.toLocaleString("es-MX")}
                 </span>
               )}
             </div>
+          </>}
 
-            {/* Precio compacto solo en catálogo móvil */}
-            {fluida && ficha.precio > 0 && (
-              <span className="sm:hidden mt-1 block text-[10px] font-semibold text-amber-400">
-                ${ficha.precio.toLocaleString("es-MX")}
-              </span>
-            )}
-          </div>
+          {/* Home: panel semitransparente */}
+          {!fluida && (
+            <div
+              className="absolute inset-x-0 bottom-0 z-10 px-4 pb-4 pt-4 backdrop-blur-md"
+              style={{ background: "rgba(60,57,54,0.45)" }}
+            >
+              <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                <p className="truncate font-bold uppercase tracking-wide text-white leading-tight text-sm">
+                  {ficha.titulo}
+                </p>
+                <span className="shrink-0 font-medium text-zinc-300 text-[10px]">
+                  {ficha.anio}
+                </span>
+              </div>
+              <p className="text-[8px] font-semibold uppercase tracking-widest text-zinc-500 mb-0.5">Descripción</p>
+              <p className="line-clamp-2 text-[11px] leading-relaxed text-zinc-300">{ficha.descripcion}</p>
+              <div className="flex justify-center mt-2">
+                <Estrellas n={ficha.estrellas} />
+              </div>
+            </div>
+          )}
         </Link>
 
         {/* ── CÁPSULA ARTISTA — dispara el tooltip ──────────────── */}
