@@ -172,39 +172,27 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
             </div>
           )}
 
-          {/* Catálogo: gradiente + blur + texto */}
-          {fluida && <>
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[8] h-[45%] sm:h-[72%] bg-gradient-to-t from-zinc-500/90 via-zinc-400/50 to-transparent" />
+          {/* Catálogo: panel semitransparente con misma info que home */}
+          {fluida && (
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 z-[9] backdrop-blur-sm h-[45%] sm:h-[72%]"
-              style={{
-                maskImage: "linear-gradient(to top, black 40%, transparent 100%)",
-                WebkitMaskImage: "linear-gradient(to top, black 40%, transparent 100%)",
-              }}
-            />
-            <div className="absolute inset-x-0 bottom-0 z-10 px-2 sm:px-4 pb-3 sm:pb-4 pt-8 sm:pt-20">
+              className="absolute inset-x-0 bottom-0 z-10 px-2 sm:px-4 pb-3 sm:pb-4 pt-3 sm:pt-4 backdrop-blur-md"
+              style={{ background: "rgba(60,57,54,0.45)" }}
+            >
               <div className="flex items-baseline justify-between gap-2 mb-1.5">
                 <p className="truncate font-bold uppercase tracking-wide text-white leading-tight text-[10px] sm:text-sm">
                   {ficha.titulo}
                 </p>
-                <span className="hidden sm:inline shrink-0 font-medium text-zinc-300 text-[10px]">
+                <span className="shrink-0 font-medium text-zinc-300 text-[10px]">
                   {ficha.anio}
                 </span>
               </div>
-              <div className="hidden sm:block">
-                <p className="text-[8px] font-semibold uppercase tracking-widest text-zinc-500 mb-0.5">Descripción</p>
-                <p className="line-clamp-2 text-[11px] leading-relaxed text-zinc-300">{ficha.descripcion}</p>
-              </div>
-              <div className="hidden sm:flex justify-center mt-2">
+              <p className="text-[8px] font-semibold uppercase tracking-widest text-zinc-500 mb-0.5">Descripción</p>
+              <p className="line-clamp-2 text-[10px] sm:text-[11px] leading-relaxed text-zinc-300">{ficha.descripcion}</p>
+              <div className="flex justify-center mt-2">
                 <Estrellas n={ficha.estrellas} />
               </div>
-              {ficha.precio > 0 && (
-                <span className="sm:hidden mt-1 block text-[10px] font-semibold text-amber-400">
-                  ${ficha.precio.toLocaleString("es-MX")}
-                </span>
-              )}
             </div>
-          </>}
+          )}
 
           {/* Home: panel semitransparente */}
           {!fluida && (
