@@ -41,7 +41,7 @@ export default function DetalleObra({ ficha, similares }: Props) {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[65%] bg-gradient-to-t from-zinc-950/90 via-zinc-950/50 to-transparent" />
 
         {/* Volver + Compartir */}
-        <div className="absolute left-4 top-4 z-10 flex items-center gap-2">
+        <div className="absolute left-4 top-4 z-10 flex items-center gap-2 dark-overlay">
           <Link
             href="/obras"
             className="flex items-center gap-1.5 rounded-full bg-black/40 px-3.5 py-1.5 text-xs text-white backdrop-blur-md transition hover:bg-black/60"
@@ -55,7 +55,7 @@ export default function DetalleObra({ ficha, similares }: Props) {
         </div>
 
         {/* Contenido superpuesto */}
-        <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-8 sm:px-8">
+        <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-8 sm:px-8 dark-overlay">
           <div className="mx-auto max-w-6xl space-y-3">
 
             {/* Artista */}

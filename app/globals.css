@@ -34,9 +34,11 @@ body {
 
 /* Fondos con opacidad (navbar, panels, dropdowns) */
 [data-theme="light"] .bg-zinc-900\/70  { background-color: rgb(240 239 237 / 0.90); }
+[data-theme="light"] .bg-zinc-900\/80  { background-color: rgb(240 239 237 / 0.93); }
 [data-theme="light"] .bg-zinc-900\/90  { background-color: rgb(240 239 237 / 0.96); }
 [data-theme="light"] .bg-zinc-900\/95  { background-color: rgb(240 239 237 / 0.98); }
 [data-theme="light"] .bg-zinc-800\/50  { background-color: rgb(229 228 225 / 0.60); }
+[data-theme="light"] .bg-zinc-800\/60  { background-color: rgb(229 228 225 / 0.70); }
 
 /* Semitransparentes (hover states, chips) */
 [data-theme="light"] .bg-white\/5  { background-color: rgb(0 0 0 / 0.04); }
@@ -66,6 +68,14 @@ body {
 
 /* Fondos muy oscuros (zinc-950) — usados en barra nav inferior móvil */
 [data-theme="light"] .bg-zinc-950\/80 { background-color: rgb(255 255 255 / 0.88); }
+
+/* Paneles con fondo oscuro fijo (inline style o gradiente) — mantener texto claro */
+[data-theme="light"] .dark-overlay .text-white    { color: #ffffff; }
+[data-theme="light"] .dark-overlay .text-zinc-100 { color: #f0efed; }
+[data-theme="light"] .dark-overlay .text-zinc-200 { color: #d4d4d8; }
+[data-theme="light"] .dark-overlay .text-zinc-300 { color: #c4c4c8; }
+[data-theme="light"] .dark-overlay .text-zinc-400 { color: #a1a1aa; }
+[data-theme="light"] .dark-overlay .text-zinc-500 { color: #71717a; }
 
 /* Sombras */
 [data-theme="light"] .shadow-2xl {

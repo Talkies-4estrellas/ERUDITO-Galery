@@ -175,7 +175,7 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
           {/* Catálogo: panel semitransparente con misma info que home */}
           {fluida && (
             <div
-              className="absolute inset-x-0 bottom-0 z-10 px-2 sm:px-4 pb-3 sm:pb-4 pt-3 sm:pt-4 backdrop-blur-md"
+              className="absolute inset-x-0 bottom-0 z-10 px-2 sm:px-4 pb-3 sm:pb-4 pt-3 sm:pt-4 backdrop-blur-md dark-overlay"
               style={{ background: "rgba(60,57,54,0.45)" }}
             >
               <div className="flex items-baseline justify-between gap-2 mb-1.5">
@@ -197,7 +197,7 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
           {/* Home: panel semitransparente */}
           {!fluida && (
             <div
-              className="absolute inset-x-0 bottom-0 z-10 px-4 pb-4 pt-4 backdrop-blur-md"
+              className="absolute inset-x-0 bottom-0 z-10 px-4 pb-4 pt-4 backdrop-blur-md dark-overlay"
               style={{ background: "rgba(60,57,54,0.45)" }}
             >
               <div className="flex items-baseline justify-between gap-2 mb-1.5">
