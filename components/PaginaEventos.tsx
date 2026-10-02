@@ -283,7 +283,7 @@ export default function PaginaEventos({
           {pasados.length > 0 && (
             <div>
               <h2 className="mb-5 text-sm font-semibold uppercase tracking-widest text-zinc-500">Anteriores</h2>
-              <div className="grid gap-5 sm:grid-cols-2 opacity-60">
+              <div className="grid gap-5 sm:grid-cols-2 opacity-75 anteriores-grid">
                 {pasados.map((e) => (
                   <TarjetaEvento key={e.id} evento={e} onRegistrar={setEventoActivo} />
                 ))}

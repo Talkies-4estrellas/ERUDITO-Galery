@@ -69,6 +69,9 @@ body {
 /* Fondos muy oscuros (zinc-950) — usados en barra nav inferior móvil */
 [data-theme="light"] .bg-zinc-950\/80 { background-color: rgb(255 255 255 / 0.88); }
 
+/* Eventos anteriores — sin opacidad en tema claro */
+[data-theme="light"] .anteriores-grid { opacity: 1; }
+
 /* Paneles con fondo oscuro fijo (inline style o gradiente) — mantener texto claro */
 [data-theme="light"] .dark-overlay .text-white    { color: #ffffff; }
 [data-theme="light"] .dark-overlay .text-zinc-100 { color: #f0efed; }
