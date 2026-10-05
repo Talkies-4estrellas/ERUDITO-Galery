@@ -268,16 +268,21 @@ export default function PaginaEventos({
       ) : (
         <div className="space-y-6 sm:space-y-10">
           {/* Próximos */}
-          {proximos.length > 0 && (
-            <div>
-              <h2 className="mb-5 text-sm font-semibold uppercase tracking-widest text-zinc-500">Próximos</h2>
+          <div>
+            <h2 className="mb-5 text-sm font-semibold uppercase tracking-widest text-zinc-500">Próximos</h2>
+            {proximos.length > 0 ? (
               <div className="grid gap-5 sm:grid-cols-2">
                 {proximos.map((e) => (
                   <TarjetaEvento key={e.id} evento={e} onRegistrar={setEventoActivo} />
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-white/10 py-12 text-center">
+                <p className="text-sm text-zinc-500">Próximamente nuevos eventos</p>
+                <p className="text-xs text-zinc-600">Síguenos para enterarte de subastas y exposiciones</p>
+              </div>
+            )}
+          </div>
 
           {/* Pasados */}
           {pasados.length > 0 && (

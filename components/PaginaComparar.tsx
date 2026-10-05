@@ -48,10 +48,10 @@ export default function PaginaComparar({ fichas }: { fichas: FichaArte[] }) {
           a lado — precio, tendencia de valor y atributos.
         </p>
         <Link
-          href="/obras"
+          href="/catalogo"
           className="mt-6 inline-block rounded-full bg-amber-400 px-5 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-amber-300"
         >
-          Ir a Obras
+          Ir al Catálogo
         </Link>
       </section>
     );

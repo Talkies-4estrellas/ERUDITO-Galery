@@ -62,7 +62,7 @@ export default function PaginaCatalogoSeccion({
 }: Props) {
   const PRECIO_MAX = useMemo(() => fichas.length ? Math.max(...fichas.map((f) => f.precio)) : 100000, [fichas]);
 
-  const POR_PAGINA = 15;
+  const POR_PAGINA = 16;
 
   const [categoria,       setCategoria]       = useState("");
   const [estilo,          setEstilo]          = useState("");
@@ -73,10 +73,10 @@ export default function PaginaCatalogoSeccion({
   const [orden,           setOrden]           = useState<Orden>("relevancia");
   const [busqueda,        setBusqueda]        = useState("");
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
-  const [limite,          setLimite]          = useState(POR_PAGINA);
+  const [pagina,          setPagina]          = useState(1);
 
   const resultado = useMemo(() => {
-    setLimite(POR_PAGINA);
+    setPagina(1);
     let lista = [...fichas];
     if (busqueda.trim()) {
       const q = busqueda.toLowerCase();
@@ -101,8 +101,8 @@ export default function PaginaCatalogoSeccion({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fichas, categoria, estilo, tamano, precioMax, orden, busqueda]);
 
-  const paginadas = resultado.slice(0, limite);
-  const hayMas    = resultado.length > limite;
+  const totalPaginas = Math.max(1, Math.ceil(resultado.length / POR_PAGINA));
+  const paginadas    = resultado.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
 
   const hayFiltros = categoria || estilo || tamano || precioMax < PRECIO_MAX || !!busqueda.trim();
 
@@ -128,7 +128,7 @@ export default function PaginaCatalogoSeccion({
         </div>
         <div className="flex items-center gap-4">
           <span className="text-xs text-zinc-500">
-            {paginadas.length} de {resultado.length} obra{resultado.length !== 1 ? "s" : ""}
+            {resultado.length} obra{resultado.length !== 1 ? "s" : ""}
           </span>
           <Link
             href={otroHref}
@@ -228,14 +228,37 @@ export default function PaginaCatalogoSeccion({
             ))}
           </div>
 
-          {hayMas && (
-            <div className="mt-10 flex justify-center">
+          {totalPaginas > 1 && (
+            <div className="mt-10 flex items-center justify-center gap-2">
               <button
                 type="button"
-                onClick={() => setLimite((l) => l + POR_PAGINA)}
-                className="rounded-full bg-zinc-800 px-6 py-2.5 text-sm text-zinc-300 ring-1 ring-white/10 transition hover:bg-amber-400/10 hover:text-amber-400 hover:ring-amber-400/20"
+                onClick={() => { setPagina((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                disabled={pagina === 1}
+                className="rounded-full bg-zinc-800 px-4 py-2 text-sm text-zinc-300 ring-1 ring-white/10 transition hover:bg-amber-400/10 hover:text-amber-400 hover:ring-amber-400/20 disabled:opacity-30 disabled:pointer-events-none"
               >
-                Cargar más · {resultado.length - limite} restantes
+                ←
+              </button>
+              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => { setPagina(n); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  className={`rounded-full px-4 py-2 text-sm ring-1 transition ${
+                    n === pagina
+                      ? "bg-amber-400 text-zinc-900 ring-amber-400 font-semibold"
+                      : "bg-zinc-800 text-zinc-300 ring-white/10 hover:bg-amber-400/10 hover:text-amber-400 hover:ring-amber-400/20"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => { setPagina((p) => Math.min(totalPaginas, p + 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                disabled={pagina === totalPaginas}
+                className="rounded-full bg-zinc-800 px-4 py-2 text-sm text-zinc-300 ring-1 ring-white/10 transition hover:bg-amber-400/10 hover:text-amber-400 hover:ring-amber-400/20 disabled:opacity-30 disabled:pointer-events-none"
+              >
+                →
               </button>
             </div>
           )}

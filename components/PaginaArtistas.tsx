@@ -71,11 +71,14 @@ export default function PaginaArtistas({
   titulo = "Artistas",
   descripcion = "Maestros cuya obra forma parte de la colección ERUDITO.",
 }: Props) {
+  const POR_PAGINA = 20;
+
   const [busqueda,         setBusqueda]         = useState("");
   const [filtroOrigen,     setFiltroOrigen]     = useState("");
   const [filtroTecnica,    setFiltroTecnica]    = useState("");
   const [filtroMovimiento, setFiltroMovimiento] = useState("");
   const [filtrosAbiertos,  setFiltrosAbiertos]  = useState(false);
+  const [pagina,           setPagina]           = useState(1);
 
   // Pre-computar obras por artista (evita recalcular dentro del useMemo de filtrado)
   const obrasPorArtista = useMemo(() => {
@@ -116,6 +119,7 @@ export default function PaginaArtistas({
 
   // Filtrado
   const filtrados = useMemo(() => {
+    setPagina(1);
     const q = busqueda.trim().toLowerCase();
     return artistas.filter((a) => {
       if (q && !a.nombre.toLowerCase().includes(q) && !a.origen.toLowerCase().includes(q)) return false;
@@ -125,7 +129,11 @@ export default function PaginaArtistas({
       if (filtroMovimiento && !obras.some((o) => o.movimiento === filtroMovimiento)) return false;
       return true;
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artistas, busqueda, filtroOrigen, filtroTecnica, filtroMovimiento, obrasPorArtista]);
+
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
+  const paginados    = filtrados.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
 
   const hayFiltros = !!busqueda || !!filtroOrigen || !!filtroTecnica || !!filtroMovimiento;
 
@@ -227,7 +235,7 @@ export default function PaginaArtistas({
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
-          {filtrados.map((artista) => {
+          {paginados.map((artista) => {
             const obras = obrasPorArtista.get(artista.id) ?? [];
             const promedio = obras.length > 0
               ? (obras.reduce((s, o) => s + o.estrellas, 0) / obras.length).toFixed(1)
@@ -255,7 +263,6 @@ export default function PaginaArtistas({
                   <p className="mt-0.5 line-clamp-1 text-[10px] text-zinc-400 sm:text-xs">
                     {artista.vida ? `${artista.vida} · ` : ""}{artista.origen}
                   </p>
-                  {/* Tags de técnica y corriente */}
                   {(tecnicasArtista.length > 0 || movimientosArtista.length > 0) && (
                     <div className="mt-1.5 hidden flex-wrap gap-1 sm:flex">
                       {movimientosArtista.map((m) => (
@@ -280,6 +287,41 @@ export default function PaginaArtistas({
               </Link>
             );
           })}
+        </div>
+      )}
+
+      {filtrados.length > 0 && totalPaginas > 1 && (
+        <div className="mt-10 flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => { setPagina((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+            disabled={pagina === 1}
+            className="rounded-full bg-zinc-800 px-4 py-2 text-sm text-zinc-300 ring-1 ring-white/10 transition hover:bg-amber-400/10 hover:text-amber-400 hover:ring-amber-400/20 disabled:opacity-30 disabled:pointer-events-none"
+          >
+            ←
+          </button>
+          {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => { setPagina(n); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              className={`rounded-full px-4 py-2 text-sm ring-1 transition ${
+                n === pagina
+                  ? "bg-amber-400 text-zinc-900 ring-amber-400 font-semibold"
+                  : "bg-zinc-800 text-zinc-300 ring-white/10 hover:bg-amber-400/10 hover:text-amber-400 hover:ring-amber-400/20"
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => { setPagina((p) => Math.min(totalPaginas, p + 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+            disabled={pagina === totalPaginas}
+            className="rounded-full bg-zinc-800 px-4 py-2 text-sm text-zinc-300 ring-1 ring-white/10 transition hover:bg-amber-400/10 hover:text-amber-400 hover:ring-amber-400/20 disabled:opacity-30 disabled:pointer-events-none"
+          >
+            →
+          </button>
         </div>
       )}
     </section>

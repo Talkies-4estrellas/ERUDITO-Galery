@@ -119,6 +119,41 @@ export async function getArtistas(): Promise<Artista[]> {
   return [...artistasTabla, ...artistasPlataforma];
 }
 
+export interface Galeria {
+  email: string;
+  nombre: string;
+  bio: string;
+  especialidad: string;
+  pais: string;
+  slug: string;
+  avatar_url?: string;
+  banner_url?: string;
+  obraCount: number;
+}
+
+export async function getGalerias(): Promise<Galeria[]> {
+  const [{ data: dataEmpresas, error }, { data: dataObras }] = await Promise.all([
+    supabase.from("usuarios").select("email,nombre,bio,especialidad,pais,slug,avatar_url,banner_url").eq("rol", "empresa").order("nombre"),
+    supabase.from("obras").select("artista_email").eq("estado", "aprobada").not("artista_email", "is", null),
+  ]);
+  if (error) throw new Error(error.message);
+  const conteo = new Map<string, number>();
+  (dataObras ?? []).forEach((r) => {
+    conteo.set(r.artista_email, (conteo.get(r.artista_email) ?? 0) + 1);
+  });
+  return (dataEmpresas ?? []).map((row) => ({
+    email:        row.email ?? "",
+    nombre:       row.nombre ?? "",
+    bio:          row.bio ?? "",
+    especialidad: row.especialidad ?? "",
+    pais:         row.pais ?? "",
+    slug:         row.slug ?? "",
+    avatar_url:   row.avatar_url || undefined,
+    banner_url:   row.banner_url || undefined,
+    obraCount:    conteo.get(row.email) ?? 0,
+  }));
+}
+
 export async function getArtista(id: number): Promise<Artista | null> {
   const { data, error } = await supabase
     .from("artistas")

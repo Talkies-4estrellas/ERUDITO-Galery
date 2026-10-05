@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const CLAVE_LOCAL = "erudito-perfil";
 const EVENTO_PERFIL = "erudito-perfil-actualizado";
+const EXPIRACION_MS = 7 * 24 * 60 * 60 * 1000; // 7 días
 
 function emitirPerfil(datos: DatosPerfil | null) {
   window.dispatchEvent(new CustomEvent(EVENTO_PERFIL, { detail: datos }));
@@ -56,7 +57,18 @@ export function usePerfil() {
     if (!user) {
       try {
         const raw = localStorage.getItem(CLAVE_LOCAL);
-        setPerfil(raw ? (JSON.parse(raw) as DatosPerfil) : null);
+        if (raw) {
+          const parsed = JSON.parse(raw) as DatosPerfil & { _savedAt?: number };
+          if (!parsed._savedAt || Date.now() - parsed._savedAt > EXPIRACION_MS) {
+            localStorage.removeItem(CLAVE_LOCAL);
+            setPerfil(null);
+          } else {
+            const { _savedAt: _, ...datos } = parsed;
+            setPerfil(datos as DatosPerfil);
+          }
+        } else {
+          setPerfil(null);
+        }
       } catch {
         setPerfil(null);
       }
@@ -115,7 +127,7 @@ export function usePerfil() {
           slug: rol === "empresa" ? "mi-galeria" : rol === "artista" || rol === "productor" ? "mi-perfil" : null,
         });
       } else {
-        localStorage.setItem(CLAVE_LOCAL, JSON.stringify(nuevo));
+        localStorage.setItem(CLAVE_LOCAL, JSON.stringify({ ...nuevo, _savedAt: Date.now() }));
       }
 
       setPerfil(nuevo);
@@ -176,7 +188,7 @@ export function usePerfil() {
           }
         }
       } else {
-        localStorage.setItem(CLAVE_LOCAL, JSON.stringify(final));
+        localStorage.setItem(CLAVE_LOCAL, JSON.stringify({ ...final, _savedAt: Date.now() }));
         // Sincroniza con tabla usuarios para que el perfil público sea visible
         if (final.email && (final.rol === "artista" || final.rol === "empresa" || final.rol === "productor")) {
           await supabase.from("usuarios").update({

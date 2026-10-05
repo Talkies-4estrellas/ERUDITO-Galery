@@ -53,8 +53,9 @@ export default function Footer() {
             </h3>
             <ul className="mt-4 space-y-2.5">
               {[
-                { label: "Obras", href: "/obras" },
+                { label: "Obras", href: "/catalogo" },
                 { label: "Artistas", href: "/artistas" },
+                { label: "Galerías", href: "/galerias" },
                 { label: "Catálogo", href: "/catalogo" },
                 { label: "Favoritos", href: "/favoritos" },
                 { label: "Cocina y Alimento", href: "/cocina" },

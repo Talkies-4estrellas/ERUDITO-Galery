@@ -74,7 +74,7 @@ export default function PaginaFavoritos({ fichas }: { fichas: FichaArte[] }) {
             Aún no has guardado ninguna obra.
           </p>
           <Link
-            href="/obras"
+            href="/catalogo"
             className="mt-4 rounded-full bg-amber-400 px-5 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-amber-300"
           >
             Explorar obras

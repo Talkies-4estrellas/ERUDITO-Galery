@@ -34,6 +34,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `app/artistas/page.tsx` — server; fetcha `getArtistas()` + `getFichas()`, pasa a `PaginaArtistas`.
 - `app/artistas/artesanos/page.tsx` — server; filtra artistas donde `origen` no incluye "digital", filtra fichas por esos ids.
 - `app/artistas/digitales/page.tsx` — server; filtra artistas donde `origen` incluye "digital", filtra fichas por esos ids.
+- `app/galerias/page.tsx` — server, `force-dynamic`; fetcha `getGalerias()` (tabla `usuarios` con `rol="empresa"`), pasa a `PaginaGalerias`.
 - `app/eventos/subastas/page.tsx` — server; filtra eventos `tipo="Subasta"`, pasa a `PaginaEventos` con `ocultarFiltroTipo`.
 - `app/eventos/exposiciones/page.tsx` — server; filtra eventos `tipo="Exposición"`, pasa a `PaginaEventos` con `ocultarFiltroTipo`.
 - `app/catalogo/page.tsx` — redirect a `/catalogo/fisicos`.
@@ -63,7 +64,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 - `lib/supabase.ts` — cliente Supabase con inicialización lazy (Proxy). `getSupabase()` solo se llama en runtime, nunca en build, para evitar crash en Vercel.
 - `hooks/useAuth.ts` — sesión Supabase (`user`, `cargando`, `entrar`, `registrar`, `salir`). El `useEffect` está envuelto en try/catch para no romper páginas si faltan las vars de entorno.
-- `hooks/usePerfil.ts` — perfil del usuario (`rol`, `nombre`, `bio`, `especialidad`, `pais`, `email`, `slug`, `avatar_url`, `banner_url`). `Rol = "artista" | "comprador" | "empresa" | "admin" | "productor"`. Lee/escribe en tabla `perfiles` de Supabase si hay sesión activa; cae a `localStorage` si no. Expone `elegirRol(rol, email?)`, `guardar(datos)`, `cerrarSesion()`. El rol `productor` genera slug y sincroniza con `usuarios` igual que artista/empresa.
+- `hooks/usePerfil.ts` — perfil del usuario (`rol`, `nombre`, `bio`, `especialidad`, `pais`, `email`, `slug`, `avatar_url`, `banner_url`). `Rol = "artista" | "comprador" | "empresa" | "admin" | "productor"`. Lee/escribe en tabla `perfiles` de Supabase si hay sesión activa; cae a `localStorage` si no. Expone `elegirRol(rol, email?)`, `guardar(datos)`, `cerrarSesion()`. El rol `productor` genera slug y sincroniza con `usuarios` igual que artista/empresa. **Expiración de 7 días**: cada escritura en localStorage incluye `_savedAt: Date.now()`; al leer, si no hay `_savedAt` o han pasado >7 días se limpia automáticamente. Esto elimina sesiones residuales sin cerrar sesión explícita.
 - `components/PerfilComprador.tsx` — perfil del coleccionista (client). Sidebar izquierdo con navegación interna: botones que cambian el panel central (`type Vista = "coleccion" | "favoritos" | "artistas" | "comparar" | "ajustes"`). Vista "coleccion": obras adquiridas (placeholder vacío hasta sistema de compras). Vista "favoritos": grilla de favoritos con badge "Adquirida" en obras compradas. Vista "artistas": artistas únicos derivados de favoritos + adquiridas con conteo de obras. Vista "comparar": cola de comparación con CTA a `/comparar`. Vista "ajustes": formulario de perfil + upload de avatar y banner (2 columnas separadas: "Foto de perfil" / "Portada") vía Canvas API → `/api/perfil/imagen`. No requiere JWT; funciona con cuentas localStorage. Requiere `ALTER TABLE perfiles ADD COLUMN IF NOT EXISTS banner_url text;` ejecutado en Supabase SQL Editor.
 - `components/MiPerfilProductor.tsx` — perfil editable del productor gastronómico. Misma estructura 3 columnas que `MiPerfilArtista` (banner amber, avatar circular, stats bar, grid izq/centro/der). Vista "productos": grid de productos propios desde `productos_cocina` donde `productor_email = perfil.email`. `TarjetaProducto`: aspect 3/4, fallback emoji por categoría si imagen falla (`onError`). Sidebar der: Estadísticas + Categorías + Tu perfil público (`/cocina/productor/[nombre-encoded]`). Vista "ajustes": mismo formulario que artista (foto+portada, nombre/pais, especialidad, bio, guardar/cancelar/cerrar sesión). Sin CRUD de productos (se asignan desde admin vía `productor_email`). Ruta pública: `/cocina/productor/[encodeURIComponent(nombre)]`.
 - `components/MiPerfilArtista.tsx` — perfil editable del artista registrado. Vista "obras": CRUD de obras propias con **modal de confirmación antes de Editar o Eliminar** (estado `pendingAction`; rojo para eliminar, amber para editar). Vista "ajustes": formulario de datos + zonas de upload en 2 columnas ("Foto de perfil" / "Portada", acento amber). Upload via `/api/perfil/imagen`. Sin dependencia de `useAuth`/JWT.
@@ -71,7 +72,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `components/FormAuth.tsx` — registro multi-rol sin confirmación de email:
   - **comprador** → guarda directo en tabla `usuarios` → redirige a `/perfil`
   - **artista / empresa** → formulario de evaluación → guarda en `solicitudes` → guarda perfil con `estado: "pendiente"` en localStorage → redirige a `/perfil` (muestra banner de espera)
-  - **login**: verifica en orden `accesos_prueba` (localStorage) → `usuarios` → `solicitudes` (si `estado="pendiente"`, entra con estado pendiente) → Supabase Auth
+  - **login**: verifica en orden `usuarios` → `solicitudes` (si `estado="pendiente"`, entra con estado pendiente) → Supabase Auth. `accesos_prueba` eliminado del flujo (ya no se usan cuentas de desarrollo).
   - Incluye botón ojito (toggle mostrar/ocultar contraseña)
 - `components/BotonAuth.tsx` — en Navbar: muestra "Entrar" si no hay sesión, o avatar amber con dropdown (Mi perfil / Administración [solo admin] / Cerrar sesión) si hay sesión. "Área privada" eliminada del dropdown (placeholder sin datos reales; ruta `/privado` conservada en código).
 - `components/AuthGuard.tsx` — acepta dos tipos de sesión: Supabase Auth (`user` del hook) O sesión de prueba en `localStorage` (clave `erudito-perfil`). Redirige a `/login` solo si ninguna de las dos existe.
@@ -94,10 +95,11 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `components/PaginaArtistas.tsx` — client component. Recibe `artistas`, `fichas`, `titulo` y `descripcion` como props. Barra de búsqueda + botón "Filtros avanzados" colapsable (chips: De dónde es / Técnica de arte / Corriente artística). Badge ámbar "activos" cuando hay filtros. `GrupoChips` definido fuera del componente para evitar remount. Usado por `/artistas`, `/artistas/artesanos` y `/artistas/digitales` — cada sub-página pre-filtra `artistas` y `fichas` server-side antes de pasar como props.
 - `components/PaginaCatalogoSeccion.tsx` — client component reutilizable para `/catalogo/fisicos` y `/catalogo/digitales`. Recibe `fichas` (pre-filtradas por tipo en el server), `titulo`, `descripcion`, `otroHref`/`otroLabel` (link al otro tipo), y `vacio`. Incluye buscador, filtros avanzados (movimiento, técnica, precio, orden) y grid de `FichaObra fluida`. Muestra botón "Ver Digitales/Físicos →" en el encabezado.
 - `components/PaginaCatalogo.tsx` — obsoleto; reemplazado por `PaginaCatalogoSeccion`. Mantener solo como referencia si se necesita la vista combinada en el futuro.
+- `components/PaginaGalerias.tsx` — client component. Recibe `galerias: Galeria[]` desde `app/galerias/page.tsx`. Grid de tarjetas con banner gradiente violeta, avatar con iniciales como fallback, badge de obras, especialidad/país. Buscador por nombre/especialidad/país. Paginación 20/pág (acento violeta). Estado vacío: "Próximamente galerías e instituciones de arte" cuando no hay registros; "Sin galerías con esa búsqueda" + "Limpiar búsqueda" cuando hay filtro activo.
 - `components/PaginaCocina.tsx` — client component. Recibe `productos: ProductoCocina[]` como prop desde `app/cocina/page.tsx` (server, `revalidate=60`). Buscador (nombre/productor/origen) + botón "Filtros avanzados" colapsable (chips de categoría + slider precio máximo + select orden). Destacados en formato hero solo sin filtros activos; con filtros van al grid normal. Carrito local en `localStorage`.
 - `components/PaginaServicios.tsx` / `PaginaFavoritos.tsx` — contenido de esas páginas (ver arriba).
 - `components/SeccionEventos.tsx` — fila horizontal (client, scroll con JS) de `data/eventos.ts`: badge de fecha, tipo (Subasta/Exposición), modalidad, lugar, descripción. Botón **"Ver subastas"** (ámbar pill) → `/eventos`. Flechas de scroll izq/der.
-- `components/PaginaEventos.tsx` — client component. Props: `eventos`, `titulo?` (default "Eventos"), `descripcion?`, `ocultarFiltroTipo?` (oculta chip tipo cuando la página ya filtra server-side). Usa `useSearchParams` para pre-activar filtro de tipo desde `?tipo=Subasta|Exposición`. Separa en secciones "Próximos" y "Anteriores". Modal de registro con POST a `/api/registros-eventos`.
+- `components/PaginaEventos.tsx` — client component. Props: `eventos`, `titulo?` (default "Eventos"), `descripcion?`, `ocultarFiltroTipo?` (oculta chip tipo cuando la página ya filtra server-side). Usa `useSearchParams` para pre-activar filtro de tipo desde `?tipo=Subasta|Exposición`. Separa en secciones "PRÓXIMOS" y "ANTERIORES". La sección PRÓXIMOS **siempre se muestra** aunque esté vacía, con mensaje "Próximamente nuevos eventos". Modal de registro con POST a `/api/registros-eventos`.
 - `components/Carousel.tsx` — carrusel (client): auto-avance 6 s, pausa con hover, flechas, puntos. Recibe `obras: Obra[]` como prop (top 4 por `vistas` desde Supabase). Botón "Ver más" → `<Link href="/obra/[id]">`. Retorna `null` si el array está vacío (guard contra crash). **Info card en dos versiones**: desktop (`hidden sm:block absolute bottom-6 left-6`) superpuesta sobre la imagen; móvil (`sm:hidden mt-3`) debajo del contenedor de imagen para no cubrirla (aspect 16/9 ≈ 211px en pantallas pequeñas).
 - `components/RegistrarVisita.tsx` — client component invisible. Dispara `incrementarVistas(id)` en `useEffect` al entrar a `/obra/[id]`. No renderiza nada.
 - `components/SeccionResenas.tsx` — sección de comentarios/estrellas bajo cada obra. `agregar()` es async (POST a `/api/resenas`). Muestra "Publicando…" y bloquea el botón durante el envío. Muestra error de la API (ej. reseña duplicada por email).
@@ -105,7 +107,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - `components/AuroraFondo.tsx` — fondo de aurora naranja (client). Fixed, `z-0`, `mix-blend-mode: screen` (el negro predomina). 4 líneas angostas (5–8% ancho) con gradiente naranja/ámbar/blanco-cálido vertical, `filter: blur(22–32px)`. Reacciona a: scroll con parallax distinto por línea (6–14% scrollY), velocidad de scroll (boost de brillo con decay), ratón (parallax horizontal suave). Flicker individual por línea (9–16s). Montado en `app/layout.tsx` antes del `ToastProvider`.
 - `components/FilaFichas.tsx` — fila horizontal scroll-snap (client). Recibe `titulo` y `lista: FichaArte[]`. Incluye botón **"Ver más"** (ámbar pill) → `/catalogo/fisicos` y flechas de scroll izq/der.
 - `components/GaleriaObras.tsx` — galería (client + Suspense interno). Ya no se usa directamente (`/obras` redirige). Filtros OR/AND con `useSearchParams`. Conservar por si se reactiva.
-- `components/DetalleObra.tsx` — detalle completo: banner, `VisorPerspectivas`, panel info, `EstadisticasValor`, "Arte similar".
+- `components/DetalleObra.tsx` — detalle completo: banner, `VisorPerspectivas`, panel info, `EstadisticasValor`, "Arte similar". Botón de volver: `href="/catalogo"` con texto "Catálogo" (era "Galería" → `/obras`).
 - `components/VisorPerspectivas.tsx` — visor museo (client): imagen enmarcada, flechas y puntos entre perspectivas. Retorna `null` si `imagenes` está vacío (guard contra crash).
 - `components/EstadisticasValor.tsx` — sección de valor (client). Recibe `ficha: FichaArte`. Gráfica de interés (barras purple, escala dinámica), gráfica de valor 12 meses (mes actual dinámico resaltado cyan, normalizada 15-100%), precio real, tipo de entrega, % de cambio vs mes anterior, acordeones con certificaciones únicas por obra, columna de compra.
 - `components/CapsulaArtista.tsx` — píldora: avatar, nombre, vida, botón Perfil → `/artista/[id]`.
@@ -136,7 +138,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 - Bucket Storage `perfiles` — público. Estructura: `{clave}/{tipo}.webp` donde `clave` = email o slug normalizado. **Las subidas van SIEMPRE por `/api/perfil/imagen`** (Route Handler con service role) — nunca directo desde cliente. Esto permite que cuentas `accesos_prueba` (localStorage, sin JWT) suban imágenes igual que cuentas Supabase Auth. Canvas API (quality 0.85) hace la conversión a WebP en browser antes de enviar. Usado por `MiPerfilArtista`, `MiPerfilEmpresa` y `PerfilComprador`.
 - Tabla `productos_cocina` — 17 productos gastronómicos. Cols: `id`, `nombre`, `productor`, `origen`, `descripcion`, `imagen` (URL picsum/Storage), `precio`, `unidad`, `categoria`, `destacado`, `activo`, `productor_email` (FK → email del productor en `accesos_prueba`/`auth.users`), `created_at`. RLS: select público con `activo=true`. Constraints: `perfiles_rol_check` y `accesos_prueba_rol_check` incluyen `'productor'`. 17 cuentas productor en `seeds_test.sql` (UUIDs `55555555-...`, contraseña Test1234).
 - Confirmación de email **desactivada** (Authentication → Providers → Email).
-- `lib/db.ts` — mappers `mapArtista`, `mapObra`. Funciones: `getArtistas()`, `getFichas()`, `getFichasNuevas(limite?)` (últimas obras aprobadas, orden desc por id_obra), `getCarousel()` (top 4 por vistas), `incrementarVistas(id)`. `mapFicha` usa `row.nombre_artista` y `row.avatar_artista` como fallback cuando la obra no tiene `id_artista` (artistas de plataforma).
+- `lib/db.ts` — mappers `mapArtista`, `mapObra`. Funciones: `getArtistas()`, `getFichas()`, `getFichasNuevas(limite?)` (últimas obras aprobadas, orden desc por id_obra), `getCarousel()` (top 4 por vistas), `incrementarVistas(id)`, `getGalerias()` (usuarios con `rol="empresa"`, cuenta obras asociadas). Interface `Galeria`: `{ id, nombre, especialidad, pais, avatar_url, banner_url, slug, obras_count }`. `mapFicha` usa `row.nombre_artista` y `row.avatar_artista` como fallback cuando la obra no tiene `id_artista` (artistas de plataforma).
 - `lib/supabase-server.ts` — `getServerSupabase()`: cliente con service role key. Solo para Route Handlers. **Nunca importar en componentes cliente.**
 
 ## Datos
@@ -205,7 +207,7 @@ npm run build   # build de producción (úsalo para verificar tipos y compilaci�
 
 - `lib/supabase.ts` — cliente público (anon key), patrón Proxy lazy.
 - `lib/supabase-server.ts` — `getServerSupabase()`: service role key, sin sesión, solo Route Handlers.
-- `lib/db.ts` — mappers y funciones: `getArtistas()`, `getFichas()`, `getCarousel()`, `incrementarVistas(id)`.
+- `lib/db.ts` — mappers y funciones: `getArtistas()`, `getFichas()`, `getCarousel()`, `incrementarVistas(id)`, `getGalerias()`. Interface `Galeria`.
 - `lib/uploadWebp.ts` — `"use client"`. `convertToWebp()` (Canvas API), `uploadImagenWebp(file, carpeta)`, `uploadWebp(file, urlOrCarpeta)` (alias de compatibilidad).
 
 ## Hooks
@@ -239,6 +241,21 @@ ALTER TABLE obras ADD COLUMN IF NOT EXISTS avatar_artista text;
 -- Backfill para obras existentes de artistas de plataforma
 UPDATE obras SET avatar_artista = u.avatar_url
   FROM usuarios u WHERE obras.artista_email = u.email;
+
+-- Artistas seed sin obras aprobadas (no aparecen en la plataforma)
+DELETE FROM usuarios WHERE email IN (
+  'franciscotoledo@gmail.com',
+  'manuelalvarezbravo@gmail.com',
+  'gunthergerzso@gmail.com'
+);
+DELETE FROM auth.users WHERE email IN (
+  'franciscotoledo@gmail.com',
+  'manuelalvarezbravo@gmail.com',
+  'gunthergerzso@gmail.com'
+);
+
+-- Mover eventos al futuro (si siguen en el pasado)
+UPDATE eventos SET fecha = fecha + INTERVAL '4 months' WHERE fecha < NOW();
 ```
 
 También pendiente de sesión 25-08-2026:

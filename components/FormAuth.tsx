@@ -100,7 +100,8 @@ export default function FormAuth({ modo }: Props) {
     pais: string; email: string; slug?: string; avatar_url: string;
     estado?: "pendiente" | "aprobado";
   }) {
-    localStorage.setItem("erudito-perfil", JSON.stringify(datos));
+    const conTimestamp = { ...datos, _savedAt: Date.now() };
+    localStorage.setItem("erudito-perfil", JSON.stringify(conTimestamp));
     window.dispatchEvent(new CustomEvent("erudito-perfil-actualizado", { detail: datos }));
   }
 
@@ -121,26 +122,7 @@ export default function FormAuth({ modo }: Props) {
 
     setEnviando(true);
     try {
-      // 1. Usuarios de desarrollo (accesos_prueba)
-      const { data: prueba } = await supabase
-        .from("accesos_prueba")
-        .select("*")
-        .eq("email", email)
-        .eq("clave", password)
-        .maybeSingle();
-
-      if (prueba) {
-        guardarLocal({
-          rol: prueba.rol, nombre: prueba.nombre ?? "", bio: prueba.bio ?? "",
-          especialidad: prueba.especialidad ?? "", pais: prueba.pais ?? "",
-          email: prueba.email, slug: prueba.slug ?? undefined, avatar_url: prueba.avatar_url ?? "",
-        });
-        toast("Sesión iniciada", { icono: "✓" });
-        router.push("/perfil");
-        return;
-      }
-
-      // 2. Usuarios registrados en la app
+      // 1. Usuarios registrados en la app
       const { data: usuario } = await supabase
         .from("usuarios")
         .select("*")

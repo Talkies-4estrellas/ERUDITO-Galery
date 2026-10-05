@@ -42,7 +42,7 @@ export default function NotFound() {
 
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
-              href="/obras"
+              href="/catalogo"
               className="rounded-full bg-amber-400 px-6 py-2.5 text-sm font-bold text-zinc-900 transition hover:bg-amber-300"
             >
               Ver obras

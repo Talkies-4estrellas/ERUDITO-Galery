@@ -328,7 +328,7 @@ export default function PanelAdmin() {
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[
-              { label: "Obras en catálogo",    valor: stats.obras,    icono: "🖼️", color: "text-amber-400",   href: "/obras"    },
+              { label: "Obras en catálogo",    valor: stats.obras,    icono: "🖼️", color: "text-amber-400",   href: "/catalogo" },
               { label: "Artistas registrados", valor: stats.artistas, icono: "👤", color: "text-violet-400",  href: "/artistas" },
               { label: "Eventos activos",      valor: stats.eventos,  icono: "📅", color: "text-emerald-400", href: "/eventos"  },
               { label: "Usuarios totales",     valor: stats.perfiles, icono: "👥", color: "text-sky-400",     href: "#"         },
@@ -377,7 +377,7 @@ export default function PanelAdmin() {
           <div>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white">Últimas obras publicadas</h3>
-              <Link href="/obras" className="text-xs text-amber-400 hover:underline">Ver catálogo →</Link>
+              <Link href="/catalogo" className="text-xs text-amber-400 hover:underline">Ver catálogo →</Link>
             </div>
             <div className="overflow-x-auto rounded-2xl ring-1 ring-white/10">
               <table className="w-full min-w-[500px] text-sm">

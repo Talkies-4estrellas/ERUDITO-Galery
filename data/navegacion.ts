@@ -49,6 +49,11 @@ export const menus: MenuNav[] = [
             href: "/artistas/digitales",
             descripcion: "Arte digital, prints y colecciones virtuales",
           },
+          {
+            etiqueta: "Galerías",
+            href: "/galerias",
+            descripcion: "Instituciones y espacios de arte en ERUDITO",
+          },
         ],
       },
     ],
