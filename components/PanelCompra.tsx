@@ -29,7 +29,7 @@ const ENTREGABLE: Record<FichaArte["tipo"], string[]> = {
   "Impresión Oficial": ["Impresión de alta calidad", "Certificado de edición limitada", "Ficha técnica completa"],
 };
 
-type Fase = "idle" | "form" | "resumen" | "procesando";
+type Fase = "idle" | "form" | "resumen" | "procesando" | "confirmado";
 
 export default function PanelCompra({ ficha }: { ficha: FichaArte }) {
   const [fase, setFase] = useState<Fase>("idle");
@@ -48,27 +48,9 @@ export default function PanelCompra({ ficha }: { ficha: FichaArte }) {
   async function pagar() {
     setFase("procesando");
     setErrorPago("");
-    try {
-      const res = await fetch("/api/pagos/crear-preferencia", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          obra_id: ficha.id,
-          titulo: ficha.titulo,
-          precio: ficha.precio,
-          tipo: ficha.tipo,
-          nombre, email,
-          telefono: telefono || undefined,
-          mensaje: mensaje || undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Error al iniciar el pago");
-      window.location.href = data.init_point;
-    } catch (err) {
-      setErrorPago(err instanceof Error ? err.message : "No se pudo conectar con Mercado Pago");
-      setFase("resumen");
-    }
+    // Simulación de pago para presentación — reemplazar con integración MP real
+    await new Promise((r) => setTimeout(r, 1800));
+    setFase("confirmado");
   }
 
   const INPUT = "w-full rounded-xl bg-zinc-800 px-3 py-2.5 text-sm text-zinc-200 placeholder-zinc-500 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-amber-400/50";
@@ -184,6 +166,35 @@ export default function PanelCompra({ ficha }: { ficha: FichaArte }) {
                 </button>
               )}
             </div>
+          </div>
+        )}
+
+        {/* CONFIRMADO */}
+        {fase === "confirmado" && (
+          <div className="space-y-4 py-2 text-center">
+            <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-400/10 ring-1 ring-emerald-400/30">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-7 text-emerald-400">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-white">¡Pedido recibido!</p>
+              <p className="mt-1 text-xs text-zinc-400">
+                Te contactaremos a <span className="text-zinc-200">{email}</span> para coordinar el pago y la entrega.
+              </p>
+            </div>
+            <div className="rounded-xl bg-zinc-800/60 p-3 ring-1 ring-white/10 text-left space-y-1">
+              <p className="text-xs text-zinc-500">Resumen</p>
+              <p className="text-sm font-semibold text-white">{ficha.titulo}</p>
+              <p className="text-xs text-amber-400 font-bold">${ficha.precio.toLocaleString("es-MX")} MXN</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setFase("idle"); setNombre(""); setEmail(""); setTelefono(""); setMensaje(""); }}
+              className="w-full rounded-full bg-white/5 py-2.5 text-xs text-zinc-400 ring-1 ring-white/10 transition hover:bg-white/10"
+            >
+              Ver otra obra
+            </button>
           </div>
         )}
       </div>
