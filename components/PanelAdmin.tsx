@@ -160,9 +160,9 @@ export default function PanelAdmin() {
 
     Promise.all([
       supabase.from("obras").select("*",    { count: "exact", head: true }).eq("estado", "aprobada"),
-      supabase.from("artistas").select("*", { count: "exact", head: true }),
+      supabase.from("usuarios").select("*", { count: "exact", head: true }).eq("rol", "artista"),
       supabase.from("eventos").select("*",  { count: "exact", head: true }),
-      supabase.from("perfiles").select("*", { count: "exact", head: true }),
+      supabase.from("usuarios").select("*", { count: "exact", head: true }),
       supabase.from("obras").select("id_obra, titulo, anio, precio, tipo, artistas(nombre)")
         .eq("estado", "aprobada").order("id_obra", { ascending: false }).limit(10),
       supabase.from("eventos").select("id_evento, titulo, lugar, modalidad, fecha_corta")
@@ -171,8 +171,8 @@ export default function PanelAdmin() {
         .order("created_at", { ascending: false }),
       fetch("/api/admin/obras").then((r) => r.json()),
       fetch("/api/admin/usuarios").then((r) => r.json()),
-    ]).then(([obrasC, artistasC, eventosC, perfilesC, obrasD, eventosD, solicD, obrasPendD, usuariosD]) => {
-      setStats({ obras: obrasC.count ?? 0, artistas: artistasC.count ?? 0, eventos: eventosC.count ?? 0, perfiles: perfilesC.count ?? 0 });
+    ]).then(([obrasC, artistasC, eventosC, usuariosC, obrasD, eventosD, solicD, obrasPendD, usuariosD]) => {
+      setStats({ obras: obrasC.count ?? 0, artistas: artistasC.count ?? 0, eventos: eventosC.count ?? 0, perfiles: usuariosC.count ?? 0 });
       setObras((obrasD.data as ObraRow[]) ?? []);
       setEventos((eventosD.data as EventoRow[]) ?? []);
       setSolicitudes((solicD.data as SolicitudRow[]) ?? []);
