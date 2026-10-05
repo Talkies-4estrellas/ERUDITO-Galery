@@ -48,13 +48,20 @@ function mapFicha(row: any): FichaArte {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapEvento(row: any): Evento {
+  const fecha = new Date(row.fecha);
+  const dia = String(fecha.getUTCDate());
+  const mes = fecha
+    .toLocaleDateString("es-MX", { month: "short", timeZone: "UTC" })
+    .replace(".", "")
+    .slice(0, 3)
+    .replace(/^./, (c) => c.toUpperCase());
   return {
     id: row.id_evento,
     tipo: row.tipo,
     modalidad: row.modalidad,
     titulo: row.titulo,
     fecha: row.fecha,
-    fechaCorta: row.fecha_corta ?? { dia: "", mes: "" },
+    fechaCorta: { dia, mes },
     lugar: row.lugar ?? "",
     imagen: row.imagen ?? "",
     descripcion: row.descripcion ?? "",
