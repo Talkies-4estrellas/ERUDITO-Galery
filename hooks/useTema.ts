@@ -22,6 +22,16 @@ export function useTema() {
     setTema(t);
     aplicarTema(t);
     setListo(true);
+
+    const observer = new MutationObserver(() => {
+      const attr = document.documentElement.getAttribute("data-theme");
+      setTema(attr === "light" ? "claro" : "oscuro");
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+    return () => observer.disconnect();
   }, []);
 
   const alternar = useCallback(() => {

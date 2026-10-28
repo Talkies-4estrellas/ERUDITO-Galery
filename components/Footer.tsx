@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTema } from "@/hooks/useTema";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [enviado, setEnviado] = useState(false);
+  const { tema } = useTema();
+  const logoSufijo = tema === "claro" ? "-amarillo" : "";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,9 +29,7 @@ export default function Footer() {
 
           {/* Columna 1 — Marca */}
           <div>
-            <p className="text-lg font-bold tracking-widest text-white">
-              ERUDITO <span className="text-amber-400">GALERY</span>
-            </p>
+            <img src={`/logo-pc${logoSufijo}.svg`} alt="ERUDITO Galery" className="h-7 w-auto" />
             <p className="mt-4 text-sm leading-relaxed text-zinc-400">
               El arte y el lujo comparten una misma raíz: la búsqueda de lo
               extraordinario en la experiencia humana.

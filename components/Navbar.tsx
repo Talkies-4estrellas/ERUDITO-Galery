@@ -8,6 +8,7 @@ import BotonTema from "@/components/BotonTema";
 import BotonAuth from "@/components/BotonAuth";
 import { useFavoritos } from "@/hooks/useFavoritos";
 import { usePerfil } from "@/hooks/usePerfil";
+import { useTema } from "@/hooks/useTema";
 
 /* ─── Grupos de menú explícitos ─── */
 const PRIMARIOS   = ["Catálogo", "Artistas", "Cocina", "Eventos"];
@@ -249,6 +250,8 @@ export default function Navbar() {
   const [buscadorAbierto, setBuscadorAbierto] = useState(false);
   const [queryBusqueda, setQueryBusqueda] = useState("");
   const { favoritos, listo: favoritosListos } = useFavoritos();
+  const { tema } = useTema();
+  const logoSufijo = tema === "claro" ? "-amarillo" : "";
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -296,11 +299,11 @@ export default function Navbar() {
               {/* ── Centro: logo absolutamente centrado ── */}
               <Link
                 href="/"
-                className="absolute left-1/2 -translate-x-1/2 select-none text-center text-base font-bold tracking-[0.2em] text-white transition hover:opacity-80"
+                className="absolute left-1/2 -translate-x-1/2 select-none transition hover:opacity-80"
                 onMouseEnter={() => setMenuAbierto(null)}
               >
-                ERUDITO<br />
-                <span className="text-amber-400 tracking-[0.3em]">GALERY</span>
+                <img src={`/logo-pc${logoSufijo}.svg`}    alt="ERUDITO Galery" className="hidden h-8 w-auto lg:block" />
+                <img src={`/logo-movil${logoSufijo}.svg`} alt="ERUDITO Galery" className="block  h-9 w-auto lg:hidden" />
               </Link>
 
               {/* ── Derecha (flex-1): menús secundarios + acciones alineados a la derecha ── */}
