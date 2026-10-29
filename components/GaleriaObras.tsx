@@ -164,7 +164,7 @@ function GaleriaObrasInner({ fichas }: { fichas: FichaArte[] }) {
 
       {/* Barra flotante de comparación */}
       {comparacionLista && comparando.length > 0 && (
-        <div className="fixed inset-x-4 bottom-4 z-40 mx-auto flex max-w-md items-center justify-between gap-3 rounded-2xl bg-zinc-900 px-5 py-3 shadow-2xl ring-1 ring-white/15 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2">
+        <div className="fixed inset-x-4 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-40 sm:bottom-4 mx-auto flex max-w-md items-center justify-between gap-3 rounded-2xl bg-zinc-900 px-5 py-3 shadow-2xl ring-1 ring-white/15 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2">
           <p className="text-sm text-zinc-200">
             <span className="font-semibold text-cyan-400">
               {comparando.length}

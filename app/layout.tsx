@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
@@ -21,6 +21,12 @@ export const metadata: Metadata = {
   description: "Galería de arte — exposiciones y obras destacadas",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,7 +40,8 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
 
-      <body suppressHydrationWarning className="min-h-full flex flex-col pb-24 sm:pb-0">
+      {/* En celular los campos van a 16 px: con menos, iOS hace zoom al enfocarlos y la página queda cortada. */}
+      <body suppressHydrationWarning className="min-h-full flex flex-col pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-0 max-sm:[&_:is(input:not([type=checkbox],[type=radio],[type=range]),textarea,select)]:text-[16px]">
         {/* Previene el flash al leer localStorage antes del primer paint */}
         <script
           dangerouslySetInnerHTML={{

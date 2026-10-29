@@ -60,7 +60,7 @@ export default function BarraNavInferior() {
   return (
     <nav
       aria-label="Navegación principal"
-      className="sm:hidden fixed bottom-4 inset-x-3 z-50"
+      className="sm:hidden fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] inset-x-3 z-50"
     >
       <div className="flex justify-around items-center rounded-3xl border border-white/10 bg-zinc-950/80 px-2 py-2.5 backdrop-blur-xl shadow-2xl">
         {ITEMS.map(({ href, label, Icon }) => {

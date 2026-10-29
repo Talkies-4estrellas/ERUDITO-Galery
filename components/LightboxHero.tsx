@@ -54,7 +54,7 @@ export default function LightboxHero({ src, alt }: Props) {
 
       {/* Imagen grande — stopPropagation para no cerrar al clickear la imagen */}
       <div
-        className="relative h-[90vh] w-[90vw]"
+        className="relative h-[90dvh] w-[90vw]"
         onClick={(e) => e.stopPropagation()}
       >
         <Image

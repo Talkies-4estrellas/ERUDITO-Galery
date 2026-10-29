@@ -267,7 +267,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="relative z-50 px-4 pt-4 sm:px-8">
+      <header className="relative z-50 px-4 pt-4 sm:px-8 lg:sticky lg:top-0">
         <div className="mx-auto max-w-7xl">
           <nav
             className="relative"

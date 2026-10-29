@@ -58,7 +58,7 @@ export default function FormObraEmpresa({ inicial, onGuardar, onCerrar }: Props)
       onClick={(e) => { if (e.target === overlayRef.current) onCerrar(); }}
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
     >
-      <div className="w-full max-w-lg overflow-y-auto rounded-t-3xl bg-zinc-900 ring-1 ring-white/10 sm:max-h-[92vh] sm:rounded-3xl">
+      <div className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-zinc-900 ring-1 ring-white/10 sm:max-h-[92vh] sm:rounded-3xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
           <h2 className="text-base font-semibold text-white">

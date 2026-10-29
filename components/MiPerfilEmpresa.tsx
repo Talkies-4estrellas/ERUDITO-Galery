@@ -155,7 +155,7 @@ function CropModal({ file, tipo, onConfirm, onCerrar }: {
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-xl rounded-3xl bg-zinc-900 p-6 shadow-2xl ring-1 ring-white/10">
+      <div className="w-full max-w-xl rounded-3xl bg-zinc-900 p-6 shadow-2xl ring-1 ring-white/10 max-sm:max-h-[92dvh] max-sm:overflow-y-auto">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-white">

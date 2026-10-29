@@ -48,7 +48,7 @@ function ModalRegistro({ evento, onClose }: { evento: Evento; onClose: () => voi
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="relative z-10 w-full max-w-md rounded-t-3xl bg-zinc-900 p-6 ring-1 ring-white/10 sm:rounded-3xl"
+        className="relative z-10 w-full max-w-md rounded-t-3xl bg-zinc-900 p-6 ring-1 ring-white/10 max-sm:max-h-[92dvh] max-sm:overflow-y-auto sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}
