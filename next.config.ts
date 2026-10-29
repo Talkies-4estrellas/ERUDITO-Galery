@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
       {
         // Supabase Storage — bucket "obras" y avatares de perfiles
         protocol: "https",
-        hostname: "dtqijxpdavazfovpzjmw.supabase.co",
+        hostname: "ehpvkbazeblmprubkcqh.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
       {

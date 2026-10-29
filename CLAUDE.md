@@ -299,5 +299,5 @@ Implicación: las rutas de admin o públicas que necesiten todos los usuarios de
 - La ruta del proyecto tiene espacio (`C:\ERUDITO Galery`): para lanzarlo desde fuera usar `npm.cmd run dev --prefix "C:\ERUDITO Galery"`. NO usar ruta corta 8.3: rompe Turbopack.
 - `package.json` debe guardarse en UTF-8 **sin BOM** (PowerShell 5.1 `Set-Content -Encoding utf8` agrega BOM y rompe el build).
 - El preview server está configurado en `C:\Users\Migue\.claude\launch.json` (nombre `erudito-dev`, `autoPort: true`).
-- `next.config.ts` `remotePatterns`: `picsum.photos`, `images.unsplash.com`, `dtqijxpdavazfovpzjmw.supabase.co/storage/v1/object/public/**`. Agregar nuevos dominios de imagen aquí o Next lanza error en runtime.
+- `next.config.ts` `remotePatterns`: `picsum.photos`, `images.unsplash.com`, `ehpvkbazeblmprubkcqh.supabase.co/storage/v1/object/public/**`, `upload.wikimedia.org`. Si se cambia de proyecto Supabase, actualizar este host y las URLs guardadas en BD (ver `database/fix_host_supabase_nuevo.sql`). Agregar nuevos dominios de imagen aquí o Next lanza error en runtime.
 - `preview_screenshot` se atasca tras navegar con `location.href`; usar clics reales (SPA). Si se atasca, reiniciar el preview con `preview_stop` + `preview_start`.

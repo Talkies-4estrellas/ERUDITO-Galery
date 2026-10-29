@@ -237,6 +237,9 @@ Verifica: home carga obras, `/artistas` muestra artistas, `/login` funciona.
 |---|---|
 | "duplicate key" al cargar datos | El schema sembró filas; truncar esa tabla primero |
 | Obras sin imagen | Falta copiar buckets (Parte 5) |
+| Algunas imágenes rotas (otras se ven por caché) | Las URLs en BD y `next.config.ts` siguen con el host viejo; correr `database/fix_host_supabase_nuevo.sql` (con los hosts correspondientes) y actualizar `remotePatterns` |
+| Aparecen obras/artistas de prueba (picsum, Ana Torres, HAUCOZE…) | `seeds_test.sql` también inserta obras y usuarios de prueba; borrar los que no estén en el respaldo (ver `respaldo/datos-prueba-eliminados.json`) |
+| `permission denied for schema public` | Faltan GRANTs para `anon`, `authenticated` y `service_role` (ver inicio de `database/fix_host_supabase_nuevo.sql`) |
 | Login falla con 500 | `auth.users` no recreada; re-ejecutar `seeds_test.sql` |
 | Login falla con "credenciales incorrectas" | El seed corrió pero con otra contraseña; recrear usuario desde Supabase Auth dashboard |
 | `Invalid supabaseUrl` en el build | El valor incluye comillas o el `NOMBRE=` |
