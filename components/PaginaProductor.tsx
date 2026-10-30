@@ -4,16 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useToast } from "@/components/ToastProvider";
-import { COLOR_COCINA, type ProductoCocina, type CategoriaCocina } from "@/data/cocina";
-
-const ICONO: Record<CategoriaCocina, string> = {
-  Vinos:      "🍷",
-  Aceites:    "🫒",
-  Especias:   "🌶️",
-  Chocolates: "🍫",
-  Conservas:  "🫙",
-  Mieles:     "🍯",
-};
+import { COLOR_COCINA, ICONO_COCINA as ICONO, type ProductoCocina, type CategoriaCocina } from "@/data/cocina";
 
 export default function PaginaProductor({ nombre, origen, productos }: {
   nombre: string;

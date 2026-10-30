@@ -1,14 +1,5 @@
 import Link from "next/link";
-import { COLOR_COCINA, type CategoriaCocina } from "@/data/cocina";
-
-const ICONO: Record<CategoriaCocina, string> = {
-  Vinos:      "🍷",
-  Aceites:    "🫒",
-  Especias:   "🌶️",
-  Chocolates: "🍫",
-  Conservas:  "🫙",
-  Mieles:     "🍯",
-};
+import { COLOR_COCINA, ICONO_COCINA as ICONO, type CategoriaCocina } from "@/data/cocina";
 
 interface Props {
   nombre: string;

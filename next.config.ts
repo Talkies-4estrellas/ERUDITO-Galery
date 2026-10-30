@@ -23,6 +23,19 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "upload.wikimedia.org",
       },
+      // Fotos de productos de cocina enlazadas desde el sitio de cada productor o tienda
+      ...[
+        "vainillapapantla.com",
+        "www.mexicomiamor.de",
+        "oaxacanitachocolate.com",
+        "yucatantoday.com",
+        "cuyusal.com",
+        "ss302.liverpool.com.mx",
+        "www.mezcalreviews.com",
+        "afar.brightspotcdn.com",
+        "yaxool.com",
+        "www.mexicodesconocido.com.mx",
+      ].map((hostname) => ({ protocol: "https" as const, hostname })),
     ],
   },
 };

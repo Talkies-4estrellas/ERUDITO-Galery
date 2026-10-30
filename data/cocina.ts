@@ -4,7 +4,12 @@ export type CategoriaCocina =
   | "Especias"
   | "Chocolates"
   | "Conservas"
-  | "Mieles";
+  | "Mieles"
+  | "Moles"
+  | "Café"
+  | "Destilados"
+  | "Quesos"
+  | "Maíz";
 
 export interface ProductoCocina {
   id: number;
@@ -26,6 +31,11 @@ export const CATEGORIAS_COCINA: CategoriaCocina[] = [
   "Chocolates",
   "Conservas",
   "Mieles",
+  "Moles",
+  "Café",
+  "Destilados",
+  "Quesos",
+  "Maíz",
 ];
 
 export const COLOR_COCINA: Record<CategoriaCocina, string> = {
@@ -35,6 +45,25 @@ export const COLOR_COCINA: Record<CategoriaCocina, string> = {
   Chocolates: "bg-yellow-900/30 text-yellow-700 ring-yellow-700/25",
   Conservas:  "bg-emerald-400/15 text-emerald-400 ring-emerald-400/25",
   Mieles:     "bg-amber-300/15 text-amber-300 ring-amber-300/25",
+  Moles:      "bg-red-900/30 text-red-400 ring-red-400/25",
+  Café:       "bg-stone-500/20 text-stone-300 ring-stone-400/25",
+  Destilados: "bg-lime-400/15 text-lime-400 ring-lime-400/25",
+  Quesos:     "bg-yellow-200/15 text-yellow-200 ring-yellow-200/25",
+  Maíz:       "bg-yellow-400/15 text-yellow-400 ring-yellow-400/25",
+};
+
+export const ICONO_COCINA: Record<CategoriaCocina, string> = {
+  Vinos:      "🍷",
+  Aceites:    "🫒",
+  Especias:   "🌶️",
+  Chocolates: "🍫",
+  Conservas:  "🫙",
+  Mieles:     "🍯",
+  Moles:      "🥣",
+  Café:       "☕",
+  Destilados: "🥃",
+  Quesos:     "🧀",
+  Maíz:       "🌽",
 };
 
 export const productosCocina: ProductoCocina[] = [

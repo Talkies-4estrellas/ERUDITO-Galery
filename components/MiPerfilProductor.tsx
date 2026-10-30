@@ -6,18 +6,9 @@ import Link from "next/link";
 import { usePerfil, type DatosPerfil } from "@/hooks/usePerfil";
 import { useToast } from "@/components/ToastProvider";
 import { supabase } from "@/lib/supabase";
-import { COLOR_COCINA, type ProductoCocina, type CategoriaCocina } from "@/data/cocina";
+import { COLOR_COCINA, ICONO_COCINA as ICONO_CAT, type ProductoCocina, type CategoriaCocina } from "@/data/cocina";
 
 type Vista = "productos" | "ajustes";
-
-const ICONO_CAT: Record<CategoriaCocina, string> = {
-  Vinos:      "🍷",
-  Aceites:    "🫒",
-  Especias:   "🌶️",
-  Chocolates: "🍫",
-  Conservas:  "🫙",
-  Mieles:     "🍯",
-};
 
 const INPUT =
   "w-full rounded-xl bg-zinc-800 px-3 py-2 text-sm text-zinc-200 placeholder-zinc-500 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-amber-400/50";
