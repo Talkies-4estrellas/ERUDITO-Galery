@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useBajandoScroll } from "@/hooks/useBajandoScroll";
 
 function IconHome({ className }: { className?: string }) {
   return (
@@ -53,6 +54,7 @@ const ITEMS = [
 
 export default function BarraNavInferior() {
   const pathname = usePathname();
+  const encogida = useBajandoScroll();
 
   const activo = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -60,7 +62,9 @@ export default function BarraNavInferior() {
   return (
     <nav
       aria-label="Navegación principal"
-      className="sm:hidden fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] inset-x-3 z-50"
+      className={`sm:hidden fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] inset-x-3 z-50 origin-bottom transition-transform duration-[280ms] ease-[cubic-bezier(0.34,1.2,0.64,1)] motion-reduce:transition-none ${
+        encogida ? "scale-[0.82]" : ""
+      }`}
     >
       <div className="flex justify-around items-center rounded-3xl border border-white/10 bg-zinc-950/80 px-2 py-2.5 backdrop-blur-xl shadow-2xl">
         {ITEMS.map(({ href, label, Icon }) => {

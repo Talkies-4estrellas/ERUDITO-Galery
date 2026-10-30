@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { menus, type MenuNav } from "@/data/navegacion";
 import BuscadorModal from "@/components/BuscadorModal";
@@ -9,6 +9,7 @@ import BotonAuth from "@/components/BotonAuth";
 import { useFavoritos } from "@/hooks/useFavoritos";
 import { usePerfil } from "@/hooks/usePerfil";
 import { useTema } from "@/hooks/useTema";
+import { useBajandoScroll } from "@/hooks/useBajandoScroll";
 
 /* ─── Grupos de menú explícitos ─── */
 const PRIMARIOS   = ["Catálogo", "Artistas", "Cocina", "Eventos"];
@@ -142,7 +143,7 @@ function MenuMovil({ alCerrar, onBuscar }: { alCerrar: () => void; onBuscar?: ()
   const { perfil } = usePerfil();
 
   return (
-    <div className="mt-2 rounded-2xl bg-zinc-900/95 p-4 ring-1 ring-white/10 backdrop-blur lg:hidden">
+    <div className="absolute inset-x-0 top-full mt-2 max-h-[calc(100dvh-13rem)] overflow-y-auto overscroll-contain rounded-2xl bg-zinc-900/95 p-4 ring-1 ring-white/10 backdrop-blur lg:hidden">
       {onBuscar && (
         <button
           type="button"
@@ -252,6 +253,20 @@ export default function Navbar() {
   const { favoritos, listo: favoritosListos } = useFavoritos();
   const { tema } = useTema();
   const logoSufijo = tema === "claro" ? "-amarillo" : "";
+  const ocultarEnMovil = useBajandoScroll(movilAbierto);
+  const headerRef = useRef<HTMLElement>(null);
+
+  // El menú móvil se cierra con cualquier gesto fuera de la barra (tocar, deslizar o rueda).
+  // No se usa el evento scroll: el navegador mueve la página solo al crecer el menú (scroll anchoring).
+  useEffect(() => {
+    if (!movilAbierto) return;
+    const fuera = (e: Event) => {
+      if (!headerRef.current?.contains(e.target as Node)) setMovilAbierto(false);
+    };
+    const eventos = ["pointerdown", "touchmove", "wheel"] as const;
+    eventos.forEach((ev) => document.addEventListener(ev, fuera, { passive: true }));
+    return () => eventos.forEach((ev) => document.removeEventListener(ev, fuera));
+  }, [movilAbierto]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -267,8 +282,13 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="relative z-50 px-4 pt-4 sm:px-8 lg:sticky lg:top-0">
-        <div className="mx-auto max-w-7xl">
+      <header
+        ref={headerRef}
+        className={`relative z-50 px-4 pt-4 sm:px-8 lg:sticky lg:top-0 max-sm:sticky max-sm:top-0 max-sm:transition-transform max-sm:duration-300 max-sm:ease-out motion-reduce:transition-none ${
+          ocultarEnMovil ? "max-sm:-translate-y-[110%]" : ""
+        }`}
+      >
+        <div className="relative mx-auto max-w-7xl">
           <nav
             className="relative"
             onMouseLeave={() => setMenuAbierto(null)}
@@ -367,13 +387,14 @@ export default function Navbar() {
                 {/* Hamburguesa móvil */}
                 <button
                   type="button"
-                  aria-label="Abrir menú"
+                  aria-label={movilAbierto ? "Cerrar menú" : "Abrir menú"}
+                  aria-expanded={movilAbierto}
                   onClick={() => setMovilAbierto(!movilAbierto)}
-                  className="flex flex-col gap-1.5 lg:hidden"
+                  className="flex flex-col gap-1.5 lg:hidden [&>span]:transition [&>span]:duration-200 motion-reduce:[&>span]:transition-none"
                 >
-                  <span className="h-0.5 w-5 bg-zinc-400" />
-                  <span className="h-0.5 w-5 bg-zinc-400" />
-                  <span className="h-0.5 w-5 bg-zinc-400" />
+                  <span className={`h-0.5 w-5 bg-zinc-400 ${movilAbierto ? "translate-y-2 rotate-45" : ""}`} />
+                  <span className={`h-0.5 w-5 bg-zinc-400 ${movilAbierto ? "opacity-0" : ""}`} />
+                  <span className={`h-0.5 w-5 bg-zinc-400 ${movilAbierto ? "-translate-y-2 -rotate-45" : ""}`} />
                 </button>
               </div>
             </div>
