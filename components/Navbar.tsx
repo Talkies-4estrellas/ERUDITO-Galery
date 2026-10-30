@@ -347,7 +347,9 @@ export default function Navbar() {
     <>
       <header
         ref={headerRef}
-        className={`relative z-50 px-4 pt-4 sm:px-8 lg:sticky lg:top-0 max-sm:sticky max-sm:top-0 max-sm:transition-transform max-sm:duration-300 max-sm:ease-out lg:transition-[padding] lg:duration-300 motion-reduce:transition-none ${
+        // En PC el alto del header queda fijo (lg:h-18): si cambiara al compactarse, el contenido
+        // se movería, el navegador corregiría el scroll y la barra oscilaría entre compacta y normal.
+        className={`relative z-50 px-4 pt-4 sm:px-8 lg:sticky lg:top-0 lg:h-18 max-sm:sticky max-sm:top-0 max-sm:transition-transform max-sm:duration-300 max-sm:ease-out lg:transition-[padding] lg:duration-300 motion-reduce:transition-none ${
           bajando ? "max-sm:-translate-y-[110%] lg:pt-2" : ""
         }`}
       >
