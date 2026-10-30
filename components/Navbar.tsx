@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { menus, type MenuNav } from "@/data/navegacion";
 import BuscadorModal from "@/components/BuscadorModal";
 import BotonTema from "@/components/BotonTema";
@@ -10,12 +11,35 @@ import { useFavoritos } from "@/hooks/useFavoritos";
 import { usePerfil } from "@/hooks/usePerfil";
 import { useTema } from "@/hooks/useTema";
 import { useBajandoScroll } from "@/hooks/useBajandoScroll";
+import { useAparecer, entradaCascada } from "@/hooks/useAparecer";
 
 /* ─── Grupos de menú explícitos ─── */
 const PRIMARIOS   = ["Catálogo", "Artistas", "Cocina", "Eventos"];
 const SECUNDARIOS = ["Servicios", "Blog", "Contacto"];
 const menusIzq = menus.filter((m) => PRIMARIOS.includes(m.etiqueta));
 const menusDer = menus.filter((m) => SECUNDARIOS.includes(m.etiqueta));
+
+/* Rutas que pertenecen a cada sección del menú (para el subrayado activo en PC) */
+const RUTAS_EXTRA: Record<string, string[]> = {
+  "Catálogo": ["/catalogo", "/obra"],
+  "Artistas": ["/artista", "/empresa"],
+};
+const RUTAS_MENU = menus
+  .filter((m) => m.href !== "/")
+  .map((m) => ({
+    etiqueta: m.etiqueta,
+    rutas: [
+      ...(m.href ? [m.href] : []),
+      ...(m.secciones ?? []).flatMap((s) => s.items.flatMap((it) => [it.href, ...(it.hijos ?? []).map((h) => h.href)])),
+      ...(RUTAS_EXTRA[m.etiqueta] ?? []),
+    ],
+  }));
+
+function seccionActiva(pathname: string) {
+  return RUTAS_MENU.find(({ rutas }) =>
+    rutas.some((r) => pathname === r || pathname.startsWith(r + "/"))
+  )?.etiqueta ?? null;
+}
 
 function Flecha({ abierta }: { abierta: boolean }) {
   return (
@@ -36,14 +60,20 @@ function PanelDesplegable({
   menu: MenuNav;
   alineacion?: "izquierda" | "derecha";
 }) {
+  const visible = useAparecer();
   if (!menu.secciones) return null;
   const esMega = menu.secciones.length > 1;
   const posXMega = "inset-x-[-24px]"; // relativo al nav
   const posXSimple = alineacion === "derecha" ? "right-0 w-64" : "left-0 w-64";
+  let orden = 0;
 
   return (
     <div className={`absolute top-full z-50 pt-2 ${esMega ? posXMega : posXSimple}`}>
-      <div className={`rounded-2xl bg-zinc-900/95 p-5 shadow-2xl ring-1 ring-white/10 backdrop-blur ${esMega ? "grid gap-6 grid-cols-3" : ""}`}>
+      <div
+        className={`rounded-2xl bg-zinc-900/95 p-5 shadow-2xl ring-1 ring-white/10 backdrop-blur transition duration-200 ease-out motion-reduce:transition-none ${
+          visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+        } ${esMega ? "grid gap-6 grid-cols-3" : ""}`}
+      >
         {menu.secciones.map((seccion, i) => (
           <div key={seccion.titulo ?? i}>
             {seccion.titulo && (
@@ -53,7 +83,7 @@ function PanelDesplegable({
             )}
             <ul className="space-y-0.5">
               {seccion.items.map((item) => (
-                <li key={item.etiqueta}>
+                <li key={item.etiqueta} {...entradaCascada(visible, orden++)}>
                   <Link
                     href={item.href}
                     className="block rounded-lg px-2 py-1.5 text-sm text-zinc-300 transition-colors hover:bg-white/5 hover:text-amber-400"
@@ -140,21 +170,9 @@ function ItemMenu({
 
 function MenuMovil({ alCerrar, onBuscar }: { alCerrar: () => void; onBuscar?: () => void }) {
   const [abierto, setAbierto] = useState<string | null>(null);
-  const [visible, setVisible] = useState(false);
+  const visible = useAparecer();
   const { perfil } = usePerfil();
-
-  useEffect(() => {
-    const id = setTimeout(() => setVisible(true), 16);
-    return () => clearTimeout(id);
-  }, []);
-
-  // Entrada en cascada: cada opción aparece 35 ms después de la anterior
-  const aparece = (i: number) => ({
-    className: `transition duration-300 ease-out motion-reduce:transition-none ${
-      visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
-    }`,
-    style: { transitionDelay: visible ? `${i * 35}ms` : "0ms" },
-  });
+  const aparece = (i: number) => entradaCascada(visible, i);
 
   return (
     <div
@@ -276,8 +294,30 @@ export default function Navbar() {
   const { favoritos, listo: favoritosListos } = useFavoritos();
   const { tema } = useTema();
   const logoSufijo = tema === "claro" ? "-amarillo" : "";
-  const ocultarEnMovil = useBajandoScroll(movilAbierto);
+  // Al bajar: en celular la barra se esconde; en PC se compacta
+  const bajando = useBajandoScroll(movilAbierto);
   const headerRef = useRef<HTMLElement>(null);
+  const barraRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const activa = seccionActiva(pathname);
+  const [subrayado, setSubrayado] = useState<{ x: number; ancho: number } | null>(null);
+
+  // Mide la sección activa para colocar el subrayado deslizante (solo visible en PC)
+  useLayoutEffect(() => {
+    const barra = barraRef.current;
+    if (!barra) return;
+    const medir = () => {
+      const item = activa ? barra.querySelector<HTMLElement>(`[data-menu="${activa}"] > *`) : null;
+      if (!item || item.offsetParent === null) return setSubrayado(null);
+      const rb = barra.getBoundingClientRect();
+      const ri = item.getBoundingClientRect();
+      setSubrayado({ x: ri.left - rb.left + 10, ancho: ri.width - 20 });
+    };
+    medir();
+    const ro = new ResizeObserver(medir);
+    ro.observe(barra);
+    return () => ro.disconnect();
+  }, [activa]);
 
   // El menú móvil se cierra con cualquier gesto fuera de la barra (tocar, deslizar o rueda).
   // No se usa el evento scroll: el navegador mueve la página solo al crecer el menú (scroll anchoring).
@@ -307,8 +347,8 @@ export default function Navbar() {
     <>
       <header
         ref={headerRef}
-        className={`relative z-50 px-4 pt-4 sm:px-8 lg:sticky lg:top-0 max-sm:sticky max-sm:top-0 max-sm:transition-transform max-sm:duration-300 max-sm:ease-out motion-reduce:transition-none ${
-          ocultarEnMovil ? "max-sm:-translate-y-[110%]" : ""
+        className={`relative z-50 px-4 pt-4 sm:px-8 lg:sticky lg:top-0 max-sm:sticky max-sm:top-0 max-sm:transition-transform max-sm:duration-300 max-sm:ease-out lg:transition-[padding] lg:duration-300 motion-reduce:transition-none ${
+          bajando ? "max-sm:-translate-y-[110%] lg:pt-2" : ""
         }`}
       >
         <div className="relative mx-auto max-w-7xl">
@@ -317,7 +357,20 @@ export default function Navbar() {
             onMouseLeave={() => setMenuAbierto(null)}
           >
             {/* ── Barra principal ── */}
-            <div className="relative flex items-center rounded-2xl bg-zinc-900/90 px-5 py-3 ring-1 ring-white/10 backdrop-blur">
+            <div
+              ref={barraRef}
+              className={`relative flex items-center rounded-2xl px-5 py-3 ring-1 ring-white/10 backdrop-blur lg:transition-[padding,background-color] lg:duration-300 motion-reduce:transition-none ${
+                bajando ? "bg-zinc-900/90 lg:bg-zinc-900/95 lg:py-1.5" : "bg-zinc-900/90"
+              }`}
+            >
+              {/* Subrayado deslizante bajo la sección activa (PC) */}
+              <span
+                aria-hidden
+                className={`pointer-events-none absolute bottom-1 left-0 hidden h-0.5 rounded-full bg-amber-400 transition-[transform,width,opacity] duration-300 ease-[cubic-bezier(0.34,1.2,0.64,1)] motion-reduce:transition-none lg:block ${
+                  subrayado ? "opacity-100" : "opacity-0"
+                }`}
+                style={subrayado ? { transform: `translateX(${subrayado.x}px)`, width: subrayado.ancho } : undefined}
+              />
 
               {/* ── Izquierda (flex-1): menús primarios alineados a la izquierda ── */}
               <div className="flex flex-1 items-center">
@@ -327,7 +380,7 @@ export default function Navbar() {
                 </div>
                 <ul className="hidden items-center gap-0.5 lg:flex">
                   {menusIzq.map((menu) => (
-                    <li key={menu.etiqueta}>
+                    <li key={menu.etiqueta} data-menu={menu.etiqueta}>
                       <ItemMenu
                         menu={menu}
                         menuAbierto={menuAbierto}
@@ -345,7 +398,11 @@ export default function Navbar() {
                 className="absolute left-1/2 -translate-x-1/2 select-none transition hover:opacity-80"
                 onMouseEnter={() => setMenuAbierto(null)}
               >
-                <img src={`/logo-pc${logoSufijo}.svg`}    alt="ERUDITO Galery" className="hidden h-8 w-auto lg:block" />
+                <img
+                  src={`/logo-pc${logoSufijo}.svg`}
+                  alt="ERUDITO Galery"
+                  className={`hidden w-auto transition-[height] duration-300 motion-reduce:transition-none lg:block ${bajando ? "h-6" : "h-8"}`}
+                />
                 <img src={`/logo-movil${logoSufijo}.svg`} alt="ERUDITO Galery" className="block  h-9 w-auto lg:hidden" />
               </Link>
 
@@ -355,7 +412,7 @@ export default function Navbar() {
                 {/* Links secundarios */}
                 <ul className="hidden items-center gap-0.5 lg:flex">
                   {menusDer.map((menu) => (
-                    <li key={menu.etiqueta}>
+                    <li key={menu.etiqueta} data-menu={menu.etiqueta}>
                       <ItemMenu
                         menu={menu}
                         menuAbierto={menuAbierto}

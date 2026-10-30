@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FichaArte } from "@/data/fichas";
 
 interface Props {
@@ -11,6 +11,23 @@ const MES_ACTUAL = new Date().getMonth();
 
 export default function EstadisticasValor({ ficha }: Props) {
   const [abierta, setAbierta] = useState<string | null>(null);
+
+  // Las barras crecen desde cero la primera vez que la sección entra en pantalla
+  const seccionRef = useRef<HTMLElement>(null);
+  const [animar, setAnimar] = useState(false);
+  useEffect(() => {
+    const el = seccionRef.current;
+    if (!el || typeof IntersectionObserver === "undefined" || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setAnimar(true);
+      return;
+    }
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setAnimar(true); io.disconnect(); }
+    }, { threshold: 0.3 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  const crecer = (i: number) => ({ transitionDelay: `${i * 45}ms` });
 
   /* ── Gráfica de interés ──────────────────────────────────────────── */
   const gi = ficha.graficaInteres ?? [];
@@ -61,7 +78,7 @@ export default function EstadisticasValor({ ficha }: Props) {
   ];
 
   return (
-    <section className="w-full">
+    <section ref={seccionRef} className="w-full">
       <p className="mb-5 text-xs font-semibold uppercase tracking-widest text-zinc-500">
         Valor y demanda
       </p>
@@ -87,8 +104,8 @@ export default function EstadisticasValor({ ficha }: Props) {
                 {gi.map((altura, i) => (
                   <div
                     key={i}
-                    className="w-3 rounded-full bg-gradient-to-t from-fuchsia-800 via-purple-500 to-purple-300"
-                    style={{ height: `${(altura / maxInteres) * 100}%` }}
+                    className="w-3 rounded-full bg-gradient-to-t from-fuchsia-800 via-purple-500 to-purple-300 transition-[height] duration-700 ease-out motion-reduce:transition-none"
+                    style={{ height: animar ? `${(altura / maxInteres) * 100}%` : "0%", ...crecer(i) }}
                   />
                 ))}
               </div>
@@ -131,10 +148,10 @@ export default function EstadisticasValor({ ficha }: Props) {
                       className="flex h-full flex-1 flex-col items-center justify-end gap-1"
                     >
                       <div
-                        className={`w-full rounded-sm ${
+                        className={`w-full rounded-sm transition-[height] duration-700 ease-out motion-reduce:transition-none ${
                           i === mesIdx ? "bg-cyan-400" : "bg-zinc-600"
                         }`}
-                        style={{ height: `${alturaPct(valor)}%` }}
+                        style={{ height: animar ? `${alturaPct(valor)}%` : "0%", ...crecer(i) }}
                       />
                       <span className="text-[7px] uppercase text-zinc-500">
                         {mes}
