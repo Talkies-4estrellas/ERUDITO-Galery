@@ -140,11 +140,30 @@ function ItemMenu({
 
 function MenuMovil({ alCerrar, onBuscar }: { alCerrar: () => void; onBuscar?: () => void }) {
   const [abierto, setAbierto] = useState<string | null>(null);
+  const [visible, setVisible] = useState(false);
   const { perfil } = usePerfil();
 
+  useEffect(() => {
+    const id = setTimeout(() => setVisible(true), 16);
+    return () => clearTimeout(id);
+  }, []);
+
+  // Entrada en cascada: cada opción aparece 35 ms después de la anterior
+  const aparece = (i: number) => ({
+    className: `transition duration-300 ease-out motion-reduce:transition-none ${
+      visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+    }`,
+    style: { transitionDelay: visible ? `${i * 35}ms` : "0ms" },
+  });
+
   return (
-    <div className="absolute inset-x-0 top-full mt-2 max-h-[calc(100dvh-13rem)] overflow-y-auto overscroll-contain rounded-2xl bg-zinc-900/95 p-4 ring-1 ring-white/10 backdrop-blur lg:hidden">
+    <div
+      className={`absolute inset-x-0 top-full mt-2 max-h-[calc(100dvh-13rem)] overflow-y-auto overscroll-contain rounded-2xl bg-zinc-900/95 p-4 ring-1 ring-white/10 backdrop-blur transition duration-200 ease-out motion-reduce:transition-none lg:hidden ${
+        visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+      }`}
+    >
       {onBuscar && (
+        <div {...aparece(0)}>
         <button
           type="button"
           onClick={() => { onBuscar(); alCerrar(); }}
@@ -155,10 +174,11 @@ function MenuMovil({ alCerrar, onBuscar }: { alCerrar: () => void; onBuscar?: ()
           </svg>
           Buscar obras, artistas…
         </button>
+        </div>
       )}
       <ul className="space-y-1">
-        {menus.map((menu) => (
-          <li key={menu.etiqueta}>
+        {menus.map((menu, i) => (
+          <li key={menu.etiqueta} {...aparece(i + 1)}>
             {menu.secciones ? (
               <>
                 <button
@@ -216,7 +236,10 @@ function MenuMovil({ alCerrar, onBuscar }: { alCerrar: () => void; onBuscar?: ()
       </ul>
 
       {/* Auth + Tema en móvil */}
-      <div className="mt-3 border-t border-white/10 pt-3 flex items-center gap-1">
+      <div
+        className={`mt-3 flex items-center gap-1 border-t border-white/10 pt-3 ${aparece(menus.length + 1).className}`}
+        style={aparece(menus.length + 1).style}
+      >
         {perfil ? (
           <Link
             href="/perfil"

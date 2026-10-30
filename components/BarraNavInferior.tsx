@@ -58,6 +58,7 @@ export default function BarraNavInferior() {
 
   const activo = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const indiceActivo = ITEMS.findIndex(({ href }) => activo(href));
 
   return (
     <nav
@@ -66,7 +67,17 @@ export default function BarraNavInferior() {
         encogida ? "scale-[0.82]" : ""
       }`}
     >
-      <div className="flex justify-around items-center rounded-3xl border border-white/10 bg-zinc-950/80 px-2 py-2.5 backdrop-blur-xl shadow-2xl">
+      <div className="relative flex items-center rounded-3xl border border-white/10 bg-zinc-950/80 px-2 py-2.5 backdrop-blur-xl shadow-2xl">
+        {/* Resaltado único que se desliza hasta la sección activa */}
+        <span
+          aria-hidden
+          className={`pointer-events-none absolute inset-y-2.5 left-2 w-[calc((100%-1rem)/4)] transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.34,1.2,0.64,1)] motion-reduce:transition-none ${
+            indiceActivo < 0 ? "opacity-0" : ""
+          }`}
+          style={{ transform: `translateX(${Math.max(indiceActivo, 0) * 100}%)` }}
+        >
+          <span className="mx-2 block h-full rounded-2xl bg-amber-400/15" />
+        </span>
         {ITEMS.map(({ href, label, Icon }) => {
           const on = activo(href);
           return (
@@ -75,10 +86,8 @@ export default function BarraNavInferior() {
               href={href}
               prefetch={true}
               aria-current={on ? "page" : undefined}
-              className={`flex flex-col items-center gap-1 rounded-2xl px-4 py-1.5 transition-colors ${
-                on
-                  ? "bg-amber-400/15 text-amber-400"
-                  : "text-zinc-500 hover:text-zinc-300"
+              className={`relative flex flex-1 flex-col items-center gap-1 py-1.5 transition-colors duration-300 ${
+                on ? "text-amber-400" : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
               <Icon />

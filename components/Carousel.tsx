@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Image from "next/image";
+import ImagenCarga from "@/components/ImagenCarga";
 import Link from "next/link";
 import type { Obra } from "@/data/obras";
 
@@ -44,7 +44,7 @@ export default function Carousel({ obras }: { obras: Obra[] }) {
             }`}
             aria-hidden={indice !== actual}
           >
-            <Image
+            <ImagenCarga
               src={item.imagen}
               alt={item.titulo}
               fill

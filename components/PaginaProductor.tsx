@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import ImagenCarga from "@/components/ImagenCarga";
 import Link from "next/link";
 import { useToast } from "@/components/ToastProvider";
 import { COLOR_COCINA, ICONO_COCINA as ICONO, type ProductoCocina, type CategoriaCocina } from "@/data/cocina";
@@ -90,7 +90,7 @@ function TarjetaProducto({ producto }: { producto: ProductoCocina }) {
       onMouseLeave={() => setHovered(false)}
     >
       <Link href={`/cocina/${producto.id}`} className="relative block aspect-[3/4] overflow-hidden bg-zinc-800">
-        <Image
+        <ImagenCarga
           src={producto.imagen}
           alt={producto.nombre}
           fill

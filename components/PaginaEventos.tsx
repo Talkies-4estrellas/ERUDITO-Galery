@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
+import ImagenCarga from "@/components/ImagenCarga";
 import type { Evento } from "@/data/eventos";
 
 type FiltroTipo = "Todos" | "Subasta" | "Exposición";
@@ -119,7 +119,7 @@ function TarjetaEvento({ evento, onRegistrar }: { evento: Evento; onRegistrar: (
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl bg-zinc-900 ring-1 ring-white/10 transition hover:ring-amber-400/20">
       <div className="relative aspect-[16/9] overflow-hidden">
-        <Image
+        <ImagenCarga
           src={evento.imagen}
           alt={evento.titulo}
           fill

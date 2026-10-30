@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Image from "next/image";
+import ImagenCarga from "@/components/ImagenCarga";
 import Link from "next/link";
 import { useToast } from "@/components/ToastProvider";
 import {
@@ -63,7 +63,7 @@ function TarjetaProducto({ producto }: { producto: ProductoCocina }) {
       onMouseLeave={() => setHovered(false)}
     >
       <Link href={`/cocina/${producto.id}`} className="relative block aspect-[3/4] overflow-hidden bg-zinc-800">
-        <Image
+        <ImagenCarga
           src={producto.imagen}
           alt={producto.nombre}
           fill
@@ -137,7 +137,7 @@ function ProductoDestacado({ producto }: { producto: ProductoCocina }) {
   return (
     <article className="group overflow-hidden rounded-3xl bg-zinc-900 ring-1 ring-white/10 lg:grid lg:grid-cols-[1fr_420px]">
       <div className="relative aspect-[4/3] lg:aspect-auto lg:min-h-[360px] overflow-hidden">
-        <Image
+        <ImagenCarga
           src={producto.imagen}
           alt={producto.nombre}
           fill

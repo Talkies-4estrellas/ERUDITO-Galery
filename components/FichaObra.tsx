@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
+import ImagenCarga from "@/components/ImagenCarga";
 import Link from "next/link";
 import type { FichaArte } from "@/data/fichas";
 import CapsulaArtista from "@/components/CapsulaArtista";
@@ -147,7 +147,7 @@ export default function FichaObra({ ficha, fluida = false, comparable = false }:
           href={`/obra/${ficha.id}`}
           className="relative block aspect-[3/4] overflow-hidden rounded-3xl bg-zinc-800 ring-1 ring-white/10"
         >
-          <Image
+          <ImagenCarga
             src={ficha.imagen}
             alt={ficha.titulo}
             fill

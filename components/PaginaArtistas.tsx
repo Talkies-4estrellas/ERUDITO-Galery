@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Image from "next/image";
+import ImagenCarga from "@/components/ImagenCarga";
 import Link from "next/link";
 import type { Artista } from "@/data/artistas";
 import type { FichaArte } from "@/data/fichas";
@@ -250,7 +250,7 @@ export default function PaginaArtistas({
                 className="group overflow-hidden rounded-2xl bg-zinc-900 ring-1 ring-white/10 transition hover:ring-amber-400/40"
               >
                 <div className="relative aspect-square overflow-hidden">
-                  <Image
+                  <ImagenCarga
                     src={artista.foto}
                     alt={artista.nombre}
                     fill

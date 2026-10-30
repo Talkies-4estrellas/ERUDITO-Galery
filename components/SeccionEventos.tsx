@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import Image from "next/image";
+import ImagenCarga from "@/components/ImagenCarga";
 import Link from "next/link";
 import type { Evento } from "@/data/eventos";
 
@@ -66,7 +66,7 @@ export default function SeccionEventos({ eventos }: { eventos: Evento[] }) {
             <Link href={evento.href} className="absolute inset-0 z-10" aria-label={evento.titulo} />
 
             <div className="relative aspect-[16/10]">
-              <Image
+              <ImagenCarga
                 src={evento.imagen}
                 alt={evento.titulo}
                 fill
