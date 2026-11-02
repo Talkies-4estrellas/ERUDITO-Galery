@@ -155,6 +155,7 @@ export default function Footer() {
               { label: "Privacidad", href: "#" },
               { label: "Términos", href: "#" },
               { label: "Contacto", href: "/contacto" },
+              { label: "Bienvenida", href: "/bienvenida" },
             ].map(({ label, href }) => (
               <Link
                 key={label}
